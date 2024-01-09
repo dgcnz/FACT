@@ -111,6 +111,24 @@ files = [
 ]
 
 [[package]]
+name = "clip"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+develop = false
+
+[package.extras]
+dev = ["pytest"]
+
+[package.source]
+type = "git"
+url = "https://github.com/openai/CLIP.git"
+reference = "HEAD"
+resolved_reference = "a1d071733d7111c9c014f024669f959182114e33"
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -1007,4 +1025,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "16deec79f957c15aad801ce99a1ff13f78b8c53d2208e309f31d1a9a58482329"
+content-hash = "843b8ba29b07bcd71d2f439c008dec61fc1760ac1328c771888bdc8e8474ead0"
