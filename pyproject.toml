@@ -19,6 +19,7 @@ clip = {git = "https://github.com/openai/CLIP.git"}
 
 [tool.poetry.group.dev.dependencies]
 gdown = "^4.7.1"
+jupyter = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
