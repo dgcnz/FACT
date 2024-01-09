@@ -1,0 +1,3 @@
+curl https://worksheets.codalab.org/rest/bundles/0xd013a7ba2e88481bbc07e787f73109f5/contents/blob/ --output artifacts/data/CUB_200_2011.tar.gz
+
+curl https://worksheets.codalab.org/rest/bundles/0x5b9d528d2101418b87212db92fea6683/contents/blob/ --output artifacts/data/CUB_processed.tar
