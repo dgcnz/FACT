@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 import pickle
 import numpy as np
 import torch
@@ -100,10 +101,7 @@ def main(args, backbone, preprocess):
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
-    run_info_file = hybrid_model_path.replace("pcbm", "run_info-pcbm")
-    run_info_file = run_info_file.replace(".ckpt", ".pkl")
-    
-    run_info_file = os.path.join(args.out_dir, run_info_file)
+    run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
     train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
