@@ -17,6 +17,9 @@ pytorchcv = "^0.0.67"
 clip = {git = "https://github.com/openai/CLIP.git"}
 
 
+[tool.poetry.group.dev.dependencies]
+gdown = "^4.7.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
