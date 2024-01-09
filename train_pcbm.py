@@ -38,7 +38,7 @@ def run_linear_probe(args, train_data, test_data):
     # We experimented with torch modules etc., and results are mostly parallel.
     classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
                                alpha=args.lam, l1_ratio=args.alpha, verbose=0,
-                               penalty="elasticnet", max_iter=10000)
+                               penalty="elasticnet", max_iter=10000) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
     classifier.fit(train_features, train_labels)
 
     train_predictions = classifier.predict(train_features)

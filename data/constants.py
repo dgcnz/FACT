@@ -20,4 +20,4 @@ HAM10K_DATA_DIR = "/path/to/broden/"
 
 
 # BRODEN concept bank
-BRODEN_CONCEPTS = "/path/to/broden/"
+BRODEN_CONCEPTS = "artifacts/data/broden_concepts"
