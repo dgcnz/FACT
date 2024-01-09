@@ -4,8 +4,8 @@ import os
 # CUB data is downloaded from the CBM release.
 # Dataset: https://worksheets.codalab.org/rest/bundles/0xd013a7ba2e88481bbc07e787f73109f5/ 
 # Metadata and splits: https://worksheets.codalab.org/bundles/0x5b9d528d2101418b87212db92fea6683
-CUB_DATA_DIR = "/path/to/cub_dataset"
-CUB_PROCESSED_DIR = "/path/to/class_attr_data_10"
+CUB_DATA_DIR = "artifacts/data/CUB_200_2011"
+CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
 
 # Derm data constants

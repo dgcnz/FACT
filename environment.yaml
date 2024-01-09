@@ -1,0 +1,14 @@
+name: fact
+channels:
+  - defaults
+  - pytorch
+  - anaconda
+  - conda-forge
+dependencies:
+  - pytorch=2.1.2
+  - numpy=1.26.3
+  - torchvision=0.16.2
+  - scikit-learn=1.3.0
+  - tqdm=4.66.1
+  - pandas=2.1.4
+  - pytorchcv=0.0.67

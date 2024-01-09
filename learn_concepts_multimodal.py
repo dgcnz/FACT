@@ -116,10 +116,11 @@ def clean_concepts(scenario_concepts):
 
 @torch.no_grad()
 def learn_conceptbank(args, concept_list, scenario):
+    assert args.device is not None, "Please specify a device."
     concept_dict = {}
     for concept in tqdm(concept_list):
         # Note: You can try other forms of prompting, e.g. "photo of {concept}" etc. here.
-        text = clip.tokenize(f"{concept}").to("cuda")
+        text = clip.tokenize(f"{concept}").to(args.device)
         text_features = model.encode_text(text).cpu().numpy()
         text_features = text_features/np.linalg.norm(text_features)
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the

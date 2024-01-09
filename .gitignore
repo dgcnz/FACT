@@ -1,0 +1,7 @@
+.DS_Store
+.venv
+.vscode/settings.json
+artifacts/data/
+artifacts/models
+**/__pycache__/
+out/
