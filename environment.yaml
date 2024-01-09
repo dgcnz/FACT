@@ -12,3 +12,4 @@ dependencies:
   - tqdm=4.66.1
   - pandas=2.1.4
   - pytorchcv=0.0.67
+  - openai-clip=1.0.1
