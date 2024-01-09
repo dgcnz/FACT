@@ -7,4 +7,4 @@ output = 'artifacts/data/broden_concepts.zip'
 gdown.download(url, output, quiet=False, fuzzy=True)
 
 with zipfile.ZipFile(output, 'r') as zip_ref:
-    zip_ref.extractall("artifacts/data/broden_concepts")
+    zip_ref.extractall("artifacts/data")
