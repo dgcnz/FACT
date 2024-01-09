@@ -1,6 +1,19 @@
 # Reproducing Post-hoc Concept Bottleneck Models
 
-## Installing dependencies
+## Running the example notebook in Google Colab
+
+The example notebook has everything you need to start testing the code, give it a try in Google Colab.
+
+1. Go to Google Colab
+2. In the `Open Notebook` tab, select GitHub
+3. Select the repository `dgcnz/FACT`
+4. Select the notebook `notebooks/example.ipynb`
+
+![Open Github Notebook in Colab](docs/figures/colab_github.png)
+
+If you choose to test on your local computer, then follow the instructions below.
+
+## Installing local dependencies
 
 You have two options to install the dependencies: poetry (recommended) or conda.
 
@@ -64,16 +77,6 @@ All datasets will reside on `artifacts/data`. When commiting changes to the repo
 ./scripts/download_broden
 ```
 
-## Running the example notebook in Google Colab
-
-The example notebook has everything you need to start testing the code, give it a try in Google Colab.
-
-1. Go to Google Colab
-2. In the `Open Notebook` tab, select GitHub
-3. Select the repository `dgcnz/FACT`
-4. Select the notebook `notebooks/example.ipynb`
-
-![Open Github Notebook in Colab](docs/figures/colab_github.png)
 
 --- 
 This is the original README
