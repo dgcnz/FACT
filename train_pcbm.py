@@ -90,15 +90,11 @@ def main(args, concept_bank, backbone, preprocess):
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
-    # Sorry for the model path hack. Probably i'll change this later.
-    model_path = os.path.join(args.out_dir,
-                              f"pcbm_{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
+    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+    model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
     torch.save(posthoc_layer, model_path)
 
-    # Again, a sad hack.. Open to suggestions
-    run_info_file = model_path.replace("pcbm", "run_info-pcbm")
-    run_info_file = run_info_file.replace(".ckpt", ".pkl")
-    run_info_file = os.path.join(args.out_dir, run_info_file)
+    run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
