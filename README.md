@@ -64,6 +64,17 @@ All datasets will reside on `artifacts/data`. When commiting changes to the repo
 ./scripts/download_broden
 ```
 
+## Running the example notebook in Google Colab
+
+The example notebook has everything you need to start testing the code, give it a try in Google Colab.
+
+1. Go to Google Colab
+2. In the `Open Notebook` tab, select GitHub
+3. Select the repository `dgcnz/FACT`
+4. Select the notebook `notebooks/example.ipynb`
+
+![Open Github Notebook in Colab](docs/figures/colab_github.png)
+
 --- 
 This is the original README
 
