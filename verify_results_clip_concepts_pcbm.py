@@ -15,7 +15,7 @@ import pickle
 import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 
@@ -45,31 +45,42 @@ def config():
 
 
 def run_linear_probe(args, train_data, test_data):
+    print("START LINEAR PROBE..")
     train_features, train_labels = train_data
     test_features, test_labels = test_data
 
-    train_features, train_labels, val_features, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=True, random_state=args.seed)
+    print(set(train_labels))
+    print(len(train_features), len(train_labels))
+    train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
 
     #Get the best possible alpha (args.lam) using the validation set 
     # Define the parameter grid for grid search
-    param_grid = {
-        'alpha': [0.001, 0.01, 0.1, 1, 10, 100],  # Inverse of regularization strength
-    }
+    param_grid = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
 
-    # Create a classifier
-    classifier = SGDClassifier(random_state=args.seed, loss="log_loss", l1_ratio=args.alpha, verbose=0,
-                            penalty="elasticnet", max_iter=10000)
+    best_score = -float('inf')
+    best_lam = None
 
-    # Create GridSearchCV object with cv=0
-    grid_search = GridSearchCV(classifier, param_grid, cv=0)
-
-    # Fit the grid search to the data
-    grid_search.fit(train_features, train_labels)
-
-    # Get the best hyperparameters
-    best_lam = grid_search.best_params_
+    # Perform grid search
+    for param in param_grid:
+        classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
+                               alpha=param, l1_ratio=args.alpha, verbose=0,
+                               penalty="elasticnet", max_iter=5000)
+        classifier.fit(train_features, train_labels)
+        
+        # Evaluate on the validation set
+        y_pred = classifier.predict(val_features)
+        if test_labels.max() == 1:
+          score = roc_auc_score(val_labels, y_pred)
+        else:
+          score = accuracy_score(val_labels, y_pred)
+        
+        # Update best parameters if current configuration is better
+        if score > best_score:
+            best_score = score
+            best_lam = param
 
     print(best_lam)
+    print(best_score)
 
     # We converged to using SGDClassifier. 
     # It's fine to use other modules here, this seemed like the most pedagogical option.
@@ -162,6 +173,5 @@ if __name__ == "__main__":
     backbone = backbone.to(args.device)
     backbone.eval()
     main(args, concept_bank, backbone, preprocess)
-
 
 
