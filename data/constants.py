@@ -10,7 +10,7 @@ CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
 # Derm data constants
 # Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
-DERM7_FOLDER = "/path/to/derm7pt/"
+DERM7_FOLDER = "artifacts/data/derm7pt/"
 DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
 DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
 DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
