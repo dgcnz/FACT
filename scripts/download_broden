@@ -1,10 +1,25 @@
 #!/usr/bin/env python
 import gdown
 import zipfile
+import time
 
-url = 'https://drive.google.com/file/d/1_yxGcveFcKetoB783H3iv3oiqXHYArT-/view?usp=sharing'
-output = 'artifacts/data/broden_concepts.zip'
-gdown.download(url, output, quiet=False, fuzzy=True)
 
-with zipfile.ZipFile(output, 'r') as zip_ref:
+URL = 'https://drive.google.com/file/d/1_yxGcveFcKetoB783H3iv3oiqXHYArT-/view?usp=sharing'
+OUTPUT = 'artifacts/data/broden_concepts.zip'
+MAX_ATTEMPTS = 5
+WAIT_TIME = 2
+EXPONENTIAL_BACKOFF = 2
+
+def download():
+    return gdown.download(URL, OUTPUT, quiet=False, fuzzy=True, use_cookies=False)
+
+for i in range(MAX_ATTEMPTS):
+    print(f"Attempt {i+1}/{MAX_ATTEMPTS} to download the dataset.")
+    if success := download():
+        break
+    print(f"Failed to download the dataset. Retrying in {WAIT_TIME} seconds.")
+    time.sleep(WAIT_TIME)
+    WAIT_TIME *= EXPONENTIAL_BACKOFF
+
+with zipfile.ZipFile(OUTPUT, 'r') as zip_ref:
     zip_ref.extractall("artifacts/data")
