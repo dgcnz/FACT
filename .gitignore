@@ -1,7 +1,6 @@
 .DS_Store
 .venv
 .vscode/settings.json
-artifacts/data/
-artifacts/models
+artifacts
 **/__pycache__/
 out/

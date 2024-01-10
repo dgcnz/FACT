@@ -1,16 +1,87 @@
-# Post-hoc Concept Bottleneck Models (ICLR 2023 Spotlight)
-The code for the paper Post-hoc Concept Bottleneck Models. This paper got an [ICLR2023 Spotlight(notable-top-25%)](https://openreview.net/forum?id=nA5AZ8CEyow)!
+# Reproducing Post-hoc Concept Bottleneck Models
+
+## Running the example notebook in Google Colab
+
+The example notebook has everything you need to start testing the code, give it a try in Google Colab.
+
+1. Go to Google Colab
+2. In the `Open Notebook` tab, select GitHub
+3. Select the repository `dgcnz/FACT`
+4. Select the notebook `notebooks/example.ipynb`
+
+![Open Github Notebook in Colab](docs/figures/colab_github.png)
+
+If you choose to test on your local computer, then follow the instructions below.
+
+## Installing local dependencies
+
+You have two options to install the dependencies: poetry (recommended) or conda.
+
+### Poetry
+
+Check the [documentation](https://python-poetry.org/docs/) on how to setup and install poetry.
+
+1. Create a virtual environment.
+
+```sh
+python -m venv .venv
+```
+2. Activate the python environment.
+```sh
+# For UNIX-based systems only
+source .venv/bin/activate 
+# For Windows cmd only
+.venv\Scripts\activate.bat 
+# For Windows Powershell
+.venv\Scripts\Activate.ps1
+```
+
+3. Install the dependencies in the virtual environment.
+
+```sh
+poetry install
+```
+And you're done!
+
+For adding/removing packages, and other functionalities check the [docs](https://python-poetry.org/docs/).
 
 
-This is the joint work of [Mert Yuksekgonul](https://cs.stanford.edu/~merty), [Maggie Wang](https://www.linkedin.com/in/maggie-wang-038b55194/), and [James Zou](https://www.james-zou.com/).
+### Conda
 
-Here is an overview of our work, and you can find more in our [Preprint](https://arxiv.org/abs/2205.15480) (soon to be updated).
+1. Create conda environment and install packages
+```sh
+conda env create -f environment.yaml
+```
+2. Activate environment
+```sh
+conda activate fact
+```
 
-![Overview](./assets/overview.png)
+## Downloading datasets
+
+All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
+
+### CUB
+
+1. Run the download script
+```sh
+./scripts/download_cub
+```
+2. You will find the downloaded data in `CUB_200_2011` and `class_attr_data_10`.
+
+### Broden
+
+1. Activate your environment (conda or venv).
+2. Run the download script
+```sh
+./scripts/download_broden
+```
 
 
-# Data Instructions
-Below we list the data sources to download the datasets we used to train / evaluate PCBMs. Once you download a dataset, please go to `data/constants.py` and specify the corresponding paths where you downloaded the datasets. 
+--- 
+This is the original README
+
+TODO: update
 ## Downloading the Data
 | Dataset      | Description | URL |
 | ----------- | ----------- |----------- |
