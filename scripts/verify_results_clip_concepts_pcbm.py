@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 
 from data import get_dataset
@@ -46,12 +47,35 @@ def config():
 def run_linear_probe(args, train_data, test_data):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
-    
+
+    train_features, train_labels, val_features, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=True, random_state=args.seed)
+
+    #Get the best possible alpha (args.lam) using the validation set 
+    # Define the parameter grid for grid search
+    param_grid = {
+        'alpha': [0.001, 0.01, 0.1, 1, 10, 100],  # Inverse of regularization strength
+    }
+
+    # Create a classifier
+    classifier = SGDClassifier(random_state=args.seed, loss="log_loss", l1_ratio=args.alpha, verbose=0,
+                            penalty="elasticnet", max_iter=10000)
+
+    # Create GridSearchCV object with cv=0
+    grid_search = GridSearchCV(classifier, param_grid, cv=0)
+
+    # Fit the grid search to the data
+    grid_search.fit(train_features, train_labels)
+
+    # Get the best hyperparameters
+    best_lam = grid_search.best_params_
+
+    print(best_lam)
+
     # We converged to using SGDClassifier. 
     # It's fine to use other modules here, this seemed like the most pedagogical option.
     # We experimented with torch modules etc., and results are mostly parallel.
     classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
-                               alpha=args.lam, l1_ratio=args.alpha, verbose=0,
+                               alpha=best_lam, l1_ratio=args.alpha, verbose=0,
                                penalty="elasticnet", max_iter=10000) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
     classifier.fit(train_features, train_labels)
 
