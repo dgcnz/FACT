@@ -1,0 +1,21 @@
+#! /bin/bash
+
+# create output folders
+mkdir -p artifacts/data/COCO_STUFF
+mkdir -p artifacts/data/class_attr_data_10
+
+# download data
+
+curl http://images.cocodataset.org/zips/train2017.zip --output artifacts/data/COCO_STUFF_TRAIN.zip
+
+curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
+
+curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
+
+# extract data
+
+unzip artifacts/data/COCO_STUFF_TRAIN.zip -d artifacts/data/COCO_STUFF
+
+unzip artifacts/data/COCO_STUFF_VAL.zip -d artifacts/data/COCO_STUFF
+
+# Need to figure out how labels work here
