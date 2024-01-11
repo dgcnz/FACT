@@ -33,7 +33,7 @@ def config():
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seeds", default=[42], type=str, help="Random seeds") # pass seeds like 'seed1,seed2,seed3'
+    parser.add_argument("--seeds", default='42', type=str, help="Random seeds") # pass seeds like 'seed1,seed2,seed3'
     
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
