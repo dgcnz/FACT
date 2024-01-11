@@ -35,7 +35,7 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
         backbone = backbone.eval()
         model = None
     
-    elif backbone_name == "resnet18_cub":
+    elif backbone_name.lower() == "resnet18_cub":
         from pytorchcv.model_provider import get_model as ptcv_get_model
         model = ptcv_get_model(backbone_name, pretrained=True, root=args.out_dir)
         backbone, model_top = ResNetBottom(model), ResNetTop(model)
