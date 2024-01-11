@@ -7,6 +7,9 @@ import os
 CUB_DATA_DIR = "artifacts/data/CUB_200_2011"
 CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
+# COCO-Stuff Constants
+# COCO-Stuff data is obtained from : https://github.com/nightrome/cocostuff
+COCO_STUFF_DIR = "artifacts/data/COCO_STUFF"
 
 # Derm data constants
 # Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html

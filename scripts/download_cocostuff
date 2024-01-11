@@ -10,7 +10,9 @@ curl http://images.cocodataset.org/zips/train2017.zip --output artifacts/data/CO
 
 curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
 
-curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
+curl http://images.cocodataset.org/annotations/annotations_trainval2017.zip --output artifacts/data/COCO_STUFF_ANNOT.zip
+
+curl https://raw.githubusercontent.com/nightrome/cocostuff/master/labels.txt --output artifacts/data/COCO_STUFF/labels.txt
 
 # extract data
 
@@ -18,4 +20,6 @@ unzip artifacts/data/COCO_STUFF_TRAIN.zip -d artifacts/data/COCO_STUFF
 
 unzip artifacts/data/COCO_STUFF_VAL.zip -d artifacts/data/COCO_STUFF
 
-# Need to figure out how labels work here
+unzip artifacts/data/COCO_STUFF_ANNOT.zip -d artifacts/data/COCO_STUFF
+
+# Need to figure out how labels work here (I assume that it's using the captions based on the CLIP ResNet Paper)
