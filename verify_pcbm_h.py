@@ -21,7 +21,7 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
-    parser.add_argument("--pcbm-paths", required=True, type=str, help="Trained PCBM modules.")
+    parser.add_argument("--pcbm-path", required=True, type=str, help="Trained PCBM modules.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
@@ -34,7 +34,6 @@ def config():
 
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
-    args.pcbm_paths = [path for path in args.pcbm_paths.split(',')]
     return args
 
 
@@ -146,7 +145,8 @@ if __name__ == "__main__":
     assert len(args.seeds) == len(args.pcbm_paths), 'number of seeds and number of pcbm paths must be equal'
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
-        args.pcbm_path = args.pcbm_paths[i]
+        # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
+        args.pcbm_path = 'artifacts/clip/cifar10_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
 
         print(f"Seed: {seed}")
         args.seed = seed
