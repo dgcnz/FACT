@@ -33,13 +33,13 @@ def config():
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seed", default=42, type=int, help="Random seed")
+    parser.add_argument("--seeds", default=42, type=int, help="Random seed")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
 
     #if one of the tree parameters below is set to None a grid search will be performed 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
-    parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
+    parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
 
     return parser.parse_args()
 
@@ -53,34 +53,37 @@ def run_linear_probe(args, train_data, test_data):
     print(len(train_features), len(train_labels))
     train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
 
-    #Get the best possible alpha (args.lam) using the validation set 
-    # Define the parameter grid for grid search
-    param_grid = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+    if args.lam is not None:
+        #Get the best possible alpha (args.lam) using the validation set 
+        # Define the parameter grid for grid search
+        param_grid = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
 
-    best_score = -float('inf')
-    best_lam = None
+        best_score = -float('inf')
+        best_lam = None
 
-    # Perform grid search
-    for param in param_grid:
-        classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
-                               alpha=param, l1_ratio=args.alpha, verbose=0,
-                               penalty="elasticnet", max_iter=5000)
-        classifier.fit(train_features, train_labels)
-        
-        # Evaluate on the validation set
-        y_pred = classifier.predict(val_features)
-        if test_labels.max() == 1:
-          score = roc_auc_score(val_labels, y_pred)
-        else:
-          score = accuracy_score(val_labels, y_pred)
-        
-        # Update best parameters if current configuration is better
-        if score > best_score:
-            best_score = score
-            best_lam = param
+        # Perform grid search
+        for param in param_grid:
+            classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
+                                alpha=param, l1_ratio=args.alpha, verbose=0,
+                                penalty="elasticnet", max_iter=5000)
+            classifier.fit(train_features, train_labels)
+            
+            # Evaluate on the validation set
+            y_pred = classifier.predict(val_features)
+            if test_labels.max() == 1:
+                score = roc_auc_score(val_labels, y_pred)
+            else:
+                score = accuracy_score(val_labels, y_pred)
+            
+            # Update best parameters if current configuration is better
+            if score > best_score:
+                best_score = score
+                best_lam = param
 
-    print(best_lam)
-    print(best_score)
+        print(best_lam)
+        print(best_score)
+    else:
+        best_lam = args.lam
 
     # We converged to using SGDClassifier. 
     # It's fine to use other modules here, this seemed like the most pedagogical option.
@@ -153,6 +156,7 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+    return run_info
 
 if __name__ == "__main__":
     args = config()
@@ -165,6 +169,33 @@ if __name__ == "__main__":
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
-    main(args, concept_bank, backbone, preprocess)
+    metric_list = []
+    for seed in args.seeds:
+        args.seed = seed
+        args.out_dir = args.out_dir + "_" + seed
+        run_info = main(args, concept_bank, backbone, preprocess)
+
+        if "test_auc" in run_info:
+            print("auc used")
+            metric = run_info['test_auc']
+
+        else:
+            print("acc used")
+            metric = run_info['test_acc']
+
+        metric_list.append(metric)
+        #compute std and mean of metrics 
+        print(f"metric_list: {metric_list}")
+        print(f"mean: {np.mean(metric_list)}")
+        print(f"std: {np.std(metric_list)}")
+        
+
+
+
+            
+
+
+
+        
 
 
