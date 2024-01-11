@@ -33,7 +33,7 @@ def config():
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seeds", default='42', type=str, help="Random seeds") # pass seeds like 'seed1,seed2,seed3'
+    parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
@@ -56,10 +56,10 @@ def run_linear_probe(args, train_data, test_data):
     print(len(train_features), len(train_labels))
     train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
 
-    if args.lam is not None:
+    if args.lam is None:
         #Get the best possible alpha (args.lam) using the validation set 
         # Define the parameter grid for grid search
-        param_grid = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+        param_grid = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
 
         best_score = -float('inf')
         best_lam = None
@@ -197,9 +197,3 @@ if __name__ == "__main__":
 
 
             
-
-
-
-        
-
-
