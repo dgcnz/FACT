@@ -146,7 +146,8 @@ if __name__ == "__main__":
     assert len(args.seeds) == len(args.pcbm_paths), 'number of seeds and number of pcbm paths must be equal'
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
-        args.pcbm_path = args.pcbm_paths[i]
+        # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
+        args.pcbm_path = 'artifacts/clip/cifar10_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
 
         print(f"Seed: {seed}")
         args.seed = seed
