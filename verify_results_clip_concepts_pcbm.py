@@ -33,7 +33,8 @@ def config():
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seeds", default=[42], type=list, help="Random seeds")
+    parser.add_argument("--seeds", default=[42], type=str, help="Random seeds") # pass seeds like 'seed1,seed2,seed3'
+    
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
 
@@ -41,7 +42,9 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.seeds = [int(seed) for seed in args.seeds.split(',')]
+    return args
 
 
 def run_linear_probe(args, train_data, test_data):
@@ -173,7 +176,7 @@ if __name__ == "__main__":
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
-        args.out_dir = args.out_dir + "_" + seed
+        args.out_dir = args.out_dir + "_" + str(seed)
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
