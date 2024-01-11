@@ -173,10 +173,11 @@ if __name__ == "__main__":
     backbone = backbone.to(args.device)
     backbone.eval()
     metric_list = []
+    og_out_dir = args.out_dir
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
-        args.out_dir = args.out_dir + "_" + str(seed)
+        args.out_dir = og_out_dir + "_" + str(seed)
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
@@ -187,7 +188,9 @@ if __name__ == "__main__":
             print("acc used")
             metric = run_info['test_acc']
 
-    metric_list.append(metric)
+        metric_list.append(metric)
+
+    
     #compute std and mean of metrics 
     print(f"metric_list: {metric_list}")
     print(f"mean: {np.mean(metric_list)}")
