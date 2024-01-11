@@ -21,7 +21,6 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
-    parser.add_argument("--pcbm-path", required=True, type=str, help="Trained PCBM modules.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
@@ -129,29 +128,29 @@ def main(args, backbone, preprocess):
         pickle.dump(run_info, f)
     
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
+    return run_info
 
 if __name__ == "__main__":    
     args = config()    
-    # Load the PCBM
-    posthoc_layer = torch.load(args.pcbm_path)
-    posthoc_layer = posthoc_layer.eval()
-    args.backbone_name = posthoc_layer.backbone_name
-    backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-    backbone = backbone.to(args.device)
-    backbone.eval()
 
     metric_list = []
     og_out_dir = args.out_dir
-    assert len(args.seeds) == len(args.pcbm_paths), 'number of seeds and number of pcbm paths must be equal'
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
         # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
         args.pcbm_path = 'artifacts/clip/cifar10_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        # Load the PCBM
+        posthoc_layer = torch.load(args.pcbm_path)
+        posthoc_layer = posthoc_layer.eval()
+        args.backbone_name = posthoc_layer.backbone_name
+        backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+        backbone = backbone.to(args.device)
+        backbone.eval()
 
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir + "_" + str(seed)
-        run_info =  main(args, backbone, preprocess)
+        run_info = main(args, backbone, preprocess)
 
         if "test_auc" in run_info:
             print("auc used")
@@ -168,4 +167,3 @@ if __name__ == "__main__":
     print(f"metric_list: {metric_list}")
     print(f"mean: {np.mean(metric_list)}")
     print(f"std: {np.std(metric_list)}")
-   
