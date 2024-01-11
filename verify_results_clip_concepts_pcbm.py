@@ -171,6 +171,7 @@ if __name__ == "__main__":
     backbone.eval()
     metric_list = []
     for seed in args.seeds:
+        print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = args.out_dir + "_" + seed
         run_info = main(args, concept_bank, backbone, preprocess)
@@ -183,12 +184,12 @@ if __name__ == "__main__":
             print("acc used")
             metric = run_info['test_acc']
 
-        metric_list.append(metric)
-        #compute std and mean of metrics 
-        print(f"metric_list: {metric_list}")
-        print(f"mean: {np.mean(metric_list)}")
-        print(f"std: {np.std(metric_list)}")
-        
+    metric_list.append(metric)
+    #compute std and mean of metrics 
+    print(f"metric_list: {metric_list}")
+    print(f"mean: {np.mean(metric_list)}")
+    print(f"std: {np.std(metric_list)}")
+
 
 
 
