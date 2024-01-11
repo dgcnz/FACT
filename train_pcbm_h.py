@@ -30,8 +30,8 @@ def config():
     parser.add_argument("--num-epochs", default=20, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
-    parser.add_argument("--l2-penalty", default=0.001, type=float)
-    
+    parser.add_argument("--l2-penalty", default=0.01, type=float)
+
     return parser.parse_args()
 
 
@@ -107,7 +107,6 @@ def main(args, backbone, preprocess):
     # We use the precomputed embeddings and projections.
     train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
-    
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)
 
