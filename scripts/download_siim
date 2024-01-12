@@ -1,14 +1,10 @@
-#! /bin/bash
+#!/usr/bin/env python
+import gdown
+import zipfile
 
-# create output folder
-mkdir -p artifacts/data/SIIM_ISIC
+url = 'https://drive.google.com/file/d/1H7cTkuEF2vg7UsiLjnFKJ7kBPIN1Y3IL/view?usp=sharing'
+output = 'artifacts/data/SIIM_ISIC_data.zip'
+gdown.download(url, output, quiet=False, fuzzy=True)
 
-# download data
-
-curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_JPEG.zip --output artifacts/data/SIIM_ISIC_data.zip
-
-curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_GroundTruth.csv --output artifacts/data/SIIM_ISIC/isic_metadata.csv
-
-# extract data
-
-unzip artifacts/data/SIIM_ISIC_data.zip -d artifacts/data/SIIM_ISIC
+with zipfile.ZipFile(output, 'r') as zip_ref:
+    zip_ref.extractall("artifacts/data")
