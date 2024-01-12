@@ -89,7 +89,9 @@ def get_dataset(args, preprocess=None):
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
         meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
-        train_loader, test_loader = load_siim_data(meta_dir)
+        train_loader, test_loader = load_siim_data(meta_dir, 
+                                                   batch_size=args.batch_size, 
+                                                   seed=args.seed)
 
     else:
         raise ValueError(args.dataset)
