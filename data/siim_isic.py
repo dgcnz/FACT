@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from PIL import Image
-from constants import SIIM_DATA_DIR
+from .constants import SIIM_DATA_DIR
 import argparse
 
 # Currently based on CUB Dataset class (am researching what components are needed)
@@ -57,8 +57,8 @@ def prepare_data(df, n_train:int=2000, n_test:int=500, ratio:float=0.2, seed:int
     # Taking n samples from the dataset (sampled in a way which prevents overlap)
     train_ben = df.loc[df['benign_malignant'] == 'benign'][:n_train_ben]
     train_mal = df.loc[df['benign_malignant'] == 'malignant'][:n_train_mal]
-    test_ben = df.loc[df['benign_malignant'] == 'benign'][n_train_ben:n_test_ben]
-    test_mal = df.loc[df['benign_malignant'] == 'malignant'][n_train_mal:n_test_mal]
+    test_ben = df.loc[df['benign_malignant'] == 'benign'][n_train_ben:n_train_ben+n_test_ben]
+    test_mal = df.loc[df['benign_malignant'] == 'malignant'][n_train_mal:n_train_mal+n_test_mal]
     clean_df = pd.concat([train_ben, train_mal, test_ben, test_mal]) # Combining and converting the dataset
 
     datalist = [list(clean_df['image_name']), list(clean_df['benign_malignant'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
@@ -91,7 +91,3 @@ if __name__ == "__main__":
 
     meta_path = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
     train_siim, test_siim = load_siim_data(meta_path)
-    train_features, train_labels = next(iter(train_siim))
-
-    print(train_features)
-    print(train_labels)
