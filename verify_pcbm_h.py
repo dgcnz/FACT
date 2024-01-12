@@ -138,7 +138,7 @@ if __name__ == "__main__":
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
         # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
-        args.pcbm_path = 'artifacts/clip/cifar10_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
         # Load the PCBM
         posthoc_layer = torch.load(args.pcbm_path)
         posthoc_layer = posthoc_layer.eval()
@@ -160,7 +160,7 @@ if __name__ == "__main__":
             print("acc used")
             metric = run_info['test_acc']
 
-        metric_list.append(metric)
+        metric_list.append(metric.val)
 
     
     #compute std and mean of metrics 
