@@ -4,6 +4,7 @@ channels:
   - pytorch
   - anaconda
   - conda-forge
+  - nvidia
 dependencies:
   - pytorch=2.1.2
   - numpy=1.26.3
@@ -13,3 +14,4 @@ dependencies:
   - pandas=2.1.4
   - pytorchcv=0.0.67
   - openai-clip=1.0.1
+  - gdown=4.7.1
