@@ -1,75 +1,97 @@
 from glob import glob
 import os
 import pandas as pd
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from PIL import Image
-from .constants import COCO_STUFF_DIR
+from constants import SIIM_DATA_DIR
 import argparse
 
 # Currently based on CUB Dataset class (am researching what components are needed)
 class ISICDataset(Dataset):
 
-    def __init__(self, image_dir, meta_dir, select_rand, num_classes, transform=None):
+    def __init__(self, datalist, transform=None):
         """
         Arguments:
         annot_dir: directory of the corresponding annotation file
-        select_rand: because each image has 3 distinct captions, determines how the labels are selected
-        image_dir: directory of the folder containing all COCO-Stuff image folders
-        transform: whether to apply any special transformation. Default = None, i.e. use standard ImageNet preprocessing
+        datalist: a list object instance returned by 'data_select' function above
+        transform: whether to apply any special transformation. Default = None
         """
-        f = open(meta_dir)
-        self.data = pd.read_csv(f) # CSV object containing all metadata of set
-        f.close()
-
+        self.data = datalist
         self.transform = transform
-        self.select_rand = select_rand
-        self.image_dir = image_dir
-        self.num_classes = num_classes
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # img_data = self.data[idx]
-        # img_path = img_data['img_path']
-        # # Trim unnecessary paths
+        img_data = self.data[idx]
+        img_path = img_data[0]
+        img = Image.open(img_path).convert('RGB')
 
-        # idx = img_path.split('/').index('CUB_200_2011')
-        # img_path = '/'.join([self.image_dir] + img_path.split('/')[idx+1:])
-        # img = Image.open(img_path).convert('RGB')
-
-        # class_label = img_data['class_label']
-        # if self.transform:
-        #     img = self.transform(img)
-        img = []
-        class_label = []
+        class_label = img_data[1]
+        if self.transform:
+            img = self.transform(img)
 
         return img, class_label
 
-def cid_to_class(pathtxt, target_labs): # "cid = COCO ID"
-    return NotImplemented
+# Function for preparing the data from the data (2500 in total: 80% benign, 20% malignant)
+def prepare_data(df, n_train:int=2000, n_test:int=500, ratio:float=0.2, seed:int=42):
+    """
+    Arguments:
+    df: Pandas dataframe object
+    n_train, n_test: the amount of training and test images to sample respectively
+    ratio: percentage of data to use for testing
+    seed: Random seed for train test split
 
-def load_siim_data(image_dir, meta_dir, transform=None):
-    return NotImplemented
+    Outputs:
+    train_data, test_data: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
+    """
+    # Obtaining a balanced number of samples from the dataset
+    n_train_ben = int(n_train * (1 - ratio)) # 1600
+    n_train_mal = int(n_train * ratio)       # 400
+    n_test_ben = int(n_test * (1 - ratio))   # 400
+    n_test_mal = int(n_test * ratio)         # 100
+
+    # Taking n samples from the dataset (sampled in a way which prevents overlap)
+    train_ben = df.loc[df['benign_malignant'] == 'benign'][:n_train_ben]
+    train_mal = df.loc[df['benign_malignant'] == 'malignant'][:n_train_mal]
+    test_ben = df.loc[df['benign_malignant'] == 'benign'][n_train_ben:n_test_ben]
+    test_mal = df.loc[df['benign_malignant'] == 'malignant'][n_train_mal:n_test_mal]
+    clean_df = pd.concat([train_ben, train_mal, test_ben, test_mal]) # Combining and converting the dataset
+
+    datalist = [list(clean_df['image_name']), list(clean_df['benign_malignant'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
+    X_train, X_test, y_train, y_test = train_test_split(datalist[0], datalist[1], 
+                                                        stratify=datalist[1], test_size=ratio, 
+                                                        random_state=seed)
+    
+    train_data = [[X_train[idx], y_train[idx]] for idx in range(len(X_train))]
+    test_data = [[X_test[idx], y_test[idx]] for idx in range(len(X_test))]
+
+    return train_data, test_data
+
+def load_siim_data(meta_dir, transform=None, seed:int=42):
+
+    df = pd.read_csv(meta_dir)[['image_name', 'benign_malignant']]
+    train_dir = os.path.join(SIIM_DATA_DIR, "train")
+    df['image_name'] = train_dir + "/" + df['image_name'] + ".jpg"
+    train_data, test_data = prepare_data(df)
+
+    train_data = ISICDataset(train_data, transform)
+    test_data = ISICDataset(test_data, transform)
+
+    train_loader = DataLoader(train_data)
+    test_loader = DataLoader(test_data)
+
+    return train_loader, test_loader
 
 # For testing:
-# def config():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
-#     parser.add_argument("--dataset-name", default="cub", type=str)
-#     parser.add_argument("--out-dir", required=True, type=str)
-#     parser.add_argument("--device", default="cuda", type=str)
-#     parser.add_argument("--seed", default=1, type=int, help="Random seed")
-#     parser.add_argument("--num-workers", default=4, type=int, help="Number of workers in the data loader.")
-#     parser.add_argument("--batch-size", default=100, type=int, help="Batch size in the concept loader.")
-#     parser.add_argument("--C", nargs="+", default=[0.01, 0.1], type=float, help="Regularization parameter for SVMs.")
-#     parser.add_argument("--n-samples", default=50, type=int, 
-#                         help="Number of positive/negative samples used to learn concepts.")
-#     return parser.parse_args()
+if __name__ == "__main__":
 
-# if __name__ == "__main__":
-#     args = config()
-#     coco_data = load_coco_data(args)
+    meta_path = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+    train_siim, test_siim = load_siim_data(meta_path)
+    train_features, train_labels = next(iter(train_siim))
+
+    print(train_features)
+    print(train_labels)

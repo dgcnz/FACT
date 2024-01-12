@@ -20,7 +20,7 @@ class COCODataset(Dataset):
         annot_dir: directory of the corresponding annotation file
         select_rand: because each image has 3 distinct captions, determines how the labels are selected
         image_dir: directory of the folder containing all COCO-Stuff image folders
-        transform: whether to apply any special transformation. Default = None, i.e. use standard ImageNet preprocessing
+        transform: whether to apply any special transformation. Default = None
         """
         f = open(annot_dir)
         self.data = json.load(f) # Dict object containing all metadata of set (no clue how they handled the stuff annotations)

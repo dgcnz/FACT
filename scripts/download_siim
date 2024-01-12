@@ -7,7 +7,7 @@ mkdir -p artifacts/data/SIIM_ISIC
 
 curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_JPEG.zip --output artifacts/data/SIIM_ISIC_data.zip
 
-curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_GroundTruth.csv --output artifacts/data/isic_metadata.csv
+curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_GroundTruth.csv --output artifacts/data/SIIM_ISIC/isic_metadata.csv
 
 # extract data
 

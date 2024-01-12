@@ -45,8 +45,8 @@ def get_dataset(args, preprocess=None):
             n_classes=num_classes, resampling=True)
 
         test_loader = load_cub_data([TEST_PKL], use_attr=False, no_img=False, 
-                batch_size=args.batch_size, uncertain_label=False, image_dir=CUB_DATA_DIR, resol=224, normalizer=normalizer,
-                n_classes=num_classes, resampling=True)
+            batch_size=args.batch_size, uncertain_label=False, image_dir=CUB_DATA_DIR, resol=224, normalizer=normalizer,
+            n_classes=num_classes, resampling=True)
 
         classes = open(os.path.join(CUB_DATA_DIR, "classes.txt")).readlines()
         classes = [a.split(".")[1].strip() for a in classes]
@@ -86,7 +86,10 @@ def get_dataset(args, preprocess=None):
         idx_to_class = cid_to_class(label_path, target_classes)
 
     elif args.dataset == "siim-isic":
-        return NotImplemented
+        from .siim_isic import load_siim_data
+        from .constants import SIIM_DATA_DIR
+        meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+        train_loader, test_loader = load_siim_data(meta_dir)
 
     else:
         raise ValueError(args.dataset)
