@@ -1,8 +1,7 @@
 #! /bin/bash
 
-# create output folders
+# create output folder
 mkdir -p artifacts/data/COCO_STUFF
-mkdir -p artifacts/data/class_attr_data_10
 
 # download data
 

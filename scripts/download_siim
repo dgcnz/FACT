@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# create output folder
+mkdir -p artifacts/data/SIIM_ISIC
+
+# download data
+
+curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_JPEG.zip --output artifacts/data/SIIM_ISIC_data.zip
+
+curl https://isic-challenge-data.s3.amazonaws.com/2020/ISIC_2020_Training_GroundTruth.csv --output artifacts/data/isic_metadata.csv
+
+# extract data
+
+unzip artifacts/data/SIIM_ISIC_data.zip -d artifacts/data/SIIM_ISIC

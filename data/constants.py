@@ -21,6 +21,8 @@ DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
 # Ham10000 can be obtained from : https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
 HAM10K_DATA_DIR = "/path/to/broden/"
 
+# SIIM-ISIC can be obtained from : https://challenge2020.isic-archive.com/
+SIIM_DATA_DIR = "artifacts/data/SIIM_ISIC"
 
 # BRODEN concept bank
 BRODEN_CONCEPTS = "artifacts/data/broden_concepts"

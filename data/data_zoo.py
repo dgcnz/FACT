@@ -67,6 +67,8 @@ def get_dataset(args, preprocess=None):
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
+        return NotImplemented
+
         # The 20 most biased classes from Singh et al., 2020
         target_classes = ["cup", "wine glass", "handbag", "apple", "car",
                           "bus", "potted plant", "spoon", "microwave", "keyboard",
