@@ -1,4 +1,4 @@
-wget -c https://nlp.stanford.edu/data/gqa/images.zip -P artifacts/data
-unzip artifacts/data/images.zip -d artifacts/data/allImages
 wget -c https://nlp.stanford.edu/data/gqa/sceneGraphs.zip -P artifacts/data
 unzip artifacts/data/sceneGraphs.zip -d artifacts/data/sceneGraphs
+wget -c https://nlp.stanford.edu/data/gqa/images.zip -P artifacts/data
+unzip artifacts/data/images.zip -d artifacts/data/allImages
