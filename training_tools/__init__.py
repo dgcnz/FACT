@@ -18,6 +18,9 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+    
+    def __str__(self):
+        return f'AverageMeter(val={self.val}, avg={self.avg}, sum={self.sum}, count={self.count})'
 
 
 class MetricComputer(object):

@@ -63,9 +63,14 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
+    elif args.dataset == "coco":
+        return NotImplemented
+
+    elif args.dataset == "siim-isic":
+        return NotImplemented
 
     else:
         raise ValueError(args.dataset)
-
+    
     return train_loader, test_loader, idx_to_class, classes
 
