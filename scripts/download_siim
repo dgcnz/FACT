@@ -8,3 +8,4 @@ gdown.download(url, output, quiet=False, fuzzy=True)
 
 with zipfile.ZipFile(output, 'r') as zip_ref:
     zip_ref.extractall("artifacts/data")
+    

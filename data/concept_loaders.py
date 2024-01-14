@@ -159,13 +159,14 @@ def broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
 def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, num_workers=4, seed=1):
     if dataset_name == "cub":
-       return cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
+        return cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
     elif dataset_name == "derm7pt":
         return derm7pt_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
     elif dataset_name == "broden":
         return broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
+    
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
     
