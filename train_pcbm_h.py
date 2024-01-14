@@ -59,7 +59,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
         return auc
-    return epoch_summary["Accuracy"]
+    return epoch_summary["Accuracy"].get()
 
 
 def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_classes):
