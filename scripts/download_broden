@@ -2,9 +2,13 @@
 import gdown
 import zipfile
 
+# download data
+
 url = 'https://drive.google.com/file/d/1_yxGcveFcKetoB783H3iv3oiqXHYArT-/view?usp=sharing'
 output = 'artifacts/data/broden_concepts.zip'
 gdown.download(url, output, quiet=False, fuzzy=True)
+
+# extract data
 
 with zipfile.ZipFile(output, 'r') as zip_ref:
     zip_ref.extractall("artifacts/data")

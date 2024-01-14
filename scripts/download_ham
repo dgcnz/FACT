@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Create output folders
+# create output folders
 
 mkdir -p artifacts/data/HAM10K
 
-# Check for Kaggle API installation
+# check for Kaggle API installation
 
 if ! command -v kaggle &> /dev/null; then
     echo "Kaggle API not found. Installing..."
@@ -24,6 +24,6 @@ fi
 destination_dir="artifacts/data"
 kaggle datasets download -d kmader/skin-cancer-mnist-ham10000 --path "$destination_dir"
 
-# Extract data
+# extract data
 
 unzip "artifacts/data/skin-cancer-mnist-ham10000.zip" -d "artifacts/data/HAM10K"
