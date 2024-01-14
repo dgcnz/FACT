@@ -1,0 +1,9 @@
+#! /bin/bash
+
+!mkdir ~/.kaggle
+
+!cp kaggle.json ~/.kaggle/
+
+!chmod 600 ~/.kaggle/kaggle.json
+
+!kaggle datasets download -d kmader/skin-cancer-mnist-ham10000
