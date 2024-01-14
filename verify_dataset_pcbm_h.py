@@ -59,6 +59,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     all_labels = np.concatenate(all_labels, axis=0)
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
+        
         return auc
     return epoch_summary["Accuracy"]
 
@@ -153,17 +154,16 @@ if __name__ == "__main__":
         args.out_dir = og_out_dir
         run_info = main(args, backbone, preprocess)
 
-        if "test_auc" in run_info:
+        
+        metric = run_info['test_acc']
+
+        if isinstance(metric, (int, float)):
             print("auc used")
-            metric = run_info['test_auc']
+            metric_list.append(metric)
 
         else:
             print("acc used")
-            metric = run_info['test_acc']
-
-        #val is just the latests value, avg is the average 
-        #and we want the average evaluation value over the training set 
-        metric_list.append(metric.avg)
+            metric_list.append(metric.avg)
 
     
     #compute std and mean of metrics 

@@ -152,15 +152,16 @@ if __name__ == "__main__":
         args.out_dir = og_out_dir + "_" + str(seed)
         run_info = main(args, backbone, preprocess)
 
-        if "test_auc" in run_info:
+        
+        metric = run_info['test_acc']
+
+        if isinstance(metric, (int, float)):
             print("auc used")
-            metric = run_info['test_auc']
+            metric_list.append(metric)
 
         else:
             print("acc used")
-            metric = run_info['test_acc']
-
-        metric_list.append(metric.val)
+            metric_list.append(metric.avg)
 
     
     #compute std and mean of metrics 
