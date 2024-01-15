@@ -9,7 +9,7 @@ from .constants import SIIM_DATA_DIR
 
 class ISICDataset(Dataset):
 
-    def __init__(self, datalist, transform=None):
+    def __init__(self, datalist, transform=None, cropsize=(480, 640)):
         """
         Arguments:
         annot_dir: directory of the corresponding annotation file
@@ -18,6 +18,7 @@ class ISICDataset(Dataset):
         """
         self.data = datalist
         self.transform = transform
+        self.cropsize = cropsize
 
     def __len__(self):
         return len(self.data)
@@ -29,6 +30,7 @@ class ISICDataset(Dataset):
         img_data = self.data[idx]
         img_path = img_data[0]
         img = Image.open(img_path).convert('RGB')
+        img = transforms.CenterCrop(self.cropsize)(img)
         img = transforms.ToTensor()(img)
 
         class_label = img_data[1]
