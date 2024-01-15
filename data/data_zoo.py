@@ -95,9 +95,9 @@ def get_dataset(args, preprocess=None):
                                                    seed=args.seed)
         
         # for the idx_to_class variable (need to read metadata table for this)
-        labels = pd.read_csv(meta_dir)['benign_malignant']
-        labels = sorted(list(set(labels)))
-        idx_to_class = {i: labels[i] for i in range(len(labels))}
+        classes = pd.read_csv(meta_dir)['benign_malignant']
+        classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
+        idx_to_class = {i: classes[i] for i in range(len(classes))}
 
     else:
         raise ValueError(args.dataset)

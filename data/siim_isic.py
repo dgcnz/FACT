@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from torchvision import transforms
-from constants import SIIM_DATA_DIR
+from .constants import SIIM_DATA_DIR
 
 class ISICDataset(Dataset):
 
