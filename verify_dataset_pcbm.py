@@ -177,7 +177,7 @@ if __name__ == "__main__":
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
-        args.out_dir = og_out_dir + "_" + str(seed)
+        args.out_dir = og_out_dir 
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
