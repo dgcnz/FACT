@@ -56,8 +56,8 @@ class CUBDataset(Dataset):
     def __getitem__(self, idx):
         img_data = self.data[idx]
         img_path = img_data['img_path']
+        
         # Trim unnecessary paths
-
         idx = img_path.split('/').index('CUB_200_2011')
         img_path = '/'.join([self.image_dir] + img_path.split('/')[idx+1:])
         img = Image.open(img_path).convert('RGB')

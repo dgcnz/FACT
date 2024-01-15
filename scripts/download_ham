@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# create output folders
+
+mkdir -p artifacts/data/HAM10K
+
+# check for Kaggle API installation
+
+if ! command -v kaggle &> /dev/null; then
+    echo "Kaggle API not found. Installing..."
+    pip install kaggle
+    
+    # Verify installation
+    if ! command -v kaggle &> /dev/null; then
+        echo "Installation failed. Please install Kaggle API manually and try again."
+        exit 1
+    fi
+    
+    echo "Kaggle API has been successfully installed."
+fi
+
+# download data
+
+destination_dir="artifacts/data"
+kaggle datasets download -d kmader/skin-cancer-mnist-ham10000 --path "$destination_dir"
+
+# extract data
+
+unzip "artifacts/data/skin-cancer-mnist-ham10000.zip" -d "artifacts/data/HAM10K"

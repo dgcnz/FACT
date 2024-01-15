@@ -7,29 +7,29 @@ def get_dataset(args, preprocess=None):
     if args.dataset == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
-        testset = datasets.CIFAR10(root=args.out_dir, train=False,
+        testset  = datasets.CIFAR10(root=args.out_dir, train=False,
                                     download=True, transform=preprocess)
         classes = trainset.classes
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                              shuffle=True, num_workers=args.num_workers)
-        test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
-                                          shuffle=False, num_workers=args.num_workers)
+                                                   shuffle=True, num_workers=args.num_workers)
+        test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
+                                                   shuffle=False, num_workers=args.num_workers)
     
     
     elif args.dataset == "cifar100":
         trainset = datasets.CIFAR100(root=args.out_dir, train=True,
-                                    download=True, transform=preprocess)
-        testset = datasets.CIFAR100(root=args.out_dir, train=False,
-                                    download=True, transform=preprocess)
+                                     download=True, transform=preprocess)
+        testset  = datasets.CIFAR100(root=args.out_dir, train=False,
+                                     download=True, transform=preprocess)
         classes = trainset.classes
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                              shuffle=True, num_workers=args.num_workers)
-        test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
-                                          shuffle=False, num_workers=args.num_workers)
+                                                   shuffle=True, num_workers=args.num_workers)
+        test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
+                                                   shuffle=False, num_workers=args.num_workers)
 
 
     elif args.dataset == "cub":
@@ -45,8 +45,8 @@ def get_dataset(args, preprocess=None):
             n_classes=num_classes, resampling=True)
 
         test_loader = load_cub_data([TEST_PKL], use_attr=False, no_img=False, 
-                batch_size=args.batch_size, uncertain_label=False, image_dir=CUB_DATA_DIR, resol=224, normalizer=normalizer,
-                n_classes=num_classes, resampling=True)
+            batch_size=args.batch_size, uncertain_label=False, image_dir=CUB_DATA_DIR, resol=224, normalizer=normalizer,
+            n_classes=num_classes, resampling=True)
 
         classes = open(os.path.join(CUB_DATA_DIR, "classes.txt")).readlines()
         classes = [a.split(".")[1].strip() for a in classes]
@@ -63,11 +63,35 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
-    elif args.dataset == "coco":
+    elif args.dataset == "coco_stuff":
+        from .coco_stuff import load_coco_data, cid_to_class
+        from .constants import COCO_STUFF_DIR
+
         return NotImplemented
 
-    elif args.dataset == "siim-isic":
-        return NotImplemented
+        # The 20 most biased classes from Singh et al., 2020
+        target_classes = ["cup", "wine glass", "handbag", "apple", "car",
+                          "bus", "potted plant", "spoon", "microwave", "keyboard",
+                          "skis", "clock", "sports ball", "remote", "snowboard",
+                          "toaster", "hair drier", "tennis racket", "skateboard", "baseball glove"]
+        
+        label_path = os.path.join(COCO_STUFF_DIR, "labels.txt")
+        train_path = os.path.join(COCO_STUFF_DIR, "train2017")
+        test_path = os.path.join(COCO_STUFF_DIR, "val2017") # It is presumed that the validation set was used as the test one
+        train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
+        test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
+
+        train_loader = load_coco_data(train_path, train_annot) # Not implemented yet ...
+        test_loader  = load_coco_data(test_path, test_annot)
+        idx_to_class = cid_to_class(label_path, target_classes)
+
+    elif args.dataset == "siim_isic":
+        from .siim_isic import load_siim_data
+        from .constants import SIIM_DATA_DIR
+        meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+        train_loader, test_loader = load_siim_data(meta_dir, 
+                                                   batch_size=args.batch_size, 
+                                                   seed=args.seed)
 
     else:
         raise ValueError(args.dataset)

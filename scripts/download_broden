@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# download data
+
 curl -X GET \
 https://huggingface.co/datasets/dgcnz/broden_concepts/resolve/main/data/broden_concepts.zip?download=true |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/broden_concepts.zip
+
+# extract data
+
 unzip artifacts/data/broden_concepts.zip -d artifacts/data/

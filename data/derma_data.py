@@ -1,9 +1,11 @@
-from glob import glob
+import argparse
 import os
 import pandas as pd
-from torch.utils.data import Dataset
 import torch
 import numpy as np
+
+from glob import glob
+from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from .constants import HAM10K_DATA_DIR, DERM7_FOLDER
@@ -41,6 +43,7 @@ class Derm7ptDataset():
         row = self.images.iloc[idx]
         img_path = os.path.join(self.base_dir, row[self.image_key])
         image = Image.open(img_path).convert('RGB')
+
         if self.transform:
             image = self.transform(image)
         return image
@@ -51,7 +54,7 @@ def load_ham_data(args, preprocess):
     id_to_lesion = {
     'nv': 'Melanocytic nevi',
     'mel': 'dermatofibroma',
-    'bkl': 'Benign keratosis-like lesions ',
+    'bkl': 'Benign keratosis-like lesions',
     'bcc': 'Basal cell carcinoma',
     'akiec': 'Actinic keratoses',
     'vasc': 'Vascular lesions',
@@ -101,3 +104,12 @@ def load_ham_data(args, preprocess):
     
     return train_loader, val_loader, idx_to_class
 
+# For testing
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", default=42, type=int, help="Random seed")
+    parser.add_argument("--batch-size", default=64, type=int)
+    parser.add_argument("--num-workers", default=4, type=int)
+
+    train_ham, test_ham, idx_to_class = load_ham_data(parser.parse_args(), preprocess=None)
