@@ -1,0 +1,24 @@
+#! /bin/bash
+
+if [[ -z "${TOKEN}" ]]; then
+  echo "Please set the TOKEN environment variable"
+else
+  curl 'https://derm.cs.sfu.ca/restricted/release_v0.zip' \
+    -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
+    -H 'Accept-Language: en-US,en;q=0.9' \
+    -H "Authorization: Basic ${TOKEN}" \
+    -H 'Cache-Control: max-age=0' \
+    -H 'Connection: keep-alive' \
+    -H 'Sec-Fetch-Dest: document' \
+    -H 'Sec-Fetch-Mode: navigate' \
+    -H 'Sec-Fetch-Site: none' \
+    -H 'Sec-Fetch-User: ?1' \
+    -H 'Upgrade-Insecure-Requests: 1' \
+    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' \
+    -H 'sec-ch-ua: "Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"' \
+    -H 'sec-ch-ua-mobile: ?0' \
+    -H 'sec-ch-ua-platform: "macOS"' \
+    --compressed --output artifacts/data/release_v0.zip
+  unzip artifacts/data/release_v0.zip -d artifacts/data/
+  mv artifacts/data/release_v0 artifacts/data/derm7pt
+fi

@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
-from PIL import Image
+
 from .constants import COCO_STUFF_DIR
 import argparse
 import json
@@ -82,3 +82,5 @@ def load_coco_data(image_dir, annot_dir, transform=None):
 # if __name__ == "__main__":
 #     args = config()
 #     coco_data = load_coco_data(args)
+
+# TO BE IMPLEMENTED

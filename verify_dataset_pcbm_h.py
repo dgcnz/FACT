@@ -21,18 +21,19 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
-    parser.add_argument("--pcbm-path", required=True, type=str, help="Trained PCBM module.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--dataset", default="cub", type=str)
-    parser.add_argument("--seed", default=42, type=int, help="Random seed")
+    parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--num-epochs", default=20, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.seeds = [int(seed) for seed in args.seeds.split(',')]
+    return args
 
 
 @torch.no_grad()
@@ -58,6 +59,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     all_labels = np.concatenate(all_labels, axis=0)
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
+        
         return auc
     return epoch_summary["Accuracy"]
 
@@ -127,14 +129,44 @@ def main(args, backbone, preprocess):
         pickle.dump(run_info, f)
     
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
+    return run_info
 
 if __name__ == "__main__":    
     args = config()    
-    # Load the PCBM
-    posthoc_layer = torch.load(args.pcbm_path)
-    posthoc_layer = posthoc_layer.eval()
-    args.backbone_name = posthoc_layer.backbone_name
-    backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-    backbone = backbone.to(args.device)
-    backbone.eval()
-    main(args, backbone, preprocess)
+
+    metric_list = []
+    og_out_dir = args.out_dir
+    for i in range(len(args.seeds)):
+        seed = args.seeds[i]
+        # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
+        #args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        args.pcbm_path = 'artifacts/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam:4.464285714285714e-07__alpha:0.99__seed:'+str(seed)+'.ckpt'
+        # Load the PCBM
+        posthoc_layer = torch.load(args.pcbm_path)
+        posthoc_layer = posthoc_layer.eval()
+        args.backbone_name = posthoc_layer.backbone_name
+        backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+        backbone = backbone.to(args.device)
+        backbone.eval()
+
+        print(f"Seed: {seed}")
+        args.seed = seed
+        args.out_dir = og_out_dir
+        run_info = main(args, backbone, preprocess)
+
+        
+        metric = run_info['test_acc']
+
+        if isinstance(metric, (int, float)):
+            print("auc used")
+            metric_list.append(metric)
+
+        else:
+            print("acc used")
+            metric_list.append(metric.avg)
+
+    
+    #compute std and mean of metrics 
+    print(f"metric_list: {metric_list}")
+    print(f"mean: {np.mean(metric_list)}")
+    print(f"std: {np.std(metric_list)}")

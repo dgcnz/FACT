@@ -77,6 +77,14 @@ All datasets will reside on `artifacts/data`. When commiting changes to the repo
 ./scripts/download_broden
 ```
 
+### Derm7pt
+
+1. Ask for the secret token 
+2. Run the download script with the given token
+```sh
+TOKEN=cmVz************************ ./scripts/download_derm7pt
+```
+
 
 --- 
 This is the original README

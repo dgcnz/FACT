@@ -13,6 +13,7 @@ COCO_STUFF_DIR = "artifacts/data/COCO_STUFF"
 
 # Derm data constants
 # Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
+
 DERM7_FOLDER = "artifacts/data/derm7pt"
 DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
 DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")

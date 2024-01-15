@@ -63,7 +63,7 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
-    elif args.dataset == "coco-stuff":
+    elif args.dataset == "coco_stuff":
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
@@ -85,7 +85,7 @@ def get_dataset(args, preprocess=None):
         test_loader  = load_coco_data(test_path, test_annot)
         idx_to_class = cid_to_class(label_path, target_classes)
 
-    elif args.dataset == "siim-isic":
+    elif args.dataset == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
         meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
