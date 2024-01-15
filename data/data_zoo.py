@@ -1,6 +1,7 @@
 from torchvision import datasets
 import torch
 import os
+import pandas as pd
 
 
 def get_dataset(args, preprocess=None):
@@ -92,6 +93,11 @@ def get_dataset(args, preprocess=None):
         train_loader, test_loader = load_siim_data(meta_dir, 
                                                    batch_size=args.batch_size, 
                                                    seed=args.seed)
+        
+        # for the idx_to_class variable (need to read metadata table for this)
+        labels = pd.read_csv(meta_dir)['benign_malignant']
+        labels = sorted(list(set(labels)))
+        idx_to_class = {i: labels[i] for i in range(len(labels))}
 
     else:
         raise ValueError(args.dataset)

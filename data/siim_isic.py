@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from torchvision import transforms
-from .constants import SIIM_DATA_DIR
+from constants import SIIM_DATA_DIR
 
 class ISICDataset(Dataset):
 
@@ -48,7 +48,7 @@ def prepare_data(df, ratio:float=0.2, seed:int=42):
     Outputs:
     train_data, test_data: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    datalist = [list(df['image_name']), list(df['benign_malignant'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
+    datalist = [list(df['image_name']), list(df['target'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
     X_train, X_test, y_train, y_test = train_test_split(datalist[0], datalist[1], 
                                                         stratify=datalist[1], test_size=ratio, 
                                                         random_state=seed)
@@ -70,7 +70,7 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    df = pd.read_csv(meta_dir)[['image_name', 'benign_malignant']]
+    df = pd.read_csv(meta_dir)[['image_name', 'target']]
     train_dir = os.path.join(SIIM_DATA_DIR, "data")
     df['image_name'] = train_dir + "/" + df['image_name'] + ".jpg"
     train_data, test_data = prepare_data(df, seed)
