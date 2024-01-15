@@ -61,7 +61,7 @@ conda activate fact
 
 All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
 
-If desired, you can run the data downloader scripts in the [train_model](.\notebook\train_models.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
+If desired, you can run the data downloader scripts in the [train_model](\notebook\train_models.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
 
 ### Broden
 
@@ -91,11 +91,11 @@ If desired, you can run the data downloader scripts in the [train_model](.\noteb
 
 ### Derm7pt
 
-Please refer to the [train_model](.\notebook\train_models.ipynb) file for instructions regarding the Derm7pt dataset.
+Please refer to the [train_model](\notebook\train_models.ipynb) file for instructions regarding the Derm7pt dataset.
 
 ### HAM10000
 
-1. Please refer to the [train_model](.\notebook\train_models.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [train_model](\notebook\train_models.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_ham
@@ -148,7 +148,7 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 
 ```
 
-Alternatively, you can run example experiments in the [train_model](.\notebook\train_models.ipynb) file.
+Alternatively, you can run example experiments in the [train_model](\notebook\train_models.ipynb) file.
 
 **Limitation**: 
 1. This approach relies on the existence of a concept dataset. These may be hard to get, depending on the application. 
