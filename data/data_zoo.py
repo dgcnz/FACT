@@ -1,5 +1,4 @@
 from torchvision import datasets
-from torchaudio import datasets as audiodatasets
 import torch
 import os
 import pandas as pd
@@ -99,22 +98,6 @@ def get_dataset(args, preprocess=None):
         classes = pd.read_csv(meta_dir)['benign_malignant']
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
-
-    elif args.dataset == "IEMOCAP":
-        # https://pytorch.org/audio/datasets.html#iemocap
-
-        dataset = audiodatasets.IEMOCAP(root = '/content/directory')
-         # Split the dataset into train and test sets (adjust as needed)
-        
-        
-
-        # Create PyTorch DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-        return train_loader, test_loader, idx_to_class, classes
-
-
 
     else:
         raise ValueError(args.dataset)
