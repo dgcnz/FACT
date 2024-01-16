@@ -86,6 +86,9 @@ class PosthocLinearCBM(nn.Module):
 
         analysis = "\n".join(output)
         return analysis
+    
+    def get_sparsity(self):
+        return (self.classifier.weight > 0).sum().item()
 
 
 class PosthocHybridCBM(nn.Module):
