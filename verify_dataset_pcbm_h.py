@@ -129,7 +129,7 @@ def main(args, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
     
-    print(f"Saved to {hybrid_model_path}, {run_info_file}")
+    print(f"Saved to {hybrid_model_path}, {run_info_file}.")
 
     return run_info
 

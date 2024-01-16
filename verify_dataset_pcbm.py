@@ -149,7 +149,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
     
     if num_classes > 1:
         # Prints the Top-5 Concept Weigths for each class.

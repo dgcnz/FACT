@@ -30,6 +30,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
+    parser.add_argument("--print-out", default=True, type=bool)
 
     return parser.parse_args()
 
@@ -58,6 +59,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
         return auc
+    
     return epoch_summary["Accuracy"]
 
 
@@ -97,6 +99,11 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
 
 
 def main(args, backbone, preprocess):
+
+    if args.print_out == False: # For print control
+        os.environ["TQDM_DISABLE"] = "1"
+
+
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     num_classes = len(classes)
     
