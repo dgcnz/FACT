@@ -1,21 +1,20 @@
 import argparse
 import os
-from pathlib import Path
 import pickle
 import numpy as np
 import torch
-from tqdm import tqdm
 import sys
 import torch.nn as nn
+
+from tqdm import tqdm
+from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
-
 
 
 def config():
@@ -93,8 +92,8 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
         print("Final test acc: ", latest_info["test_acc"])
-    return latest_info
 
+    return latest_info
 
 
 def main(args, backbone, preprocess):
@@ -128,13 +127,18 @@ def main(args, backbone, preprocess):
     
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
 
+
 if __name__ == "__main__":    
-    args = config()    
+    args = config()
     # Load the PCBM
     posthoc_layer = torch.load(args.pcbm_path)
     posthoc_layer = posthoc_layer.eval()
+
+    # Get the backbone from the model zoo.
     args.backbone_name = posthoc_layer.backbone_name
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
+
+    # Execute main code
     main(args, backbone, preprocess)
