@@ -26,6 +26,8 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--print-out", default=True, type=bool)
+
     return parser.parse_args()
 
 
@@ -54,7 +56,10 @@ def run_linear_probe(args, train_data, test_data):
         cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == predictions[test_lbl_mask]).astype(float))
         cls_acc["train"][lbl] = np.mean(
             (train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
-        print(f"{lbl}: {cls_acc['test'][lbl]}")
+        
+        # Print control via parser argument
+        if args.print_out == True:
+            print(f"{lbl}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
@@ -64,6 +69,7 @@ def run_linear_probe(args, train_data, test_data):
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
+                                              
     return run_info, classifier.coef_, classifier.intercept_
 
 
@@ -100,12 +106,13 @@ def main(args, concept_bank, backbone, preprocess):
         pickle.dump(run_info, f)
 
     
-    if num_classes > 1:
+    if (num_classes > 1) and (args.print_out == True):
         # Prints the Top-5 Concept Weigths for each class.
         print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+
 
 if __name__ == "__main__":
     args = config()
@@ -118,4 +125,6 @@ if __name__ == "__main__":
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
+
+    # Execute main code
     main(args, concept_bank, backbone, preprocess)
