@@ -38,7 +38,7 @@ def run_linear_probe(args, train_data, test_data):
     # We experimented with torch modules etc., and results are mostly parallel.
     classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
                                alpha=args.lam, l1_ratio=args.alpha, verbose=0,
-                               penalty="elasticnet", max_iter=10000) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
+                               penalty="elasticnet", max_iter=2) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
     classifier.fit(train_features, train_labels)
 
     train_predictions = classifier.predict(train_features)
@@ -110,14 +110,16 @@ def main(args, concept_bank, backbone, preprocess):
     print(run_info)
     return run_info
 
-def plot_sparsity(metrics, sparsities, metric_name):
+def plot_sparsity(args, metrics, sparsities, metric_name):
     import matplotlib.pyplot as plt
+    print(metrics)
     plt.plot(sparsities, metrics)
     plt.grid()
     plt.xlabel("N non-zero weights")
     plt.ylabel(metric_name)
-    plt.legend()
-    plt.show()
+    plt.savefig(f"{args.out_dir}/your_plot_filename.png")
+    print('figure save in {args.out_dir}/your_plot_filename.png')
+    
 
 if __name__ == "__main__":
     args = config()
@@ -156,7 +158,7 @@ if __name__ == "__main__":
         metrics.append(metric)
         sparsities.append(run_info['sparsity'])
 
-    plot_sparsity(metrics, sparsities, metric_name)
+    plot_sparsity(args, metrics, sparsities, metric_name)
 
         
 
