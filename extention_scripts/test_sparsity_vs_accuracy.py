@@ -105,6 +105,7 @@ def main(args, concept_bank, backbone, preprocess):
         print(posthoc_layer.analyze_classifier(k=5))
 
     run_info["sparsity"] = posthoc_layer.get_sparsity()
+    run_info["sum"] = weights.sum()
 
     print(f"Model saved to : {model_path}")
     print(run_info)
@@ -117,8 +118,18 @@ def plot_sparsity(args, metrics, sparsities, metric_name):
     plt.grid()
     plt.xlabel("N non-zero weights")
     plt.ylabel(metric_name)
-    plt.savefig(f"{args.out_dir}/your_plot_filename.png")
+    plt.savefig(f"{args.out_dir}/sparsity.png")
     print('figure save in {args.out_dir}/your_plot_filename.png')
+
+def plot_sum(args, metrics, sums, metric_name):
+    import matplotlib.pyplot as plt
+    print(metrics)
+    plt.plot(sums, metrics)
+    plt.grid()
+    plt.xlabel("Sum of weights")
+    plt.ylabel(metric_name)
+    plt.savefig(f"{args.out_dir}/your_plot_filename.png")
+    print('figure save in {args.out_dir}/sum.png')
     
 
 if __name__ == "__main__":
@@ -159,6 +170,7 @@ if __name__ == "__main__":
         sparsities.append(run_info['sparsity'])
 
     plot_sparsity(args, metrics, sparsities, metric_name)
+    plot_sum(args, metrics, sparsities, metric_name)
 
         
 
