@@ -108,6 +108,7 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+    return run_info
 
 def plot_sparsity(metrics, sparsities, metric_name):
     import matplotlib.pyplot as plt
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         metrics.append(metric)
         sparsities.append(run_info['sparsity'])
 
-    plot_sparsity()
+    plot_sparsity(metrics, sparsities, metric_name)
 
         
 
