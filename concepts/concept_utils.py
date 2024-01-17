@@ -60,6 +60,9 @@ class ConceptBank:
 
     def __getattr__(self, item):
         return self.concept_info[item]
+    
+    def __setitem__(self, key, value):
+        self.concept_info[key] = value
 
 
 @torch.no_grad()
