@@ -105,7 +105,7 @@ def main(args, concept_bank, backbone, preprocess):
         print(posthoc_layer.analyze_classifier(k=5))
 
     run_info["sparsity"] = posthoc_layer.get_sparsity()
-    run_info["sum"] = weights.sum()
+    run_info["sum"] = np.abs(weights.sum())
 
     print(f"Model saved to : {model_path}")
     print(run_info)
@@ -119,7 +119,8 @@ def plot_sparsity(args, metrics, sparsities, metric_name):
     plt.xlabel("N non-zero weights")
     plt.ylabel(metric_name)
     plt.savefig(f"{args.out_dir}/sparsity.png")
-    print('figure save in {args.out_dir}/your_plot_filename.png')
+    plt.show()
+    print(f'figure save in {args.out_dir}/sparisity.png')
 
 def plot_sum(args, metrics, sums, metric_name):
     import matplotlib.pyplot as plt
@@ -128,8 +129,9 @@ def plot_sum(args, metrics, sums, metric_name):
     plt.grid()
     plt.xlabel("Sum of weights")
     plt.ylabel(metric_name)
-    plt.savefig(f"{args.out_dir}/your_plot_filename.png")
-    print('figure save in {args.out_dir}/sum.png')
+    plt.savefig(f"{args.out_dir}/sum.png")
+    plt.show()
+    print(f'figure save in {args.out_dir}/sum.png')
     
 
 if __name__ == "__main__":
@@ -147,11 +149,16 @@ if __name__ == "__main__":
     classes = get_dataset(args, preprocess)[3]
     print(classes)
     metrics = []
+    sums= []
     metric_name = "Accuracy"
 
     sparsities = []
 
+    print(f'number of concepts: {len(all_concept_names)}')
+    print(f'number of classes: {len(classes)}')
+
     for strength in args.strengths:
+
         args.lam = strength/(len(all_concept_names)*len(classes))
 
         run_info = main(args, concept_bank, backbone, preprocess)
@@ -167,10 +174,11 @@ if __name__ == "__main__":
             metric = run_info['test_acc']
 
         metrics.append(metric)
+        sums.append(run_info['sum'])
         sparsities.append(run_info['sparsity'])
 
     plot_sparsity(args, metrics, sparsities, metric_name)
-    plot_sum(args, metrics, sparsities, metric_name)
+    plot_sum(args, metrics, sums, metric_name)
 
         
 
