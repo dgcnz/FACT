@@ -1,21 +1,20 @@
 import argparse
 import os
-from pathlib import Path
 import pickle
 import numpy as np
 import torch
-from tqdm import tqdm
 import sys
 import torch.nn as nn
+
+from tqdm import tqdm
+from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, PosthocHybridCBM, get_model
-from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
-
+from training_tools import load_or_compute_projections, AverageMeter, MetricComputer, export
 
 
 def config():
@@ -33,6 +32,7 @@ def config():
 
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
+
     return args
 
 
@@ -59,7 +59,9 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     all_labels = np.concatenate(all_labels, axis=0)
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
+        
         return auc
+    
     return epoch_summary["Accuracy"]
 
 
@@ -94,8 +96,8 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
         print("Final test acc: ", latest_info["test_acc"])
-    return latest_info
 
+    return latest_info
 
 
 def main(args, backbone, preprocess):
@@ -127,18 +129,21 @@ def main(args, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
     
-    print(f"Saved to {hybrid_model_path}, {run_info_file}")
+    print(f"Saved to {hybrid_model_path}, {run_info_file}.")
+
     return run_info
 
-if __name__ == "__main__":    
-    args = config()    
 
+if __name__ == "__main__":
+    args = config()    
     metric_list = []
     og_out_dir = args.out_dir
+    
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
         # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
-        args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        #args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        args.pcbm_path = 'artifacts/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam:4.464285714285714e-07__alpha:0.99__seed:'+str(seed)+'.ckpt'
         # Load the PCBM
         posthoc_layer = torch.load(args.pcbm_path)
         posthoc_layer = posthoc_layer.eval()
@@ -149,21 +154,21 @@ if __name__ == "__main__":
 
         print(f"Seed: {seed}")
         args.seed = seed
-        args.out_dir = og_out_dir + "_" + str(seed)
+        args.out_dir = og_out_dir
         run_info = main(args, backbone, preprocess)
 
-        if "test_auc" in run_info:
+        
+        metric = run_info['test_acc']
+
+        if isinstance(metric, (int, float)):
             print("auc used")
-            metric = run_info['test_auc']
+            metric_list.append(metric)
 
         else:
             print("acc used")
-            metric = run_info['test_acc']
-
-        metric_list.append(metric.val)
+            metric_list.append(metric.avg)
 
     
-    #compute std and mean of metrics 
-    print(f"metric_list: {metric_list}")
-    print(f"mean: {np.mean(metric_list)}")
-    print(f"std: {np.std(metric_list)}")
+    # export results
+    out_name = "verify_dataset_pcbm_h"
+    export.export_to_json(out_name, metric_list)

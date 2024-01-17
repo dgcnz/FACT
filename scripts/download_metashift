@@ -1,6 +1,13 @@
-#! /bin/bash
+#!/bin/bash
+
+# download and unzip scenegraphs
 
 wget -c https://nlp.stanford.edu/data/gqa/sceneGraphs.zip -P artifacts/data
-unzip artifacts/data/sceneGraphs.zip -d artifacts/data/sceneGraphs
+
+unzip artifacts/data/sceneGraphs.zip -d artifacts/data/metashift/sceneGraphs
+
+# download and unzip images
+
 wget -c https://nlp.stanford.edu/data/gqa/images.zip -P artifacts/data
-unzip artifacts/data/images.zip -d artifacts/data/allImages
+
+unzip artifacts/data/images.zip -d artifacts/data/metashift/allImages

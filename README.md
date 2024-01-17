@@ -61,59 +61,80 @@ conda activate fact
 
 All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
 
+If desired, you can run the data downloader scripts in the [train_model](/notebook/train_models.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
+
+### Broden
+
+1. Activate your environment (conda or venv).
+2. Run the download script below:
+```sh
+./scripts/download_broden
+```
+3. You will find the downloaded data in `broden_concepts`.
+
+### COCO-Stuff
+
+1. Activate your environment (conda or venv).
+2. Run the download script below:
+```sh
+./scripts/download_cocostuff
+```
+3. You will find the downloaded data in `COCO_STUFF`.
+
 ### CUB
 
-1. Run the download script
+1. Run the download script below:
 ```sh
 ./scripts/download_cub
 ```
 2. You will find the downloaded data in `CUB_200_2011` and `class_attr_data_10`.
 
-### Broden
-
-1. Activate your environment (conda or venv).
-2. Run the download script
-```sh
-./scripts/download_broden
-```
-
 ### Derm7pt
 
-1. Ask for the secret token 
-2. Run the download script with the given token
+Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the Derm7pt dataset.
+
+### HAM10000
+
+1. Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+2. Run the download script below:
 ```sh
-TOKEN=cmVz************************ ./scripts/download_derm7pt
+./scripts/download_ham
 ```
+3. You will find the downloaded data in `HAM10K`.
 
+### SIIM-ISIC
 
---- 
-This is the original README
+1. Activate your environment (conda or venv).
+2. Run the download script below:
+```sh
+./scripts/download_siim
+```
+3. You will find the downloaded data in `SIIM_ISIC`.
 
-TODO: update
-## Downloading the Data
-| Dataset      | Description | URL |
-| ----------- | ----------- |----------- |
-| CUB      | Bird Classification dataset       | [Codalab Bundle from CBM repo](https://worksheets.codalab.org/bundles/0xd013a7ba2e88481bbc07e787f73109f5)|
-| CUB   | CUB Metadata and splits        |[Codalab Bundle from CBM repo](https://worksheets.codalab.org/bundles/0x5b9d528d2101418b87212db92fea6683) |
-| Derm7pt| Dermatology Concepts Dataset |[Get access here](https://derm.cs.sfu.ca/Welcome.html) |
-| HAM10k | Skin lesion classification dataset | [Kaggle Link](https://www.kaggle.com/kmader/skin-cancer-mnist-ham10000) |))
-|CIFAR10, CIFAR100 | Standard CIFAR datasets | These are automatically downloaded via torchvision. |
-|Broden Concept Dataset | This dataset is mostly inherited from the Broden Dataset, thanks to [Amirata Ghorbani](https://www.amiratag.com/) and [Abubakar Abid](https://twitter.com/abidlabs). | [Can be downloaded from this gdrive folder.](https://drive.google.com/file/d/1_yxGcveFcKetoB783H3iv3oiqXHYArT-/view?usp=share_link) |
-| SkinCon Concept Dataset | **TODO** will add. We later proposed this dataset for dermatology concepts. | Please see our [NeurIPS22 paper](https://openreview.net/forum?id=gud0qopqJc4) and [the dataset website](https://skincon-dataset.github.io/).|
+### Metashift
 
+1. Run the download script below:
+```sh
+./scripts/download_metashift
+```
+2. You will find the downloaded data in `metashift`.
 
-## Downloading the backbones
-Please see `models/model_zoo.py` for the backbones we used. Some models rely on external dependencies (e.g. [pytorchcv](https://pypi.org/project/pytorchcv/) for the CUB backbone, [OpenAI repo](https://github.com/openai/CLIP) for the CLIP backbone.) or will be downloaded (e.g. HAM1000 model from the [DDI repo](https://drive.google.com/drive/folders/1oQ53WH_Tp6rcLZjRp_-UBOQcMl-b1kkP)). If you want to add your own model, please edit `models/model_zoo.py`.
+## Downloading the Backbones
+Please see `models/model_zoo.py` for the backbones used. Some of the original models rely on external dependencies (e.g. [pytorchcv](https://pypi.org/project/pytorchcv/) for the CUB backbone, [OpenAI repo](https://github.com/openai/CLIP) for the CLIP backbone.) or will be downloaded (e.g. HAM1000 model from the [DDI repo](https://drive.google.com/drive/folders/1oQ53WH_Tp6rcLZjRp_-UBOQcMl-b1kkP)). 
+
+Furthermore, ...
+
+Any additional models can be added by editing `models/model_zoo.py`.
 
 # Learning Concepts
-In our paper, we propose two different ways to learn concepts activations vectors to build concepts banks.
+In the original paper, two different ways to learn concepts activations vectors were proposed to build concepts banks which are used here. 
 
-## 1- Learning concepts with a concept dataset
-To learn concepts in this way, we need to have a concept dataset where each concept should have a set of positive and negative images. We use the CAV methodology (Kim et al. 2018).  <br>
+## 1- Learning Concepts with a Concept Dataset
+To learn concepts in this way, each concept dataset needs to have a set of positive and negative images per concept. For this, the original authors proposed the CAV methodology (Kim et al. 2018). <br>
 
-**Concept Dataset Implementations:** We provide the code to extract concept data loaders in `data/concept_loaders.py`. In there, you could find the loaders for `Broden`, `CUB`, and `derm7pt` datasets to extract concept loaders. If you'd like to use custom concept datasets, you could implement your own loader and place there.
+**Concept Dataset Implementations:** The code provided to extract concept data loaders in `data/concept_loaders.py` is the same as in the original implementation. In there, you could find the loaders for `Broden`, `CUB`, and `derm7pt` datasets to extract concept loaders. If you'd like to use custom concept datasets, you could implement your own loader and place there.
 
-**Obtainin concept vectors**: Once you have the concept data loaders, you could use the `learn_concepts_dataset.py` script to learn the concept vectors. As examples, you can run the following scripts (once you obtain the corresponding datasets):
+**Obtaining concept vectors**: Once you have the concept data loaders, you could use the `learn_concepts_dataset.py` script to learn the concept vectors (which is also from the original implementation). As examples, you can run the following scripts (once you obtain the corresponding datasets):
 ```
 OUTPUT_DIR=/path/where/you/save/conceptbanks/
 # Learning CUB Concepts
@@ -127,6 +148,8 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 
 ```
 
+Alternatively, you can run example experiments in the [train_model](/notebook/train_models.ipynb) file.
+
 **Limitation**: 
 1. This approach relies on the existence of a concept dataset. These may be hard to get, depending on the application. 
 2. Learning concepts with the CAV way could inherit the potential biases in the concept datasets. One should be careful about how the concept dataset is constructed, and what it means to learn that concept. 
@@ -135,17 +158,17 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 ## 2- Learning concepts via prompting with multimodal models
 What if we do not have a concept dataset? We could leverage multimodal models, such as [CLIP](https://arxiv.org/abs/2103.00020)! i.e. We can simply prompt the text encoder with the concept name, and obtain the concept vector in the shared embedding space. 
 
-We provide the code to do this in `learn_concepts_multimodal.py`. You can run the following script to learn the concept vectors:
+The code to do this can be found in `learn_concepts_multimodal.py`. You can run the following script to learn the concept vectors:
 ```
 python3 learn_concepts_multimodal.py --backbone-name="clip:RN50" --classes=cifar10 --out-dir=$OUTPUT_DIR --recurse=1
 ```
 
-Currently, we support CIFAR10/CIFAR100 for this approach. You can very easily add the set of class names in the script and obtain the concept bank for your own purpose. 
+Currently, CIFAR10/CIFAR100 is supported for this approach. You can very easily add the set of class names in the script and obtain the concept bank for your own purpose. 
 
 **Limitation**: This approach is limited to the multimodal models that have a shared embedding space. Existing multimodal models that are not specialized may not do very well with domain-specific concepts (e.g. healthcare concepts).
 
 # Training PCBMs
-Once you have a concept bank and a backbone, you are ready to train your PCBM! We provide the code to train PCBMs in `train_pcmb.py`. You can run the following script to train a PCBM on CUB:
+Once you have a concept bank and a backbone, you are ready to train your PCBM! We provide the code to train PCBMs in `train_pcbm.py`. You can run the following script to train a PCBM on CUB:
 ```
 python3 train_pcbm.py --concept-bank="${OUTPUT_DIR}/cub_resnet18_cub_0.1_100.pkl" --dataset="cub" --backbone-name="resnet18_cub" --out-dir=$OUTPUT_DIR --lam=2e-4
 ```
@@ -162,11 +185,19 @@ pcbm_path="/path/to/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam:0.0002__alph
 python3 train_pcbm_h.py --concept-bank="${OUTPUT_DIR}/cub_resnet18_cub_0.1_100.pkl" --pcbm-path=$pcbm_path --out-dir=$OUTPUT_DIR --dataset="cub"
 ```
 
-# Notes
-This repository is WIP! The quickest way to reach out to me is via `merty@stanford.edu`. 
-
-# Citation
+# Citation (REMOVE for secret repo)
 If you find this code useful, please consider citing our paper:
+```
+@inproceedings{
+midavaine2024posthoc,
+title={On the Reproductibility of Post-hoc Concept Bottleneck Models},
+author={Nesta Midavaine and Gregory Go and Diego Cánez Ildefonso and Ioana Simion},
+booktitle={None},
+year={2024}
+}
+```
+
+In addition, we also recommend citing the original authors via the citation below:
 ```
 @inproceedings{
 yuksekgonul2023posthoc,

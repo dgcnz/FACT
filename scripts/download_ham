@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# create output folders
+
+mkdir -p artifacts/data/HAM10K
+
+# download data
+
+destination_dir="artifacts/data"
+kaggle datasets download -d kmader/skin-cancer-mnist-ham10000 --path "$destination_dir"
+
+# extract data
+
+unzip "artifacts/data/skin-cancer-mnist-ham10000.zip" -d "artifacts/data/HAM10K"

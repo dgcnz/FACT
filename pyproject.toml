@@ -3,6 +3,7 @@ name = "fact"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
+packages = [{ include = "model" }, { include = "data" }, { include = "concepts" }, { include = "training_tools" }]
 readme = "README.md"
 
 [tool.poetry.dependencies]

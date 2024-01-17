@@ -15,3 +15,4 @@ dependencies:
   - pytorchcv=0.0.67
   - openai-clip=1.0.1
   - gdown=4.7.1
+  - kaggle=1.6.3

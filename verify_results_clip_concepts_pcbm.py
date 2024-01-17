@@ -14,15 +14,14 @@ import os
 import pickle
 import numpy as np
 import torch
+
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
-
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
 
 
@@ -34,7 +33,6 @@ def config():
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
-    
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
 
@@ -48,7 +46,7 @@ def config():
 
 
 def run_linear_probe(args, train_data, test_data):
-    print("START LINEAR PROBE..")
+    print("START LINEAR PROBE...")
     train_features, train_labels = train_data
     test_features, test_labels = test_data
 
@@ -121,6 +119,7 @@ def run_linear_probe(args, train_data, test_data):
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
     return run_info, classifier.coef_, classifier.intercept_
 
+
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
@@ -174,6 +173,7 @@ if __name__ == "__main__":
     backbone.eval()
     metric_list = []
     og_out_dir = args.out_dir
+
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
@@ -191,12 +191,6 @@ if __name__ == "__main__":
         metric_list.append(metric)
 
     
-    #compute std and mean of metrics 
-    print(f"metric_list: {metric_list}")
-    print(f"mean: {np.mean(metric_list)}")
-    print(f"std: {np.std(metric_list)}")
-
-
-
-
-            
+    # export results
+    out_name = "verify_results_clip_concepts_pcbm"
+    export.export_to_json(out_name, metric_list)
