@@ -129,14 +129,6 @@ def main(args, concept_bank, backbone, preprocess):
     print(run_info)
     return run_info
 
-def set_random_proj(concept_bank, shape):
-    # Set random projection matrix
-    concept_bank.vectors = torch.randn(shape).to(args.device)
-    print(concept_bank.vectors)
-    concept_bank.norm = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
-
-    concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
-
 if __name__ == "__main__":
     args = config()
     all_concepts = pickle.load(open(args.concept_bank, 'rb'))
@@ -157,9 +149,13 @@ if __name__ == "__main__":
         concept_bank.intercepts = None
         concept_bank.norms = None
         concept_bank.margin_info = None
-        print('random projection used')
+        print('random projection used + CHANE')
         print(concept_bank.vectors)
-        set_random_proj(concept_bank, shape)
+
+        concept_bank.vectors = torch.randn(shape).to(args.device)
+        print(concept_bank.vectors)
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
     elif args.identity_proj:
         concept_bank.vectors = None
@@ -168,7 +164,7 @@ if __name__ == "__main__":
         concept_bank.margin_info = None
         print('identity projection used')
         concept_bank.vectors = torch.eye(n=shape[1]).to(args.device) #(embedding dim x embedding dim identity matrix)
-        concept_bank.norm = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
