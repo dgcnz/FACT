@@ -45,6 +45,7 @@ def export_to_json(name:str, result_list:list, print_out=True):
 
     print(f"Exported '{name}' results to '{file_out}'.")
 
+
 # For testing
 if __name__ == "__main__":
 

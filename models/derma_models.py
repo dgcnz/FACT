@@ -33,6 +33,7 @@ def load_model(backbone_name, save_dir="./models", download=True):
             # Requires installation of gdown (pip install gdown)
             import gdown
             gdown.download(MODEL_WEB_PATHS[backbone_name], model_path)
+            
     model = torchvision.models.inception_v3(init_weights=False, pretrained=False, transform_input=True)
     model.fc = torch.nn.Linear(2048, 2)
     model.AuxLogits.fc = torch.nn.Linear(768, 2)

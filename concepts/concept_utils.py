@@ -35,6 +35,7 @@ class ConceptBank:
     def __init__(self, concept_dict, device):
         all_vectors, concept_names, all_intercepts = [], [], []
         all_margin_info = defaultdict(list)
+        
         for k, (tensor, _, _, intercept, margin_info) in concept_dict.items():
             all_vectors.append(tensor)
             concept_names.append(k)
@@ -42,6 +43,7 @@ class ConceptBank:
             for key, value in margin_info.items():
                 if key != "train_margins":
                     all_margin_info[key].append(np.array(value).reshape(1, 1))
+
         for key, val_list in all_margin_info.items():
             margin_tensor = torch.tensor(np.concatenate(
                 val_list, axis=0), requires_grad=False).float().to(device)

@@ -5,8 +5,6 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
-
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
@@ -105,9 +103,8 @@ def main(args, concept_bank, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
 
-    
     if (num_classes > 1) and (args.print_out == True):
-        # Prints the Top-5 Concept Weigths for each class.
+        # Prints the Top-5 Concept Weigths for each class if desired.
         print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")

@@ -83,7 +83,6 @@ class CUBDataset(Dataset):
         else:
             return img, class_label
         
-        
 
 class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
     """Samples elements randomly from a given list of indices for imbalanced dataset

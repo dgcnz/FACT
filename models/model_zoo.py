@@ -27,7 +27,7 @@ class ResNetTop(nn.Module):
 
 
 def get_model(args, backbone_name="resnet18_cub", full_model=False):
-    if "clip" in backbone_name:
+    if "clip" in backbone_name.lower():
         import clip
         # We assume clip models are passed of the form : clip:RN50
         clip_backbone_name = backbone_name.split(":")[1]

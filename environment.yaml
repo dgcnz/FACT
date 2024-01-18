@@ -16,3 +16,4 @@ dependencies:
   - openai-clip=1.0.1
   - gdown=4.7.1
   - kaggle=1.6.3
+  - nltk=3.8.1
