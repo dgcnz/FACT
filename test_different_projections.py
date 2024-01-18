@@ -132,6 +132,7 @@ def main(args, concept_bank, backbone, preprocess):
 def set_random_proj(concept_bank, shape):
     # Set random projection matrix
     concept_bank.vectors = torch.randn(shape).to(args.device)
+    print(concept_bank.vectors)
     concept_bank.norm = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
     concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
@@ -157,6 +158,7 @@ if __name__ == "__main__":
         concept_bank.norms = None
         concept_bank.margin_info = None
         print('random projection used')
+        print(concept_bank.vectors)
         set_random_proj(concept_bank, shape)
 
     elif args.identity_proj:
