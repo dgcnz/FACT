@@ -38,9 +38,9 @@ def config():
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
 
     ## arguments for the different projection matrix weights
-    parser.add_argument("--random_proj", default=False, type=bool, help="Whether to use random projection matrix")
-    parser.add_argument("--identity_proj", default=False, type=bool, help="Whether to use identity projection matrix")
+    parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
 
+    parser.add_argument("--identity_proj", action="store_true", default=False, help="Whether to use identity projection matrix")
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
@@ -129,12 +129,12 @@ def main(args, concept_bank, backbone, preprocess):
     print(run_info)
     return run_info
 
-def set_random_proj(concept_bank):
+def set_random_proj(concept_bank, shape):
     # Set random projection matrix
-    concept_bank.vectors = torch.randn(concept_bank.vectors.shape).to(args.device)
+    concept_bank.vectors = torch.randn(shape).to(args.device)
     concept_bank.norm = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
-    concept_bank.intercepts = torch.zeros(concept_bank.vectors.shape[0],1).to(args.device)
+    concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
 if __name__ == "__main__":
     args = config()
@@ -143,20 +143,35 @@ if __name__ == "__main__":
     print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
     concept_bank = ConceptBank(all_concepts, args.device)
 
+    #to be completely robust to oversight, set all attributes (/ concept names) of the concept bank class to None
+    shape = concept_bank.vectors.shape
+
     #change the following three attributes of the ConceptBank class
     #self.cavs = concept_bank.vectors
     #self.intercepts = concept_bank.intercepts -> seem svm based thing, why use these when you use clip concepts?
     #self.norms = concept_bank.norms
 
     if args.random_proj:
-        set_random_proj(concept_bank)
-    if args.identity_proj:
-        concept_bank.vectors = torch.eye(n=concept_bank.vectors.shape[1]).to(args.device) #(embedding dim x embedding dim identity matrix)
+        concept_bank.vectors = None
+        concept_bank.intercepts = None
+        concept_bank.norms = None
+        concept_bank.margin_info = None
+        print('random projection used')
+        set_random_proj(concept_bank, shape)
+
+    elif args.identity_proj:
+        concept_bank.vectors = None
+        concept_bank.intercepts = None
+        concept_bank.norms = None
+        concept_bank.margin_info = None
+        print('identity projection used')
+        concept_bank.vectors = torch.eye(n=shape[1]).to(args.device) #(embedding dim x embedding dim identity matrix)
         concept_bank.norm = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
-        concept_bank.intercepts = torch.zeros(concept_bank.vectors.shape[0],1).to(args.device)
+        concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
-    print(f'concept vectors matrix rank is {torch.matrix_rank(concept_bank.vectors)}')
+    
+    print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
 
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
