@@ -24,7 +24,7 @@ def get_projections(args, backbone, posthoc_layer, loader):
             embeddings = backbone.encode_image(batch_X).detach().float()
         else:
             embeddings = backbone(batch_X).detach()
-        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
+        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy() # why does the intercept matter for the clip case?
         embeddings = embeddings.detach().cpu().numpy()
         if all_embs is None:
             all_embs = embeddings

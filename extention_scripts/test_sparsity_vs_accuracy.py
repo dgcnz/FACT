@@ -5,6 +5,8 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
+
+
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
@@ -22,10 +24,8 @@ def config():
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
-    parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
+    parser.add_argument("--strengths", default=None, type=float, nargs='+', help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
-
     return parser.parse_args()
 
 
@@ -38,7 +38,7 @@ def run_linear_probe(args, train_data, test_data):
     # We experimented with torch modules etc., and results are mostly parallel.
     classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
                                alpha=args.lam, l1_ratio=args.alpha, verbose=0,
-                               penalty="elasticnet", max_iter=10000) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
+                               penalty="elasticnet", max_iter=2) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
     classifier.fit(train_features, train_labels)
 
     train_predictions = classifier.predict(train_features)
@@ -54,10 +54,7 @@ def run_linear_probe(args, train_data, test_data):
         cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == predictions[test_lbl_mask]).astype(float))
         cls_acc["train"][lbl] = np.mean(
             (train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
-        
-        # Print control via parser argument
-        if args.print_out == True:
-            print(f"{lbl}: {cls_acc['test'][lbl]}")
+        print(f"{lbl}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
@@ -67,9 +64,9 @@ def run_linear_probe(args, train_data, test_data):
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
-                                              
+    
+    
     return run_info, classifier.coef_, classifier.intercept_
-
 
 
 def main(args, concept_bank, backbone, preprocess):
@@ -103,13 +100,39 @@ def main(args, concept_bank, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
 
-    if (num_classes > 1) and (args.print_out == True):
-        # Prints the Top-5 Concept Weigths for each class if desired.
+    if num_classes > 1:
+        # Prints the Top-5 Concept Weigths for each class.
         print(posthoc_layer.analyze_classifier(k=5))
+
+    run_info["sparsity"] = posthoc_layer.get_sparsity()
+    run_info["sum"] = np.abs(weights.sum())
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+    return run_info
 
+def plot_sparsity(args, metrics, sparsities, metric_name):
+    import matplotlib.pyplot as plt
+    print(metrics)
+    plt.plot(sparsities, metrics)
+    plt.grid()
+    plt.xlabel("N non-zero weights")
+    plt.ylabel(metric_name)
+    plt.savefig(f"{args.out_dir}/sparsity.png")
+    plt.show()
+    print(f'figure save in {args.out_dir}/sparisity.png')
+
+def plot_sum(args, metrics, sums, metric_name):
+    import matplotlib.pyplot as plt
+    print(metrics)
+    plt.plot(sums, metrics)
+    plt.grid()
+    plt.xlabel("Sum of weights")
+    plt.ylabel(metric_name)
+    plt.savefig(f"{args.out_dir}/sum.png")
+    plt.show()
+    print(f'figure save in {args.out_dir}/sum.png')
+    
 
 if __name__ == "__main__":
     args = config()
@@ -122,6 +145,42 @@ if __name__ == "__main__":
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
+    
+    classes = get_dataset(args, preprocess)[3]
+    print(classes)
+    metrics = []
+    sums= []
+    metric_name = "Accuracy"
 
-    # Execute main code
-    main(args, concept_bank, backbone, preprocess)
+    sparsities = []
+
+    print(f'number of concepts: {len(all_concept_names)}')
+    print(f'number of classes: {len(classes)}')
+
+    for strength in args.strengths:
+
+        args.lam = strength/(len(all_concept_names)*len(classes))
+
+        run_info = main(args, concept_bank, backbone, preprocess)
+
+        if "test_auc" in run_info:
+            print("auc used")
+            metric_name = "AUC"
+            metric = run_info['test_auc']
+
+        else:
+            print("acc used")
+            metric_name = "Accuracy"
+            metric = run_info['test_acc']
+
+        metrics.append(metric)
+        sums.append(run_info['sum'])
+        sparsities.append(run_info['sparsity'])
+
+    plot_sparsity(args, metrics, sparsities, metric_name)
+    plot_sum(args, metrics, sums, metric_name)
+
+        
+
+
+        

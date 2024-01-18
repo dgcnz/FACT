@@ -9,7 +9,7 @@ from .constants import SIIM_DATA_DIR
 
 class ISICDataset(Dataset):
 
-    def __init__(self, datalist, transform=None):
+    def __init__(self, datalist, transform=None, cropsize=(480, 640)):
         """
         Arguments:
         annot_dir: directory of the corresponding annotation file
@@ -18,6 +18,7 @@ class ISICDataset(Dataset):
         """
         self.data = datalist
         self.transform = transform
+        self.cropsize = cropsize
 
     def __len__(self):
         return len(self.data)
@@ -29,6 +30,7 @@ class ISICDataset(Dataset):
         img_data = self.data[idx]
         img_path = img_data[0]
         img = Image.open(img_path).convert('RGB')
+        img = transforms.CenterCrop(self.cropsize)(img)
         img = transforms.ToTensor()(img)
 
         class_label = img_data[1]
@@ -48,7 +50,7 @@ def prepare_data(df, ratio:float=0.2, seed:int=42):
     Outputs:
     train_data, test_data: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    datalist = [list(df['image_name']), list(df['benign_malignant'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
+    datalist = [list(df['image_name']), list(df['target'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
     X_train, X_test, y_train, y_test = train_test_split(datalist[0], datalist[1], 
                                                         stratify=datalist[1], test_size=ratio, 
                                                         random_state=seed)
@@ -70,7 +72,7 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    df = pd.read_csv(meta_dir)[['image_name', 'benign_malignant']]
+    df = pd.read_csv(meta_dir)[['image_name', 'target']]
     train_dir = os.path.join(SIIM_DATA_DIR, "data")
     df['image_name'] = train_dir + "/" + df['image_name'] + ".jpg"
     train_data, test_data = prepare_data(df, seed)

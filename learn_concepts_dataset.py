@@ -2,9 +2,7 @@ import os
 import pickle
 import torch
 import argparse
-
 import numpy as np
-
 from models import get_model
 from concepts import learn_concept_bank
 from data import get_concept_loaders
@@ -34,8 +32,8 @@ def main():
     backbone = backbone.eval()
     
     concept_libs = {C: {} for C in args.C}
+
     # Get the positive and negative loaders for each concept. 
-    
     concept_loaders = get_concept_loaders(args.dataset_name, preprocess, n_samples=args.n_samples, batch_size=args.batch_size, 
                                           num_workers=args.num_workers, seed=args.seed)
     

@@ -8,21 +8,19 @@
 # 2) lam
 # 3) alpha
 
-
 import argparse
 import os
 import pickle
 import numpy as np
 import torch
+
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
-
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
 
 
@@ -34,7 +32,6 @@ def config():
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
-    
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
 
@@ -48,17 +45,18 @@ def config():
 
 
 def run_linear_probe(args, train_data, test_data):
-    print("START LINEAR PROBE..")
+    print("START LINEAR PROBE...")
     train_features, train_labels = train_data
     test_features, test_labels = test_data
 
     print(set(train_labels))
     print(len(train_features), len(train_labels))
-    train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
+    
 
     if args.lam is None:
         #Get the best possible alpha (args.lam) using the validation set 
         # Define the parameter grid for grid search
+        train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
         param_grid = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
 
         best_score = -float('inf')
@@ -121,6 +119,7 @@ def run_linear_probe(args, train_data, test_data):
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
     return run_info, classifier.coef_, classifier.intercept_
 
+
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
@@ -151,7 +150,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
     
     if num_classes > 1:
         # Prints the Top-5 Concept Weigths for each class.
@@ -174,10 +172,11 @@ if __name__ == "__main__":
     backbone.eval()
     metric_list = []
     og_out_dir = args.out_dir
+
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
-        args.out_dir = og_out_dir + "_" + str(seed)
+        args.out_dir = og_out_dir 
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
@@ -191,12 +190,6 @@ if __name__ == "__main__":
         metric_list.append(metric)
 
     
-    #compute std and mean of metrics 
-    print(f"metric_list: {metric_list}")
-    print(f"mean: {np.mean(metric_list)}")
-    print(f"std: {np.std(metric_list)}")
-
-
-
-
-            
+    # export results
+    out_name = "verify_dataset_pcbm_h"
+    export.export_to_json(out_name, metric_list)
