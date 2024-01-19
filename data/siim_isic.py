@@ -12,9 +12,9 @@ class ISICDataset(Dataset):
     def __init__(self, datalist, transform=None, cropsize=(480, 640)):
         """
         Arguments:
-        annot_dir: directory of the corresponding annotation file
-        datalist: a list object instance returned by 'data_select' function above
+        datalist: a list object instance returned by 'load_siim_data' function below
         transform: whether to apply any special transformation. Default = None
+        cropsize: the size to crop the image to (defaults to the smallest size in the ISIC dataset)
         """
         self.data = datalist
         self.transform = transform

@@ -13,14 +13,18 @@ def unpack_batch(batch):
     else:
         raise ValueError()
 
+        # # added due to the audio classification extension task
+        # elif "audio" in args.backbone_name.lower():
+        #     # convert batch data to format which can be processed by AudioCLIP
+        #     embeddings = backbone.encode_audio(batch_X).detach().float()
 
-@torch.no_grad()
+@torch.no_grad() # Probably need to make if statement so audio data gets put in as list
 def get_projections(args, backbone, posthoc_layer, loader):
     all_projs, all_embs, all_lbls = None, None, None
     for batch in tqdm(loader):
         batch_X, batch_Y = unpack_batch(batch)
         batch_X = batch_X.to(args.device)
-        if "clip" in args.backbone_name:
+        if "clip" in args.backbone_name.lower():
             embeddings = backbone.encode_image(batch_X).detach().float()
         else:
             embeddings = backbone(batch_X).detach()
@@ -54,7 +58,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     
-    # To make it easier to analyize results/rerun with different params, we'll extract the embeddings and save them
+    # To make it easier to analyze results/rerun with different params, we'll extract the embeddings and save them
     train_file = f"train-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
     test_file = f"test-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
     train_proj_file = f"train-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
@@ -62,7 +66,6 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     train_lbls_file = f"train-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
     test_lbls_file = f"test-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
     
-
     train_file = os.path.join(args.out_dir, train_file)
     test_file = os.path.join(args.out_dir, test_file)
     train_proj_file = os.path.join(args.out_dir, train_proj_file)

@@ -5,6 +5,7 @@ import torch
 import clip
 import argparse
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from data.data_zoo import get_dataset
 
@@ -176,18 +177,6 @@ if __name__ == "__main__":
         learn_conceptbank(args, all_concepts, args.classes)
     
     elif args.classes == "cub":
-        #from data.constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
-        #create some placeholder args such that we can get the dataset labels of cub
-        #classes = open(os.path.join(CUB_DATA_DIR, "classes.txt")).readlines()
-        #classes = [a.split(".")[1].strip() for a in classes]
-
-        # Assuming get_dataset is a function that retrieves the CUB dataset.
-        #print("Number of classes in CUB dataset:", len(classes))
-        #all_classes = list(classes)
-        #all_concepts = get_concept_data(all_classes)
-        #all_concepts = clean_concepts(all_concepts)
-        #all_concepts = list(set(all_concepts).difference(set(all_classes)))
-
         all_concepts = [
         # Physical Features
         'Plumage', 'Wing Shape', 'Beak Structure', 'Tail Length', 'Leg Length', 'Eye Color',
@@ -219,14 +208,18 @@ if __name__ == "__main__":
         # Notable Characteristics
         'Markings', 'Crest', 'Tufts', 'Facial Disk'
         ]
-        # If we'd like to recurse in the conceptnet graph, specify `recurse > 1`.
-        #for i in range(1, args.recurse):
-        #    all_concepts = get_concept_data(all_concepts)
-        #    all_concepts = list(set(all_concepts))
-        #    all_concepts = clean_concepts(all_concepts)
-        #    #all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
         learn_conceptbank(args, all_concepts, args.classes)
 
+    elif args.classes == "esc50":
+        # The concepts are adapted from the supersets defined by the authors
+        all_concepts = []
+        learn_conceptbank(args, all_concepts, args.classes)
+
+    elif args.classes == "us8k":
+        # The concepts are derived from the urban sound taxonomy defined by the authors
+        all_concepts = []
+        learn_conceptbank(args, all_concepts, args.classes)
 
     else:
         raise ValueError(f"Unknown classes: {args.classes}. Define your dataset here!")

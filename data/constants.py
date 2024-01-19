@@ -28,3 +28,11 @@ SIIM_DATA_DIR = "artifacts/data/SIIM_ISIC"
 
 # BRODEN concept bank
 BRODEN_CONCEPTS = "artifacts/data/broden_concepts"
+
+
+# CONSTANTS FOR EXTENSION EXPERIMENTS
+# ESC_50 can be obtained from : https://github.com/karolpiczak/ESC-50
+ESC_DIR = "artifacts/data/ESC_50"
+
+# UrbanSound8k can be obtained from : https://www.kaggle.com/datasets/chrisfilo/urbansound8k
+US_DIR = "artifacts/data/US8K"

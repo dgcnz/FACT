@@ -5,8 +5,6 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
-
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model

@@ -17,3 +17,12 @@ dependencies:
   - gdown=4.7.1
   - kaggle=1.6.3
   - nltk=3.8.1
+
+  # extra AudioCLIP dependencies
+  - librosa==0.10.1
+  - termcolor==2.4.0
+  - visdom==0.2.4
+  - ignite=0.4.13
+
+  # for UrbanSounds8K dataset
+  - soundata==0.1.2

@@ -99,6 +99,35 @@ def get_dataset(args, preprocess=None):
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
 
+    # the following two if-statement branches are for the extensions
+    elif args.dataset == "esc50":
+        from .esc_50 import load_esc_data
+        from .constants import ESC_DIR
+        meta_dir = os.path.join(ESC_DIR, "esc50.csv")
+        train_loader, test_loader = load_esc_data(meta_dir, 
+                                                  batch_size=args.batch_size)
+        
+        # for the idx_to_class variable (need to read metadata table for this)
+        df = pd.read_csv(meta_dir)
+        indexes = list(df['target'])
+        classes = list(df['category'])
+        idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
+        idx_to_class = dict(sorted(idx_to_class.items()))
+
+    elif args.dataset == "us8k":
+        from .us8k import load_us_data
+        from .constants import US_DIR
+        meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
+        train_loader, test_loader = load_us_data(meta_dir, 
+                                                 batch_size=args.batch_size)
+        
+        # for the idx_to_class variable (need to read metadata table for this)
+        df = pd.read_csv(meta_dir)
+        indexes = list(df['classID'])
+        classes = list(df['class'])
+        idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
+        idx_to_class = dict(sorted(idx_to_class.items()))
+
     else:
         raise ValueError(args.dataset)
     

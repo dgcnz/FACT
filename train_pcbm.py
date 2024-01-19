@@ -71,7 +71,6 @@ def run_linear_probe(args, train_data, test_data):
     return run_info, classifier.coef_, classifier.intercept_
 
 
-
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
