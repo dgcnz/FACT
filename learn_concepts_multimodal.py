@@ -212,13 +212,44 @@ if __name__ == "__main__":
         learn_conceptbank(args, all_concepts, args.classes)
 
     elif args.classes == "esc50":
-        # The concepts are adapted from the supersets defined by the authors
-        all_concepts = []
+        # Use labels to generate concepts
+        from data.constants import ESC_DIR
+        meta_dir = os.path.join(ESC_DIR, "esc50.csv")
+        df = pd.read_csv(meta_dir)
+
+        all_classes = list(df['category'])
+        all_concepts = get_concept_data(all_classes)
+        all_concepts = clean_concepts(all_concepts)
+        all_concepts = list(set(all_concepts).difference(set(all_classes)))
+        # If we'd like to recurse in the conceptnet graph, specify `recurse > 1`.
+        for i in range(1, args.recurse):
+            all_concepts = get_concept_data(all_concepts)
+            all_concepts = list(set(all_concepts))
+            all_concepts = clean_concepts(all_concepts)
+            all_concepts = list(set(all_concepts).difference(set(all_classes)))
         learn_conceptbank(args, all_concepts, args.classes)
 
     elif args.classes == "us8k":
         # The concepts are derived from the urban sound taxonomy defined by the authors
-        all_concepts = []
+        # with adjustments to make it specific enough (no leaves to prevent label overlap,
+        # vehicles too specific removedas well)
+        all_concepts = [
+        # The four main concepts (level one)
+        'Human', 'Nature', 'Mechanical', 'Music',
+
+        # Nodes directly below main concepts (level two)
+        'Voice', 'Movement', 'Elements', 'Animals', 'Plants',
+        'Construction', 'Ventilation', 'Non-motor Vehicle',
+        'Signals', 'Motor Vehicle', 'Non-amplified Music', 'Amplified Music',
+
+        # Nodes directly below level two concepts (level three)
+        'Bicycle', 'Skateboard', 'Marine', 'Rail', 'Road', 'Air',
+        'Live Music', 'Recorded Music',
+
+        # Nodes directly below level three concepts (level four)
+        'Boat', 'Train', 'Subway', 'Car', 'Motorcycle', 'Bus', 'Truck'
+        ]
+
         learn_conceptbank(args, all_concepts, args.classes)
 
     else:
