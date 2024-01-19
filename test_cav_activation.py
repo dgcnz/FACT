@@ -37,6 +37,8 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
+    parser.add_argument("--n-samples", default=50, type=int, 
+                        help="Number of positive/negative samples used to learn concepts.")
 
     ## arguments for the different projection matrix weights
     parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
@@ -61,7 +63,7 @@ def main(args, concept_bank, backbone, preprocess):
     posthoc_layer = posthoc_layer.to(args.device)
 
     # Get the true concepts for the dataset, per image
-    concept_loaders = get_concept_loaders(args.dataset_name, preprocess, n_samples=args.n_samples, batch_size=args.batch_size, 
+    concept_loaders = get_concept_loaders(args.dataset, preprocess, n_samples=args.n_samples, batch_size=args.batch_size, 
                                           num_workers=args.num_workers, seed=args.seed)
     
     positive_projection_magnitude_per_concept = {}
@@ -70,9 +72,9 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     for concept_name, loaders in concept_loaders.items():
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
-        _, train_projs_pos, _, _, _, _ = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True)
+        train_embs, train_projs = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
 
-        _, train_projs_neg, _, _, _, _ = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True)
+        train_embs, train_projs = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
 
         # Select only the projection of our current concept of interest
         assert train_projs_pos.shape[1] == len(concept_bank.concept_names), "wrong dimension selected for concept of interest"

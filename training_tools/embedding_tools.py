@@ -10,6 +10,8 @@ def unpack_batch(batch):
         return batch[0], batch[1]
     elif len(batch) == 2:
         return batch
+    elif len(batch) == 1:
+        return batch[0]
     else:
         raise ValueError()
 
@@ -36,6 +38,26 @@ def get_projections(args, backbone, posthoc_layer, loader):
             all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
     return all_embs, all_projs, all_lbls
 
+@torch.no_grad()
+def get_projections_self_supervised(args, backbone, posthoc_layer, loader):
+    all_projs, all_embs = None, None
+    for batch in tqdm(loader):
+        batch_X = unpack_batch(batch)
+        batch_X = batch_X.to(args.device)
+        if "clip" in args.backbone_name:
+            embeddings = backbone.encode_image(batch_X).detach().float()
+        else:
+            embeddings = backbone(batch_X).detach()
+        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
+        embeddings = embeddings.detach().cpu().numpy()
+        if all_embs is None:
+            all_embs = embeddings
+            all_projs = projs
+        else:
+            all_embs = np.concatenate([all_embs, embeddings], axis=0)
+            all_projs = np.concatenate([all_projs, projs], axis=0)
+    return all_embs, all_projs
+
 
 class EmbDataset(Dataset):
     def __init__(self, data, target):
@@ -49,7 +71,7 @@ class EmbDataset(Dataset):
         return len(self.data)
 
 
-def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False):
+def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False, self_supervised = False):
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
@@ -70,7 +92,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
     test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
 
-    if os.path.exists(train_proj_file) and not compute:
+    if os.path.exists(train_proj_file) and not compute and not self_supervised:
         train_embs = np.load(train_file)
         test_embs = np.load(test_file)
         train_projs = np.load(train_proj_file)
@@ -78,7 +100,9 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         train_lbls = np.load(train_lbls_file)
         test_lbls = np.load(test_lbls_file)
 
-    else:
+        return train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls
+
+    elif not self_supervised:
         train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
         test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
 
@@ -88,5 +112,12 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         np.save(test_proj_file, test_projs)
         np.save(train_lbls_file, train_lbls)
         np.save(test_lbls_file, test_lbls)
+
+        return train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls
     
-    return train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls
+    else:
+        train_embs, train_projs = get_projections_self_supervised(args, backbone, posthoc_layer, train_loader)
+
+        return train_embs, train_projs
+    
+    
