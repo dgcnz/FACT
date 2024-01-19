@@ -24,7 +24,7 @@ def get_projections(args, backbone, posthoc_layer, loader):
             embeddings = backbone.encode_image(batch_X).detach().float()
         else:
             embeddings = backbone(batch_X).detach()
-        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy() # why does the intercept matter for the clip case?
+        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
         embeddings = embeddings.detach().cpu().numpy()
         if all_embs is None:
             all_embs = embeddings
@@ -49,7 +49,7 @@ class EmbDataset(Dataset):
         return len(self.data)
 
 
-def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader):
+def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False):
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
@@ -70,7 +70,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
     test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
 
-    if os.path.exists(train_proj_file):
+    if os.path.exists(train_proj_file) and not compute:
         train_embs = np.load(train_file)
         test_embs = np.load(test_file)
         train_projs = np.load(train_proj_file)
