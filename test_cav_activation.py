@@ -30,6 +30,7 @@ def config():
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
     parser.add_argument("--dataset", default="cub", type=str)
+    parser.add_argument("--concept-dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
@@ -63,15 +64,17 @@ def main(args, concept_bank, backbone, preprocess):
     posthoc_layer = posthoc_layer.to(args.device)
 
     # Get the true concepts for the dataset, per image
-    concept_loaders = get_concept_loaders(args.dataset, preprocess, n_samples=args.n_samples, batch_size=args.batch_size, 
+    concept_loaders = get_concept_loaders(args.concept_dataset, preprocess, n_samples=args.n_samples, batch_size=args.batch_size, 
                                           num_workers=args.num_workers, seed=args.seed)
     
     positive_projection_magnitude_per_concept = {}
     negative_projection_magnitude_per_concept = {}
     
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    for concept_name, loaders in concept_loaders.items():
+    for concept_name in concept_bank.concept_names:
+        loaders = concept_loaders[concept_name]
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
+    
         train_embs_pos, train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
 
         train_embs_neg, train_projs_neg = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
@@ -158,3 +161,10 @@ if __name__ == "__main__":
 
         pos.append(run_info['total_average_pos_activation'])
         neg.append(run_info['total_average_neg_activation'])
+
+
+    
+    # export results
+    out_name = "verify_dataset_pcbm_h"
+    export.export_to_json(out_name, pos)
+    export.export_to_json(out_name, neg)
