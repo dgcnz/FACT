@@ -227,9 +227,14 @@ if __name__ == "__main__":
         #    #all_concepts = list(set(all_concepts).difference(set(all_classes)))
         learn_conceptbank(args, all_concepts, args.classes)
 
+
     if args.classes == "broden":
-        # get dataset on broden
-        pass
+        from .constants import BRODEN_CONCEPTS
+        concept_loaders = {}
+        concepts = [c for c in os.listdir(BRODEN_CONCEPTS) if os.path.isdir(os.path.join(BRODEN_CONCEPTS, c))]
+        
+        learn_conceptbank(args, concepts, args.classes)
+        
         
 
 
