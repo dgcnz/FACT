@@ -10,8 +10,6 @@ def unpack_batch(batch):
         return batch[0], batch[1]
     elif len(batch) == 2:
         return batch
-    elif len(batch) == 1:
-        return batch[0]
     else:
         raise ValueError()
 
@@ -42,7 +40,7 @@ def get_projections(args, backbone, posthoc_layer, loader):
 def get_projections_self_supervised(args, backbone, posthoc_layer, loader):
     all_projs, all_embs = None, None
     for batch in tqdm(loader):
-        batch_X = unpack_batch(batch)
+        batch_X = batch
         batch_X = batch_X.to(args.device)
         if "clip" in args.backbone_name:
             embeddings = backbone.encode_image(batch_X).detach().float()

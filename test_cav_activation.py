@@ -72,9 +72,9 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     for concept_name, loaders in concept_loaders.items():
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
-        train_embs, train_projs = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
+        train_embs_pos, train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
 
-        train_embs, train_projs = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
+        train_embs_neg, train_projs_neg = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
 
         # Select only the projection of our current concept of interest
         assert train_projs_pos.shape[1] == len(concept_bank.concept_names), "wrong dimension selected for concept of interest"
@@ -95,13 +95,9 @@ def main(args, concept_bank, backbone, preprocess):
     print(f"total average pos activation: {total_average_pos_activation}")
     print(f"total average neg activation: {total_average_neg_activation}")
 
-
-
-
-
-    
-
-
+    run_info = {}
+    run_info['total_average_pos_activation'] = total_average_pos_activation
+    run_info['total_average_neg_activation'] = total_average_neg_activation
 
     return run_info
 
@@ -150,7 +146,8 @@ if __name__ == "__main__":
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
-    metric_list = []
+    pos = []
+    neg = []
     og_out_dir = args.out_dir
 
     for seed in args.seeds:
@@ -159,17 +156,5 @@ if __name__ == "__main__":
         args.out_dir = og_out_dir 
         run_info = main(args, concept_bank, backbone, preprocess)
 
-        if "test_auc" in run_info:
-            print("auc used")
-            metric = run_info['test_auc']
-
-        else:
-            print("acc used")
-            metric = run_info['test_acc']
-
-        metric_list.append(metric)
-
-    
-    # export results
-    out_name = "verify_dataset_pcbm_h"
-    export.export_to_json(out_name, metric_list)
+        pos.append(run_info['total_average_pos_activation'])
+        neg.append(run_info['total_average_neg_activation'])
