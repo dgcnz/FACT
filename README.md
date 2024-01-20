@@ -100,6 +100,9 @@ Please refer to the [train_model](/notebook/train_models.ipynb) file for instruc
 ```sh
 ./scripts/download_ham
 ```
+
+(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/train_models.ipynb) file after following the instructions there.)
+
 3. You will find the downloaded data in `HAM10K`.
 
 ### SIIM-ISIC
@@ -118,6 +121,39 @@ Please refer to the [train_model](/notebook/train_models.ipynb) file for instruc
 ./scripts/download_metashift
 ```
 2. You will find the downloaded data in `metashift`.
+
+## Extension Experiment Downloads
+
+The below downloads are not part of the original experiments and were done as an extension to the original paper. They amount to around 7 GB in total.
+
+### ESC-50
+
+1. Run the download script below:
+```sh
+./scripts/download_esc
+```
+2. You will find the downloaded data in `ESC_50`.
+
+### UrbanSound8K
+
+1. Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+2. Run the download script below:
+```sh
+./scripts/download_us8k
+```
+
+(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/train_models.ipynb) file after following the instructions there.)
+
+3. You will find the downloaded data in `US8K`.
+
+### AudioCLIP Dependencies
+
+1. Run the download script below:
+```sh
+./scripts/download_audioclip
+```
+2. Instead of in `artifacts/data`, You will find the downloaded data in `FACT/models/AudioCLIP/assets`.
+
 
 ## Downloading the Backbones
 Please see `models/model_zoo.py` for the backbones used. Some of the original models rely on external dependencies (e.g. [pytorchcv](https://pypi.org/project/pytorchcv/) for the CUB backbone, [OpenAI repo](https://github.com/openai/CLIP) for the CLIP backbone.) or will be downloaded (e.g. HAM1000 model from the [DDI repo](https://drive.google.com/drive/folders/1oQ53WH_Tp6rcLZjRp_-UBOQcMl-b1kkP)). 
