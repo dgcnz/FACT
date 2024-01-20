@@ -105,7 +105,7 @@ def get_dataset(args, preprocess=None):
         from PIL import Image
         from io import BytesIO
 
-        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.hf_token)
+        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.token)
 
         class PCBMSurveyDataset(Dataset):
             def __init__(self, dataset):
