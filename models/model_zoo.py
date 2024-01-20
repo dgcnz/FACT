@@ -59,22 +59,24 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                       ])
 
     elif backbone_name.lower() == "audio":
-        from AudioCLIP.model import AudioCLIP
-        from AudioCLIP.utils.transforms import ToTensor1D
+        # from AudioCLIP.model import AudioCLIP
+        # from AudioCLIP.utils.transforms import ToTensor1D
 
-        # Done like this to ensure that it does not do relative imports w.r.t. from where
-        # the user is running the script
-        filedir = os.path.abspath(__file__)
-        filedir = os.path.dirname(filedir)
-        pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
+        # # Done like this to ensure that it does not do relative imports w.r.t. from where
+        # # the user is running the script
+        # filedir = os.path.abspath(__file__)
+        # filedir = os.path.dirname(filedir)
+        # pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
         
-        # loading the model and transforms (only audio is used)
-        backbone = AudioCLIP(pretrained=pt_path)
-        backbone.eval()
-        preprocess = transforms.Compose([
-                        ToTensor1D()
-                      ])
-        model = None
+        # # loading the model and transforms (only audio is used)
+        # backbone = AudioCLIP(pretrained=pt_path)
+        # backbone.eval()
+        # preprocess = transforms.Compose([
+        #                 ToTensor1D()
+        #               ])
+        # model = None
+
+        return NotImplemented # Find new model to use
         
     else:
         raise ValueError(backbone_name)

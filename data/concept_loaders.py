@@ -9,6 +9,25 @@ from torch.utils.data import DataLoader
 from .constants import CUB_PROCESSED_DIR
 
 
+class ListDataset:
+    def __init__(self, images, transform=None):
+        self.images = images
+        self.transform = transform
+
+    def __len__(self):
+        # Return the length of the dataset
+        return len(self.images)
+    
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        img_path = self.images[idx]
+        image = Image.open(img_path).convert('RGB') 
+        if self.transform:
+            image = self.transform(image)
+        return image
+
+
 def cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     from .cub import CUBConceptDataset, get_concept_dicts
     TRAIN_PKL = os.path.join(CUB_PROCESSED_DIR, "train.pkl")
@@ -100,24 +119,7 @@ def derm7pt_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed
             "neg": neg_loader
         }
     return concept_loaders
-    
-class ListDataset:
-    def __init__(self, images, transform=None):
-        self.images = images
-        self.transform = transform
 
-    def __len__(self):
-        # Return the length of the dataset
-        return len(self.images)
-    
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        img_path = self.images[idx]
-        image = Image.open(img_path).convert('RGB') 
-        if self.transform:
-            image = self.transform(image)
-        return image
 
 def broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     from .constants import BRODEN_CONCEPTS
@@ -167,6 +169,12 @@ def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, 
     elif dataset_name == "broden":
         return broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
+    elif dataset_name == "esc50":
+        return NotImplemented
+
+    elif dataset_name == "us8k":
+        return NotImplemented
+
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
     

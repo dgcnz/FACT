@@ -13,7 +13,7 @@ class ESCDataset(Dataset):
         Arguments:
         datalist: a list object instance returned by 'load_esc_data' function below
         transform: whether to apply any special transformation. Default = None
-        sample_rate: the sample rate of the audio data loaded (default is general standard)
+        sample_rate: the sampling rate of the audio data loaded (default is general standard)
         """
         self.data = datalist
         self.transform = transform

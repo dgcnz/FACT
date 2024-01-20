@@ -192,7 +192,7 @@ Alternatively, you can run example experiments in the [train_model](/notebook/tr
 
 
 ## 2- Learning concepts via prompting with multimodal models
-What if we do not have a concept dataset? We could leverage multimodal models, such as [CLIP](https://arxiv.org/abs/2103.00020)! i.e. We can simply prompt the text encoder with the concept name, and obtain the concept vector in the shared embedding space. 
+What if we don't have a concept dataset? We could leverage multimodal models, such as [CLIP](https://arxiv.org/abs/2103.00020)! In other words, we can simply prompt the text encoder with the concept name, and obtain the concept vector in the shared embedding space. 
 
 The code to do this can be found in `learn_concepts_multimodal.py`. You can run the following script to learn the concept vectors:
 ```
