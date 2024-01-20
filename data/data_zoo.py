@@ -99,6 +99,35 @@ def get_dataset(args, preprocess=None):
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
 
+    elif 'task' in args.dataset:
+        from datasets import load_dataset
+        from torch.utils.data import Dataset, DataLoader
+        from PIL import Image
+        from io import BytesIO
+
+        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.hf_token)
+
+        class PCBMSurveyDataset(Dataset):
+            def __init__(self, dataset):
+                self.dataset = dataset
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def __getitem__(self, idx):
+                item = self.dataset[idx]
+                image = Image.open(BytesIO(item['image']))
+                label = item['label']
+                return image, label
+            
+        train_dataset = PCBMSurveyDataset(dataset['train'])
+        test_dataset = PCBMSurveyDataset(dataset['test'])
+
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
+        classes = dataset['train'].features['label'].names
+
     else:
         raise ValueError(args.dataset)
     
