@@ -29,7 +29,7 @@ class ESCDataset(Dataset):
         audio_data = self.data[idx]
         audio_path = audio_data[0]
         audio, _ = librosa.load(audio_path, sr=self.sample_rate, dtype=np.float32)
-        audio = torch.from_numpy(audio)
+        audio = audio.reshape(1, -1)
 
         class_label = audio_data[1]
         if self.transform:

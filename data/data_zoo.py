@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def get_dataset(args, preprocess=None):
-    if args.dataset == "cifar10":
+    if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
         testset  = datasets.CIFAR10(root=args.out_dir, train=False,
@@ -19,7 +19,7 @@ def get_dataset(args, preprocess=None):
                                                    shuffle=False, num_workers=args.num_workers)
     
     
-    elif args.dataset == "cifar100":
+    elif args.dataset.lower() == "cifar100":
         trainset = datasets.CIFAR100(root=args.out_dir, train=True,
                                      download=True, transform=preprocess)
         testset  = datasets.CIFAR100(root=args.out_dir, train=False,
@@ -33,7 +33,7 @@ def get_dataset(args, preprocess=None):
                                                    shuffle=False, num_workers=args.num_workers)
 
 
-    elif args.dataset == "cub":
+    elif args.dataset.lower() == "cub":
         from .cub import load_cub_data
         from .constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
         from torchvision import transforms
@@ -58,13 +58,14 @@ def get_dataset(args, preprocess=None):
         print(len(test_loader.dataset), "test set size")
         
 
-    elif args.dataset == "ham10000":
+    elif args.dataset.lower() == "ham10000":
         from .derma_data import load_ham_data
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
-    elif args.dataset == "coco_stuff":
+
+    elif args.dataset.lower() == "coco_stuff":
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
@@ -86,7 +87,8 @@ def get_dataset(args, preprocess=None):
         test_loader  = load_coco_data(test_path, test_annot)
         idx_to_class = cid_to_class(label_path, target_classes)
 
-    elif args.dataset == "siim_isic":
+
+    elif args.dataset.lower() == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
         meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
@@ -100,7 +102,7 @@ def get_dataset(args, preprocess=None):
         idx_to_class = {i: classes[i] for i in range(len(classes))}
 
     # the following two if-statement branches are for the extensions
-    elif args.dataset == "esc50":
+    elif args.dataset.lower() == "esc50":
         from .esc_50 import load_esc_data
         from .constants import ESC_DIR
         meta_dir = os.path.join(ESC_DIR, "esc50.csv")
@@ -114,7 +116,8 @@ def get_dataset(args, preprocess=None):
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
 
-    elif args.dataset == "us8k":
+
+    elif args.dataset.lower() == "us8k":
         from .us8k import load_us_data
         from .constants import US_DIR
         meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
@@ -127,6 +130,7 @@ def get_dataset(args, preprocess=None):
         classes = list(df['class'])
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
+
 
     else:
         raise ValueError(args.dataset)

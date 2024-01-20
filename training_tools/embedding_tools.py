@@ -12,11 +12,7 @@ def unpack_batch(batch):
         return batch
     else:
         raise ValueError()
-
-        # # added due to the audio classification extension task
-        # elif "audio" in args.backbone_name.lower():
-        #     # convert batch data to format which can be processed by AudioCLIP
-        #     embeddings = backbone.encode_audio(batch_X).detach().float()
+    
 
 @torch.no_grad() # Probably need to make if statement so audio data gets put in as list
 def get_projections(args, backbone, posthoc_layer, loader):
@@ -26,6 +22,8 @@ def get_projections(args, backbone, posthoc_layer, loader):
         batch_X = batch_X.to(args.device)
         if "clip" in args.backbone_name.lower():
             embeddings = backbone.encode_image(batch_X).detach().float()
+        elif "audio" in args.backbone_name.lower():
+            embeddings = backbone.encode_audio(batch_X).detach().float()
         else:
             embeddings = backbone(batch_X).detach()
         projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy() # why does the intercept matter for the clip case?
@@ -38,6 +36,7 @@ def get_projections(args, backbone, posthoc_layer, loader):
             all_embs = np.concatenate([all_embs, embeddings], axis=0)
             all_projs = np.concatenate([all_projs, projs], axis=0)
             all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
+            
     return all_embs, all_projs, all_lbls
 
 
