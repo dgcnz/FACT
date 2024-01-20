@@ -4,6 +4,6 @@
 
 outdir=models/AudioCLIP/assets
 
-curl -L https://github.com/AndreyGuzhov/AudioCLIP/releases/download/v0.1/AudioCLIP-Partial-Training.pt --output "${outdir}/audioclip.pt"
+curl -L https://github.com/AndreyGuzhov/AudioCLIP/releases/download/v0.1/AudioCLIP-Full-Training.pt --output "${outdir}/audioclip.pt"
 
 curl -L https://github.com/AndreyGuzhov/AudioCLIP/releases/download/v0.1/bpe_simple_vocab_16e6.txt.gz --output "${outdir}/bpe_simple_vocab_16e6.txt.gz"

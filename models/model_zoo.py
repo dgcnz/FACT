@@ -58,25 +58,24 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                       ])
 
+    # For some of the extension experiments
     elif backbone_name.lower() == "audio":
-        # from AudioCLIP.model import AudioCLIP
-        # from AudioCLIP.utils.transforms import ToTensor1D
+        from AudioCLIP.model import AudioCLIP
+        from AudioCLIP.utils.transforms import ToTensor1D
 
-        # # Done like this to ensure that it does not do relative imports w.r.t. from where
-        # # the user is running the script
-        # filedir = os.path.abspath(__file__)
-        # filedir = os.path.dirname(filedir)
-        # pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
+        # Done like this to ensure that it does not do relative imports w.r.t. from where
+        # the user is running the script
+        filedir = os.path.abspath(__file__)
+        filedir = os.path.dirname(filedir)
+        pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
         
-        # # loading the model and transforms (only audio is used)
-        # backbone = AudioCLIP(pretrained=pt_path)
-        # backbone.eval()
-        # preprocess = transforms.Compose([
-        #                 ToTensor1D()
-        #               ])
-        # model = None
-
-        return NotImplemented # Find new model to use
+        # loading the model and transforms (only audio is used)
+        backbone = AudioCLIP(pretrained=pt_path)
+        backbone.eval()
+        preprocess = transforms.Compose([
+                        ToTensor1D()
+                      ])
+        model = None
         
     else:
         raise ValueError(backbone_name)
