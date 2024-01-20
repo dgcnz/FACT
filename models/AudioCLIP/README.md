@@ -1,4 +1,4 @@
-_Note_: This is a copy of the AudioCLIP repository. Due to the LFS files present in the repo which cannot be installed traditionally, a modified and smaller copy of the repository had to be made. 
+_Note_: This is a copy of the AudioCLIP repository. Due to the LFS pointer files present in the repo which prevent it from being installed traditionally, a modified and smaller copy of the repository had to be made. 
 
 ### Cite the Original Authors
 
