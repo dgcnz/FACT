@@ -1,0 +1,2 @@
+This is where your JSON files for verification results
+would be located in.
