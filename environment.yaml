@@ -6,6 +6,7 @@ channels:
   - conda-forge
   - nvidia
 dependencies:
+  - pip=23.3.1
   - pytorch=2.1.2
   - numpy=1.26.3
   - torchvision=0.16.2
@@ -23,6 +24,3 @@ dependencies:
   - termcolor==2.4.0
   - visdom==0.2.4
   - ignite=0.4.13
-
-  # for UrbanSounds8K dataset
-  - soundata==0.1.2

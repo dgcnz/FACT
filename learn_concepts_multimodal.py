@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./models")
+
 import requests
 import os
 import pickle
@@ -124,7 +127,10 @@ def learn_conceptbank(args, concept_list, scenario, model):
     concept_dict = {}
     for concept in tqdm(concept_list):
         # Note: You can try other forms of prompting, e.g. "photo of {concept}" etc. here.
-        text = clip.tokenize(f"{concept}").to(args.device)
+        if args.backbone_name.lower() == "audio":
+            text = [[text]]
+        else:
+            text = clip.tokenize(f"{concept}").to(args.device)
         text_features = model.encode_text(text).cpu().numpy()
         text_features = text_features/np.linalg.norm(text_features)
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
@@ -153,8 +159,9 @@ if __name__ == "__main__":
         # which only uses the image-text embeddings as supervision
         filedir = os.path.abspath(__file__)
         filedir = os.path.dirname(filedir)
-        pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
-        model = AudioCLIP(pt_path)
+        pt_path = os.path.join(filedir, "models/AudioCLIP/assets/audioclip.pt")
+        print(pt_path)
+        model = AudioCLIP(pretrained=pt_path)
 
     concept_cache = {}
     print(f"EXTRACTING CONCEPTS FOR {args.classes.upper()} CLASSES\n")

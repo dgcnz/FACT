@@ -10,33 +10,30 @@ from .constants import COCO_STUFF_DIR
 import argparse
 import json
 
-# Currently based on CUB Dataset class (am researching what components are needed)
-# Currently hard-coded to tackle the 20 most biased classes mentioned in Singh et al., 2020
+
+# By default focuses on the 20 most biased classes mentioned in Singh et al., 2020
 class COCODataset(Dataset):
 
-    def __init__(self, image_dir, annot_dir, select_rand, num_classes, transform=None):
+    def __init__(self, datalist, image_dir, annot_dir, transform=None):
         """
         Arguments:
-        annot_dir: directory of the corresponding annotation file
-        select_rand: because each image has 3 distinct captions, determines how the labels are selected
+        datalist: a list object instance returned by 'load_coco_data' function below
         image_dir: directory of the folder containing all COCO-Stuff image folders
+        annot_dir: directory of the corresponding annotation file
         transform: whether to apply any special transformation. Default = None
         """
-        f = open(annot_dir)
-        self.data = json.load(f) # Dict object containing all metadata of set (no clue how they handled the stuff annotations)
-        f.close()
-
+        self.data = datalist
         self.transform = transform
-        self.select_rand = select_rand
+        self.annot_dir = annot_dir
         self.image_dir = image_dir
-        self.num_classes = num_classes
+        self.num_classes = 2 # By default these datasets are always for binary classification
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # img_data = self.data[idx]
-        # img_path = img_data['img_path']
+        img_data = self.data[idx]
+        img_path = img_data[0]
         # # Trim unnecessary paths
 
         # idx = img_path.split('/').index('CUB_200_2011')
@@ -62,6 +59,10 @@ def cid_to_class(pathtxt, target_labs): # "cid = COCO ID"
     return labeldict
 
 def load_coco_data(image_dir, annot_dir, transform=None):
+
+    f = open(annot_dir)
+    data = json.load(f)
+
     return NotImplemented
 
 # For testing:

@@ -69,13 +69,13 @@ def get_dataset(args, preprocess=None):
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
-        return NotImplemented
-
         # The 20 most biased classes from Singh et al., 2020
         target_classes = ["cup", "wine glass", "handbag", "apple", "car",
                           "bus", "potted plant", "spoon", "microwave", "keyboard",
                           "skis", "clock", "sports ball", "remote", "snowboard",
                           "toaster", "hair drier", "tennis racket", "skateboard", "baseball glove"]
+        
+        assert (args.target_class in target_classes), f"Target class not found: '{args.target_class}'"
         
         label_path = os.path.join(COCO_STUFF_DIR, "labels.txt")
         train_path = os.path.join(COCO_STUFF_DIR, "train2017")
@@ -83,8 +83,8 @@ def get_dataset(args, preprocess=None):
         train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
         test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
 
-        train_loader = load_coco_data(train_path, train_annot) # Not implemented yet ...
-        test_loader  = load_coco_data(test_path, test_annot)
+        train_loader = load_coco_data(train_path, train_annot, transform=preprocess) # Not implemented yet ...
+        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess)
         idx_to_class = cid_to_class(label_path, target_classes)
 
 
