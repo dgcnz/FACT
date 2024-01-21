@@ -1,2 +1,0 @@
-This is where your JSON files for multimodal concepts results
-would be located in.
