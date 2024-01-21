@@ -124,7 +124,7 @@ def get_dataset(args, preprocess=None):
         meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
         train_loader, test_loader = load_us_data(meta_dir, 
                                                  batch_size=args.batch_size,
-                                                 testfold=args.usfolds)
+                                                 testfolds=args.usfolds)
         
         # for the idx_to_class variable (need to read metadata table for this)
         df = pd.read_csv(meta_dir)
