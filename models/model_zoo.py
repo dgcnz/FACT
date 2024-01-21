@@ -3,6 +3,8 @@ import torch.nn as nn
 import numpy as np
 
 from torchvision import transforms
+from torchvision.models import resnet18
+from torchvision.models import ResNet18_Weights
 
 
 class ResNetBottom(nn.Module):
@@ -50,6 +52,15 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
     elif backbone_name.lower() == "ham10000_inception":
         from .derma_models import get_derma_model
         model, backbone, model_top = get_derma_model(args, backbone_name.lower())
+        preprocess = transforms.Compose([
+                        transforms.Resize(299),
+                        transforms.CenterCrop(299),
+                        transforms.ToTensor(),
+                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                      ])
+    elif backbone_name.lower() == "resnet18_imagenet1k_v1":
+        model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        backbone, model_top = ResNetBottom(model), ResNetTop(model)
         preprocess = transforms.Compose([
                         transforms.Resize(299),
                         transforms.CenterCrop(299),
