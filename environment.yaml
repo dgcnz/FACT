@@ -23,4 +23,4 @@ dependencies:
   - librosa==0.10.1
   - termcolor==2.4.0
   - visdom==0.2.4
-  - ignite=0.4.13
+  - pytorch-ignite==0.4.8

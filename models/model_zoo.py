@@ -1,3 +1,6 @@
+import sys
+sys.path.append("./models")
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -60,8 +63,8 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
 
     # For some of the extension experiments
     elif backbone_name.lower() == "audio":
-        from AudioCLIP.model import AudioCLIP
-        from AudioCLIP.utils.transforms import ToTensor1D
+        from models.AudioCLIP.model import AudioCLIP
+        from models.AudioCLIP.utils.transforms import ToTensor1D
 
         # Done like this to ensure that it does not do relative imports w.r.t. from where
         # the user is running the script

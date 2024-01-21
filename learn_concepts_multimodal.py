@@ -128,7 +128,7 @@ def learn_conceptbank(args, concept_list, scenario, model):
     for concept in tqdm(concept_list):
         # Note: You can try other forms of prompting, e.g. "photo of {concept}" etc. here.
         if args.backbone_name.lower() == "audio":
-            text = [[text]]
+            text = [[concept]]
         else:
             text = clip.tokenize(f"{concept}").to(args.device)
         text_features = model.encode_text(text).cpu().numpy()
@@ -160,7 +160,6 @@ if __name__ == "__main__":
         filedir = os.path.abspath(__file__)
         filedir = os.path.dirname(filedir)
         pt_path = os.path.join(filedir, "models/AudioCLIP/assets/audioclip.pt")
-        print(pt_path)
         model = AudioCLIP(pretrained=pt_path)
 
     concept_cache = {}
