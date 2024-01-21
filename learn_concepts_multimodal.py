@@ -82,6 +82,7 @@ def get_concept_data(all_classes):
     for cls_name in all_classes:
         print(f"Pulling concepts for '{cls_name}'...")
         all_concepts |= get_single_concept_data(cls_name)
+        
     return all_concepts
 
 
@@ -118,6 +119,7 @@ def clean_concepts(scenario_concepts):
             else:
                 scenario_concepts_rec.append(c)
     scenario_concepts_rec = list(set(scenario_concepts_rec))
+
     return scenario_concepts_rec
 
 
