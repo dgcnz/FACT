@@ -14,6 +14,7 @@ import numpy as np
 import torch
 import clip
 
+from copy import deepcopy
 from tqdm import tqdm
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
@@ -36,15 +37,16 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
 
     parser.add_argument("--datasets", default=None, nargs='+', type=str)
-    parser.add_argument("--eval_all", action="store_true", default=False, type=str)
+    parser.add_argument("--eval_all", action="store_true", default=False)
 
+    args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
 
 @torch.no_grad()
 def eval_model(args, model, loader, num_classes, clip=False, text_inputs=None):
-    if clip == False and text_inputs is None:
-        raise ValueError("Must pass text inputs if clip=False")
+    #if clip == True and text_inputs is None:
+    #    raise ValueError("Must pass text inputs if clip=False")
 
     epoch_summary = {"Accuracy": AverageMeter()}
     tqdm_loader = tqdm(loader)
@@ -94,15 +96,15 @@ def get_clip_output(args, model, batch_X, text_inputs):
     
 
 @torch.no_grad()
-def cifar10():
+def cifar10(args):
     backbone, preprocess = get_model(args, backbone_name="clip:RN50", full_model=False)
     backbone = backbone.to(args.device)
     backbone.eval()
 
     _, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     num_classes = len(classes)
-    text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in cifar100.classes]).to(args.device)
 
+    text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(args.device)
 
     results = eval_model(args, backbone, test_loader, num_classes, text_inputs)
 
@@ -138,22 +140,36 @@ if __name__ == "__main__":
     metrics = {}
 
     if "cifar10" in args.datasets or args.eval_all:
-        metrics['cifar10'] = cifar10()
+        new_args = deepcopy(args)
+        new_args.dataset = "cifar10"
+        metrics['cifar10'] = cifar10(new_args)
     
     if "cifar100" in args.datasets or args.eval_all:
-        metrics['cifar100'] = cifar100()
+        new_args = deepcopy(args)
+        new_args.dataset = "cifar100"
+        metrics['cifar100'] = cifar100(new_args)
     
     if "ham10k" in args.datasets or args.eval_all:
-        metrics['ham10k'] = ham10k()
+        new_args = deepcopy(args)
+        new_args.dataset = "ham10000"
+        metrics['ham10k'] = ham10k(new_args)
 
     if "cub" in args.datasets or args.eval_all:
-        metrics['cub'] = cub()  
+        new_args = deepcopy(args)
+        new_args.dataset = "cub"
+        metrics['cub'] = cub(new_args)  
     
     if "isic" in args.datasets or args.eval_all:
-        metrics['isic'] = isic()
+        new_args = deepcopy(args)
+        new_args.dataset = "isic"
+        metrics['isic'] = isic(new_args)
 
     if "coco_stuff" in args.datasets or args.eval_all:
-        metrics['coco_stuff'] = coco_stuff()
+        
+        #new_args = deepcopy(args)
+        #new_args.dataset = "coco_stuff"
+        #metrics['coco_stuff'] = coco_stuff()
+        pass
 
     print(metrics)
 
