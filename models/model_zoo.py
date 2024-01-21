@@ -93,6 +93,7 @@ def config():
     parser.add_argument("--device", default="cuda", type=str)
     return parser.parse_args()
 
+
 if __name__ == "__main__":
     args = config()
     backbone, preprocess = get_model(args, args.backbone_name)

@@ -168,12 +168,6 @@ def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, 
     
     elif dataset_name == "broden":
         return broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
-    
-    elif dataset_name == "esc50":
-        return NotImplemented
-
-    elif dataset_name == "us8k":
-        return NotImplemented
 
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")

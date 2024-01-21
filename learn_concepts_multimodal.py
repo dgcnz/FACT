@@ -101,7 +101,7 @@ def clean_concepts(scenario_concepts):
         c_subwords = c.split(" ")
         # If a concept is made of more than 2 words, we drop it.
         if len(c_subwords) > 2:
-            print("skipping long concept", c_prev)
+            print(f"Skipping long concept: '{c_prev}'")
             continue
         # Lemmatize words to help eliminate non-unique concepts etc.
         for i, csw in enumerate(c_subwords):
@@ -136,7 +136,7 @@ def learn_conceptbank(args, concept_list, scenario, model):
     if ":" in args.backbone_name:
         args.backbone_name = sub(":", "", args.backbone_name)
 
-    concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{args.backbone_name}_{scenario}_recurse_{args.recurse}.pkl")
+    concept_dict_path = os.path.join(args.out_dir, f"mmc_{args.backbone_name}_{scenario}_recurse_{args.recurse}.pkl")
 
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to {concept_dict_path}!\n")
