@@ -1,3 +1,5 @@
+Remove branch names when anonymizing
+
 # Reproducing Post-hoc Concept Bottleneck Models
 
 ## Running the example notebook in Google Colab
@@ -6,7 +8,7 @@ The example notebook has everything you need to start testing the code, give it 
 
 1. Go to Google Colab
 2. In the `Open Notebook` tab, select GitHub
-3. Select the repository `dgcnz/FACT`
+3. Select the repository `dgcnz/FACT` (remove when anonymizing)
 4. Select the notebook `notebooks/example.ipynb`
 
 ![Open Github Notebook in Colab](docs/figures/colab_github.png)

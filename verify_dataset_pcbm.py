@@ -51,11 +51,12 @@ def run_linear_probe(args, train_data, test_data):
 
     print(set(train_labels))
     print(len(train_features), len(train_labels))
-    train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
+    
 
     if args.lam is None:
         #Get the best possible alpha (args.lam) using the validation set 
         # Define the parameter grid for grid search
+        train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
         param_grid = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
 
         best_score = -float('inf')

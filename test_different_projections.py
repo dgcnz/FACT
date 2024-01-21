@@ -1,14 +1,27 @@
+# This script has some functions that can be used to verify the results of PCBM with clip features
+# First run the comand below 
+# python learn_concepts_multimodal.py --backbone-name="clip:RN50" --classes=cifar10 --out-dir="artifacts/multimodal" --recurse=1
+# This script has only the "recurse" hyperparameter which we leave at its default value of 1.
+
+# The code will run a gridsearch over the hyperparameters of the method. In particular:
+# 1) lr
+# 2) lam
+# 3) alpha
+
 import argparse
 import os
 import pickle
 import numpy as np
 import torch
+
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, export
+from torch.utils.data import DataLoader, random_split
 
 
 def config():
@@ -18,27 +31,37 @@ def config():
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seed", default=42, type=int, help="Random seed")
+    parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
-    parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
-    parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
 
-    return parser.parse_args()
+    ## arguments for the different projection matrix weights
+    parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
+
+    parser.add_argument("--identity_proj", action="store_true", default=False, help="Whether to use identity projection matrix")
+    args = parser.parse_args()
+    args.seeds = [int(seed) for seed in args.seeds.split(',')]
+    return args
 
 
 def run_linear_probe(args, train_data, test_data):
+    print("START LINEAR PROBE...")
     train_features, train_labels = train_data
     test_features, test_labels = test_data
-    
+
+    print(set(train_labels))
+    print(len(train_features), len(train_labels))
+    train_features, val_features, train_labels, val_labels = train_test_split(train_features, train_labels, train_size= 0.8, stratify=None, random_state=args.seed)
+
+
     # We converged to using SGDClassifier. 
     # It's fine to use other modules here, this seemed like the most pedagogical option.
     # We experimented with torch modules etc., and results are mostly parallel.
     classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
                                alpha=args.lam, l1_ratio=args.alpha, verbose=0,
-                               penalty="elasticnet", max_iter=10000) # TODO: change to OLS package function such that I can do tests and stuff on it. essentially a logistic regression. 
+                               penalty="elasticnet", max_iter=5000)
     classifier.fit(train_features, train_labels)
 
     train_predictions = classifier.predict(train_features)
@@ -54,10 +77,7 @@ def run_linear_probe(args, train_data, test_data):
         cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == predictions[test_lbl_mask]).astype(float))
         cls_acc["train"][lbl] = np.mean(
             (train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
-        
-        # Print control via parser argument
-        if args.print_out == True:
-            print(f"{lbl}: {cls_acc['test'][lbl]}")
+        print(f"{lbl}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
@@ -67,9 +87,7 @@ def run_linear_probe(args, train_data, test_data):
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
-                                              
     return run_info, classifier.coef_, classifier.intercept_
-
 
 
 def main(args, concept_bank, backbone, preprocess):
@@ -102,14 +120,14 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
-    if (num_classes > 1) and (args.print_out == True):
-        # Prints the Top-5 Concept Weigths for each class if desired.
+    
+    if num_classes > 1:
+        # Prints the Top-5 Concept Weigths for each class.
         print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
-
+    return run_info
 
 if __name__ == "__main__":
     args = config()
@@ -118,10 +136,64 @@ if __name__ == "__main__":
     print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
     concept_bank = ConceptBank(all_concepts, args.device)
 
+    #to be completely robust to oversight, set all attributes (/ concept names) of the concept bank class to None
+    shape = concept_bank.vectors.shape
+
+    #change the following three attributes of the ConceptBank class
+    #self.cavs = concept_bank.vectors
+    #self.intercepts = concept_bank.intercepts -> seem svm based thing, why use these when you use clip concepts?
+    #self.norms = concept_bank.norms
+
+    if args.random_proj:
+        concept_bank.vectors = None
+        concept_bank.intercepts = None
+        concept_bank.norms = None
+        concept_bank.margin_info = None
+        print(concept_bank.vectors)
+
+        concept_bank.vectors = torch.randn(shape).to(args.device)
+        print(concept_bank.vectors)
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
+
+    elif args.identity_proj:
+        concept_bank.vectors = None
+        concept_bank.intercepts = None
+        concept_bank.norms = None
+        concept_bank.margin_info = None
+        print('identity projection used')
+        concept_bank.vectors = torch.eye(n=shape[1]).to(args.device) #(embedding dim x embedding dim identity matrix)
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+
+        concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
+
+    
+    print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
+
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     backbone.eval()
+    metric_list = []
+    og_out_dir = args.out_dir
 
-    # Execute main code
-    main(args, concept_bank, backbone, preprocess)
+    for seed in args.seeds:
+        print(f"Seed: {seed}")
+        args.seed = seed
+        args.out_dir = og_out_dir 
+        run_info = main(args, concept_bank, backbone, preprocess)
+
+        if "test_auc" in run_info:
+            print("auc used")
+            metric = run_info['test_auc']
+
+        else:
+            print("acc used")
+            metric = run_info['test_acc']
+
+        metric_list.append(metric)
+
+    
+    # export results
+    out_name = "verify_dataset_pcbm_h"
+    export.export_to_json(out_name, metric_list)
