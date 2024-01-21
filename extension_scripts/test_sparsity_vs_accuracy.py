@@ -24,6 +24,7 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--strengths", default=None, type=float, nargs='+', help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
+
     return parser.parse_args()
 
 

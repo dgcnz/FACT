@@ -35,6 +35,10 @@ def config():
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     #if one of the tree parameters below is set to None a grid search will be performed 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")

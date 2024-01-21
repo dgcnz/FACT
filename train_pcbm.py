@@ -25,6 +25,10 @@ def config():
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     return parser.parse_args()
 

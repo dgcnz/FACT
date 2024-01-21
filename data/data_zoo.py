@@ -107,7 +107,8 @@ def get_dataset(args, preprocess=None):
         from .constants import ESC_DIR
         meta_dir = os.path.join(ESC_DIR, "esc50.csv")
         train_loader, test_loader = load_esc_data(meta_dir, 
-                                                  batch_size=args.batch_size)
+                                                  batch_size=args.batch_size,
+                                                  testfold=args.escfold)
         
         # for the idx_to_class variable (need to read metadata table for this)
         df = pd.read_csv(meta_dir)
@@ -122,7 +123,8 @@ def get_dataset(args, preprocess=None):
         from .constants import US_DIR
         meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
         train_loader, test_loader = load_us_data(meta_dir, 
-                                                 batch_size=args.batch_size)
+                                                 batch_size=args.batch_size,
+                                                 testfold=args.usfolds)
         
         # for the idx_to_class variable (need to read metadata table for this)
         df = pd.read_csv(meta_dir)

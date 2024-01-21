@@ -36,6 +36,10 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     ## arguments for the different projection matrix weights
     parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
