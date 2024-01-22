@@ -1,23 +1,32 @@
+import sys
+sys.path.append("./models")
+
 import os
 import pandas as pd
 import torch
 import librosa
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+from torch.nn.functional import pad
 from .constants import US_DIR
+
 
 class US8KDataset(Dataset):
 
-    def __init__(self, datalist, transform=None, sample_rate:int=44100):
+    def __init__(self, datalist, transform=None, sample_rate:int=44100, max_len:int=176400):
         """
         Arguments:
         datalist: a list object instance returned by 'load_esc_data' function below
         transform: whether to apply any special transformation. Default = None
         sample_rate: the sampling rate of the audio data loaded (default is general standard)
+        max_len: due to the variations in audio file lengths, this is needed to ensure that
+        the dataloader contains only samples of the same length
+        This variable will then be used to model the target size of the outputs
         """
         self.data = datalist
         self.transform = transform
         self.sample_rate = sample_rate
+        self.max_len = max_len
 
     def __len__(self):
         return len(self.data)
@@ -34,6 +43,9 @@ class US8KDataset(Dataset):
         class_label = audio_data[1]
         if self.transform:
             audio = self.transform(audio)
+        
+        delta = [0, self.max_len - audio.size(dim=-1)]
+        audio = pad(audio, delta)
 
         return audio, class_label
 
@@ -88,7 +100,7 @@ def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 
 if __name__ == "__main__":
 
     meta_path = os.path.join(US_DIR, "UrbanSound8K.csv")
-    train_esc, test_esc = load_us_data(meta_path)
+    train_esc, test_esc = load_us_data(meta_path, transform=ToTensor1D())
 
     first_x, first_y = next(iter(train_esc))
     
