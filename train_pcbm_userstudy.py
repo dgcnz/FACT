@@ -107,6 +107,12 @@ def main(args, concept_bank, backbone, preprocess):
     if (num_classes > 1):
         # Prints the Top-10 Concept Weigths for each class if desired.
         print(posthoc_layer.analyze_classifier(k=10))
+        import pandas as pd
+        _, analysis_data = posthoc_layer.analyze_classifier_withResults(k=10)
+        df = pd.DataFrame(analysis_data)
+        csv_path = os.path.join(args.out_dir, args.dataset+"_weights.csv")
+        df.to_csv(csv_path, index=False)
+        print(f"Analysis saved to {csv_path}")
 
     print(f"Model saved to : {model_path}")
     print(run_info)
