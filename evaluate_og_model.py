@@ -13,6 +13,7 @@ import os
 import numpy as np
 import torch
 import clip
+import pytorch_lightning as pl
 
 from copy import deepcopy
 from tqdm import tqdm
@@ -26,6 +27,7 @@ from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
+
 
 
 def config():
@@ -44,10 +46,7 @@ def config():
     return args
 
 @torch.no_grad()
-def eval_model(args, model, loader, num_classes, use_clip=False, text_features=None):
-    if use_clip == True and text_features is None:
-        raise ValueError("Must pass text inputs if clip=False")
-
+def eval_model(args, model, loader, num_classes, use_clip=False):
     tqdm_loader = tqdm(loader)
 
     all_preds = []
@@ -57,8 +56,7 @@ def eval_model(args, model, loader, num_classes, use_clip=False, text_features=N
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         
         if use_clip:
-            preds = get_clip_output(args, model, batch_X, text_features)
-
+            preds = model(batch_X)
         else:
             out = model(batch_X)
             
@@ -79,58 +77,40 @@ def eval_model(args, model, loader, num_classes, use_clip=False, text_features=N
     
     return final_accuracy
 
-@torch.no_grad()
-def get_clip_output(args, model, batch_X, text_features):
 
-    # Calculate features
-    image_features = model.encode_image(batch_X).to(args.device)
-
-    # Pick the top 5 most similar labels for the image
-    image_features /= image_features.norm(dim=-1, keepdim=True)
-
-    similarity = (100.0 * image_features @ text_features.T)
-    preds = torch.argmax(similarity, dim = -1)
-
-    return preds
-
-@torch.no_grad()
 def cifar10(args):
     backbone, preprocess = get_model(args, backbone_name="clip:RN50", full_model=False)
     backbone = backbone.to(args.device)
     backbone.eval()
 
-    _, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     num_classes = len(classes)
     print(num_classes)
     print(classes)
 
-    text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(args.device)
-    text_features = backbone.encode_text(text_inputs)
-    text_features /= text_features.norm(dim=-1, keepdim=True)
+    #first apply linear probing and instantiate the classifier module 
 
-    results = eval_model(args, backbone, test_loader, num_classes, text_features = text_features, use_clip=True)
+
+    # the evaluate the model
+
+    results = eval_model(args, model, test_loader, num_classes, use_clip=True)
     print('final acc' + str(results))
 
     return results #average accuracy over the batches
 
 
-@torch.no_grad()
 def cifar100():
     pass
 
-@torch.no_grad()
 def ham10k():
     pass
 
-@torch.no_grad()
 def cub():
     pass
 
-@torch.no_grad()
 def isic():
     pass
 
-@torch.no_grad()
 def coco_stuff():
     pass
 
