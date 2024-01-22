@@ -1,6 +1,3 @@
-"""
-The class index mappings for only the target classes
-
 car: 3
 bus: 6
 handbag: 31
@@ -21,4 +18,3 @@ microwave: 78
 toaster: 80
 clock: 85
 hair drier: 89
-"""

@@ -75,16 +75,14 @@ def get_dataset(args, preprocess=None):
                           "skis", "clock", "sports ball", "remote", "snowboard",
                           "toaster", "hair drier", "tennis racket", "skateboard", "baseball glove"]
         
-        assert (args.target_class in target_classes), f"Target class not found: '{args.target_class}'"
-        
-        label_path = os.path.join(COCO_STUFF_DIR, "labels.txt")
+        label_path = "coco_target_indexes.txt"
         train_path = os.path.join(COCO_STUFF_DIR, "train2017")
         test_path = os.path.join(COCO_STUFF_DIR, "val2017") # It is presumed that the validation set was used as the test one
         train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
         test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
 
-        train_loader = load_coco_data(train_path, train_annot, transform=preprocess)
-        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess)
+        train_loader = load_coco_data(train_path, train_annot, transform=preprocess, target=args.target, n_samples=500)
+        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess, target=args.target, n_samples=250)
         idx_to_class = cid_to_class(label_path, target_classes)
 
 
