@@ -244,7 +244,7 @@ if __name__ == "__main__":
         learn_conceptbank(args, all_concepts, args.classes)
 
     elif args.classes == "broden":
-        from .constants import BRODEN_CONCEPTS
+        from data.constants import BRODEN_CONCEPTS
         concept_loaders = {}
         concepts = [c for c in os.listdir(BRODEN_CONCEPTS) if os.path.isdir(os.path.join(BRODEN_CONCEPTS, c))]
         
