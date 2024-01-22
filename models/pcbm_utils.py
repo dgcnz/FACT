@@ -89,7 +89,46 @@ class PosthocLinearCBM(nn.Module):
 
         analysis = "\n".join(output)
         return analysis
+    
+    def analyze_classifier_withResults(self, k=5, print_lows=False):
+        weights = self.classifier.weight.clone().detach()
+        output = []
+        analysis_data = []
 
+        if len(self.idx_to_class) == 2:
+            weights = [weights.squeeze(), weights.squeeze()]
+        
+        for idx, cls in self.idx_to_class.items():
+            cls_weights = weights[idx]
+            topk_vals, topk_indices = torch.topk(cls_weights, k=k)
+            topk_indices = topk_indices.detach().cpu().numpy()
+            topk_concepts = [self.names[j] for j in topk_indices]
+            for j, c in enumerate(topk_concepts):
+                analysis_data.append({
+                    'class': cls,
+                    'rank': j+1,
+                    'concept': c,
+                    'weight': topk_vals[j].item()
+                })
+            analysis_str = [f"Class : {cls}"]
+            for j, c in enumerate(topk_concepts):
+                analysis_str.append(f"\t {j+1} - {c}: {topk_vals[j]:.3f}")
+            analysis_str = "\n".join(analysis_str)
+            output.append(analysis_str)
+
+            if print_lows:
+                topk_vals, topk_indices = torch.topk(-cls_weights, k=k)
+                topk_indices = topk_indices.detach().cpu().numpy()
+                topk_concepts = [self.names[j] for j in topk_indices]
+                analysis_str = [f"Class : {cls}"]
+                for j, c in enumerate(topk_concepts):
+                    analysis_str.append(f"\t {j+1} - {c}: {-topk_vals[j]:.3f}")
+                analysis_str = "\n".join(analysis_str)
+                output.append(analysis_str)
+
+        analysis = "\n".join(output)
+        return analysis, analysis_data
+    
     def get_sparsity(self):
         return (self.classifier.weight > 0).sum().item()
 
