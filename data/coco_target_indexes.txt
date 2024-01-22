@@ -1,0 +1,24 @@
+"""
+The class index mappings for only the target classes
+
+car: 3
+bus: 6
+handbag: 31
+skis: 35
+snowboard: 36
+sports ball: 37
+baseball glove: 40
+skateboard: 41
+tennis racket: 43
+wine glass: 46
+cup: 47
+spoon: 50
+apple: 53
+potted plant: 64
+remote: 75
+keyboard: 76
+microwave: 78
+toaster: 80
+clock: 85
+hair drier: 89
+"""
