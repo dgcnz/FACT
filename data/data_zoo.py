@@ -83,7 +83,7 @@ def get_dataset(args, preprocess=None):
         train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
         test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
 
-        train_loader = load_coco_data(train_path, train_annot, transform=preprocess) # Not implemented yet ...
+        train_loader = load_coco_data(train_path, train_annot, transform=preprocess)
         test_loader  = load_coco_data(test_path, test_annot, transform=preprocess)
         idx_to_class = cid_to_class(label_path, target_classes)
 
@@ -116,6 +116,7 @@ def get_dataset(args, preprocess=None):
         classes = list(df['category'])
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
+        classes = list(idx_to_class.values())
 
 
     elif args.dataset.lower() == "us8k":
