@@ -123,7 +123,7 @@ def get_dataset(args, preprocess=None):
                 item = self.dataset[idx]
                 image = item['image']
                 label = item['label']
-                return image, label
+                return self.transform(image), label
             
         train_dataset = PCBMSurveyDataset(dataset['train'])
         test_dataset = PCBMSurveyDataset(dataset['test'])
