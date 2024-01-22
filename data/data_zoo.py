@@ -99,8 +99,41 @@ def get_dataset(args, preprocess=None):
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
 
+    elif 'task' in args.dataset:
+        from datasets import load_dataset
+        from torch.utils.data import Dataset, DataLoader
+        from torchvision import transforms
+
+        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.token)
+
+        transform = transforms.Compose([
+          transforms.Resize((224, 224)),
+          transforms.ToTensor(),
+        ])
+
+        class PCBMSurveyDataset(Dataset):
+            def __init__(self, dataset):
+                self.dataset = dataset
+                self.transform  = transform
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def __getitem__(self, idx):
+                item = self.dataset[idx]
+                image = item['image']
+                label = item['label']
+                return self.transform(image), label
+            
+        train_dataset = PCBMSurveyDataset(dataset['train'])
+        test_dataset = PCBMSurveyDataset(dataset['test'])
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+        idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
+        classes = dataset['train'].features['label'].names
+
     else:
         raise ValueError(args.dataset)
     
     return train_loader, test_loader, idx_to_class, classes
-
