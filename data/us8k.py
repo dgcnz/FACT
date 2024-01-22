@@ -1,6 +1,3 @@
-import sys
-sys.path.append("./models")
-
 import os
 import pandas as pd
 import torch
