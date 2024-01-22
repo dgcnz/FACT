@@ -44,31 +44,29 @@ def config():
     return args
 
 @torch.no_grad()
-def eval_model(args, model, loader, num_classes, clip=False, text_inputs=None):
-    #if clip == True and text_inputs is None:
-    #    raise ValueError("Must pass text inputs if clip=False")
+def eval_model(args, model, loader, num_classes, use_clip=False, text_features=None):
+    if use_clip == True and text_features is None:
+        raise ValueError("Must pass text inputs if clip=False")
 
-    epoch_summary = {"Accuracy": AverageMeter()}
     tqdm_loader = tqdm(loader)
-    computer = MetricComputer(n_classes=num_classes)
+
     all_preds = []
     all_labels = []
     
     for batch_X, batch_Y in tqdm(loader):
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         
-        if clip:
-            out = get_clip_output(args, model, batch_X, text_inputs)
+        if use_clip:
+            preds = get_clip_output(args, model, batch_X, text_features)
+
         else:
             out = model(batch_X)
-
-        all_preds.append(out.detach().cpu().numpy())
+            
+        all_preds.append(preds.detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
-        
-        metrics = computer(out, batch_Y) 
-        epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
-        summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
-        summary_text = "Eval - " + " ".join(summary_text)
+
+        current_accuracy = torch.sum(preds == batch_Y)/batch_Y.shape[0]
+        summary_text = "Eval - " + f"{current_accuracy}"
         tqdm_loader.set_description(summary_text)
     
     all_preds = np.concatenate(all_preds, axis=0)
@@ -76,24 +74,24 @@ def eval_model(args, model, loader, num_classes, clip=False, text_inputs=None):
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
         return auc
+
+    final_accuracy = np.mean(all_preds == all_labels)
     
-    return epoch_summary["Accuracy"]
+    return final_accuracy
 
 @torch.no_grad()
-def get_clip_output(args, model, batch_X, text_inputs):
+def get_clip_output(args, model, batch_X, text_features):
 
     # Calculate features
-    image_features = model.encode_image(batch_X)
-    text_features = model.encode_text(text_inputs)
+    image_features = model.encode_image(batch_X).to(args.device)
 
     # Pick the top 5 most similar labels for the image
     image_features /= image_features.norm(dim=-1, keepdim=True)
-    text_features /= text_features.norm(dim=-1, keepdim=True)
-    similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
-    values, indices = similarity[0].topk(1)
 
-    return indices
-    
+    similarity = (100.0 * image_features @ text_features.T)
+    preds = torch.argmax(similarity, dim = -1)
+
+    return preds
 
 @torch.no_grad()
 def cifar10(args):
@@ -103,12 +101,17 @@ def cifar10(args):
 
     _, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     num_classes = len(classes)
+    print(num_classes)
+    print(classes)
 
     text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(args.device)
+    text_features = backbone.encode_text(text_inputs)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
 
-    results = eval_model(args, backbone, test_loader, num_classes, text_inputs)
+    results = eval_model(args, backbone, test_loader, num_classes, text_features = text_features, use_clip=True)
+    print('final acc' + str(results))
 
-    return results.avg #average accuracy over the batches
+    return results #average accuracy over the batches
 
 
 @torch.no_grad()
