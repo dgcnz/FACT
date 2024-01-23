@@ -186,7 +186,7 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir 
-        run_info = test_runs(args, main, concept_bank, backbone, preprocess)
+        run_info = test_runs(args, main, concept_bank, backbone, preprocess, mode="vdr")
 
         if "test_auc" in run_info:
             print("AUC used")

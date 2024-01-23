@@ -13,7 +13,7 @@ import os
 import pickle
 import numpy as np
 import torch
-
+from training_tools.utils import test_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -192,7 +192,7 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir 
-        run_info = main(args, concept_bank, backbone, preprocess)
+        run_info = test_runs(args, main, concept_bank, backbone, preprocess, mode="vcr")
 
         if "test_auc" in run_info:
             print("AUC used")
@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
         metric_list.append(metric)
 
-    
     # export results
-    out_name = "verify_dataset_pcbm_h"
+    out_name = "test_different_projections"
     export.export_to_json(out_name, metric_list)
+    print("Verification results exported!")

@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 import torch
 import torch.nn as nn
+from training_tools.utils import test_runs
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
@@ -158,7 +159,8 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir + "_" + str(seed)
-        run_info = main(args, backbone, preprocess)
+        run_info = test_runs(args, main, concept_bank="", 
+                             backbone=backbone, preprocess=preprocess, mode="vch")
         metric = run_info['test_acc']
 
         if isinstance(metric, (int, float)):
