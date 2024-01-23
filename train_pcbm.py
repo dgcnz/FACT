@@ -84,15 +84,23 @@ def main(args, concept_bank, backbone, preprocess):
     # See `learn_concepts_dataset.py` for details.
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     num_classes = len(classes)
+
+    print(concept_bank.vectors, "concept bank vectors")
     
     # Initialize the PCBM module.
     posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
     posthoc_layer = posthoc_layer.to(args.device)
-
+    
+    print('concept bank vectors', concept_bank.vectors)
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+
+    print(train_projs, "train projs")
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
+
+    print(weights, "weights")
+    print(train_projs, "proj")
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
