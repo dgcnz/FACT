@@ -2,7 +2,8 @@ seed_everything: 42
 model:
   n_classes: 5
   lr: 0.05
-  weight_decay: 0.002
+  lam: 0.05
+  alpha: 0.99
   n_concepts: 170  # Broden concepts
 data:
   projector: 
@@ -17,13 +18,9 @@ data:
   test_batch_size: 8
   preprocessor_name: CLIP_RESNET50
 trainer:
+  deterministic: True
   max_epochs: 20
   check_val_every_n_epoch: 1
-  # logger:
-  #   class_path: lightning.pytorch.loggers.WandbLogger
-  #   init_args:
-  #     project: model-editing-clip-resnet50
-  #     save_dir: artifacts
   callbacks:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
