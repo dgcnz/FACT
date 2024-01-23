@@ -96,6 +96,8 @@ class LightningScript(object):
         logger.info(f"RUNNING: {cmd}")
         run = subprocess.run(cmd, capture_output=True, text=True)
         logger.info(f"EXIT CODE: {run.returncode}")
+        if run.returncode != 0:
+            logger.error(f"FAILED: {run.stderr}")
         return run
 
     def _get_modelpath_from_fit_run(self, run: subprocess.CompletedProcess) -> Path:
