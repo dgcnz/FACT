@@ -24,7 +24,9 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--strengths", default=None, type=float, nargs='+', help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--target", default=3, type=int, help="target index for cocostuff")
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
 
     return parser.parse_args()
 
@@ -164,12 +166,12 @@ if __name__ == "__main__":
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
-            print("auc used")
+            print("AUC used")
             metric_name = "AUC"
             metric = run_info['test_auc']
 
         else:
-            print("acc used")
+            print("Accuracy used")
             metric_name = "Accuracy"
             metric = run_info['test_acc']
 

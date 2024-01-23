@@ -4,7 +4,8 @@ import os
 import pandas as pd
 
 
-def get_dataset(args, preprocess=None):
+def get_dataset(args, target:int, preprocess=None):
+    # note: target is only needed for COCO-Stuff due to the 20 datasets involved
     if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
@@ -53,7 +54,7 @@ def get_dataset(args, preprocess=None):
         classes = [a.split(".")[1].strip() for a in classes]
         idx_to_class = {i: classes[i] for i in range(num_classes)}
         classes = [classes[i] for i in range(num_classes)]
-        print(len(classes), "num classes for cub")
+        print(len(classes), "number of classes for CUB")
         print(len(train_loader.dataset), "training set size")
         print(len(test_loader.dataset), "test set size")
         
@@ -81,9 +82,14 @@ def get_dataset(args, preprocess=None):
         train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
         test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
 
-        train_loader = load_coco_data(train_path, train_annot, transform=preprocess, target=args.target, n_samples=500)
-        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess, target=args.target, n_samples=250)
+        train_loader = load_coco_data(train_path, train_annot, transform=preprocess, target=target, n_samples=500)
+        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess, target=target, n_samples=250)
         idx_to_class = cid_to_class(label_path, target_classes)
+
+        # For printing
+        assert (target in idx_to_class.keys()), "This target index is not supported. Please check again what was \
+                                                 inputted into --target."
+        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[target]}'")
 
 
     elif args.dataset.lower() == "siim_isic":

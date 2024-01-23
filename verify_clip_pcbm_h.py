@@ -4,7 +4,6 @@ import pickle
 import numpy as np
 import torch
 import torch.nn as nn
-
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
@@ -28,7 +27,9 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
-    parser.add_argument("--target", default=3, type=int, help="target index for cocostuff")
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
     parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
                     "you can determine the fold to use for testing.")
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
@@ -98,13 +99,13 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["args"] = args
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+        print("Final Test Accuracy:", latest_info["test_acc"])
 
     return latest_info
 
 
-def main(args, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+def main(args, target, backbone, preprocess):
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
@@ -161,14 +162,14 @@ if __name__ == "__main__":
         metric = run_info['test_acc']
 
         if isinstance(metric, (int, float)):
-            print("auc used")
+            print("AUC used")
             metric_list.append(metric)
 
         else:
-            print("acc used")
+            print("Accuracy used")
             metric_list.append(metric.avg)
 
-    
     # export results
     out_name = "verify_clip_pcbm_h"
     export.export_to_json(out_name, metric_list)
+    print("Verification results exported!")

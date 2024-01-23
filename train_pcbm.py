@@ -3,6 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
+from training_tools.utils import train_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
@@ -15,6 +16,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    # For the above: Please make sure to output the COCO-Stuff results in "outdir/coco-stuff"
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
@@ -25,7 +27,9 @@ def config():
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
-    parser.add_argument("--target", default=3, type=int, help="target index for cocostuff")
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
     parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
                     "you can determine the fold to use for testing.")
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
@@ -76,14 +80,14 @@ def run_linear_probe(args, train_data, test_data):
     return run_info, classifier.coef_, classifier.intercept_
 
 
-def main(args, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+def main(args, target, concept_bank, backbone, preprocess):
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
     
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
     # See `learn_concepts_dataset.py` for details.
-    conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
+    conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0]
     num_classes = len(classes)
     
     # Initialize the PCBM module.
@@ -98,11 +102,12 @@ def main(args, concept_bank, backbone, preprocess):
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
-    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
+    model_id = f"{model_id}_target_{target}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
     torch.save(posthoc_layer, model_path)
 
-    run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
+    run_info_file = os.path.join(args.out_dir, f"rinf_pcbm_{model_id}.pkl")
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
@@ -128,4 +133,5 @@ if __name__ == "__main__":
     backbone.eval()
 
     # Execute main code
-    main(args, concept_bank, backbone, preprocess)
+    train_runs(args, main, concept_bank, backbone, preprocess, mode="r")
+    

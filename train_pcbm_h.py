@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import sys
 import torch.nn as nn
-
+from training_tools.utils import train_runs
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
@@ -31,7 +31,9 @@ def config():
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
-    parser.add_argument("--target", default=3, type=int, help="target index for cocostuff")
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
     parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
                     "you can determine the fold to use for testing.")
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
@@ -98,18 +100,13 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["args"] = args
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+        print("Final Test Accuracy:", latest_info["test_acc"])
 
     return latest_info
 
 
-def main(args, backbone, preprocess):
-
-    if args.print_out == False: # For print control
-        os.environ["TQDM_DISABLE"] = "1"
-
-
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+def main(args, target, backbone, preprocess):
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
@@ -142,6 +139,9 @@ def main(args, backbone, preprocess):
 
 if __name__ == "__main__":    
     args = config()
+    if args.print_out == False: # For print control
+        os.environ["TQDM_DISABLE"] = "1"
+
     # Load the PCBM
     posthoc_layer = torch.load(args.pcbm_path)
     posthoc_layer = posthoc_layer.eval()
@@ -153,4 +153,5 @@ if __name__ == "__main__":
     backbone.eval()
 
     # Execute main code
-    main(args, backbone, preprocess)
+    concept_bank = "" # Dummy variable
+    train_runs(args, main, backbone, concept_bank, preprocess, mode='h')
