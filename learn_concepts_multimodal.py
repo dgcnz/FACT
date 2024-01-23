@@ -284,6 +284,18 @@ if __name__ == "__main__":
         ]
 
         learn_conceptbank(args, all_concepts, args.classes, model)
+    
+    elif args.classes == "audioset":
+        import json
+
+        # Read the JSON file
+        with open('concepts\ontology.json', 'r') as file:
+            data = json.load(file)
+
+        # Extract the names into a list
+        names_list = [entry['name'] for entry in data]
+
+        learn_conceptbank(args, names_list, args.classes, model)
 
     else:
         raise ValueError(f"Unknown classes: '{args.classes}'. Define your dataset here!")
