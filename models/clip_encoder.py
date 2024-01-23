@@ -15,6 +15,8 @@ class CLIPImageEncoder(torch.nn.Module):
         """Return image embeddings from batch of images."""
         with torch.no_grad():
             if isinstance(x, torch.Tensor):
+                print(f"INPUT DEVICE {x.device}")
+                print(f"MODEL DEVICE {next(self.model.visual.parameters()).device}")
                 return self.model.encode_image(x)
             else:
                 return torch.stack([self.model.encode_image(i) for i in x], dim=0)

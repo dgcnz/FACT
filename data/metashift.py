@@ -29,13 +29,14 @@ class NNProjector(torch.nn.Module):
         return concept_weights.T
 
 
-class CLIPPreprocessor(object):
+class CLIPPreprocessor(torch.nn.Module):
     def __init__(self, clip_model_name: str):
         super().__init__()
         _, self.preprocess = clip.load(clip_model_name, jit=True)
 
     def __call__(self, x: list[Image.Image]) -> torch.Tensor:
-        return torch.stack([self.preprocess(img) for img in x])
+        with torch.no_grad():
+            return torch.stack([self.preprocess(img) for img in x])
 
 
 class PreprocessorEnum(Enum):
