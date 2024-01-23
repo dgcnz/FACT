@@ -69,6 +69,14 @@ class LightningScript(object):
         basic_args = ["--trainer.accelerator", device, "--seed_everything", str(seed)]
         logger_args = self._get_logger_args(task_name=task_name, seed=seed)
         return basic_args + logger_args
+    
+    def _validate_output(self, run: subprocess.CompletedProcess): 
+        logger.info(f"EXIT CODE: {run.returncode}")
+        if run.returncode != 0:
+            logger.error(f"FAILED: {run.stderr}")
+        else:
+            logger.info(f"SUCCESS")
+
 
     def fit(
         self, task_name: str, config_paths: list[str], device: str, seed: int
@@ -78,7 +86,7 @@ class LightningScript(object):
         cmd = self.entrypoint + ["fit"] + config_args + extra_args
         logger.info(f"RUNNING: {cmd}")
         run = subprocess.run(cmd, capture_output=True, text=True)
-        logger.info(f"EXIT CODE: {run.returncode}")
+        self._validate_output(run)
         return run
 
     def test(
@@ -95,9 +103,7 @@ class LightningScript(object):
         cmd = self.entrypoint + ["test"] + config_args + extra_args + ckpt_args
         logger.info(f"RUNNING: {cmd}")
         run = subprocess.run(cmd, capture_output=True, text=True)
-        logger.info(f"EXIT CODE: {run.returncode}")
-        if run.returncode != 0:
-            logger.error(f"FAILED: {run.stderr}")
+        self._validate_output(run)
         return run
 
     def _get_modelpath_from_fit_run(self, run: subprocess.CompletedProcess) -> Path:
