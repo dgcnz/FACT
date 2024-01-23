@@ -23,9 +23,10 @@ def get_projections(args, backbone, posthoc_layer, loader):
         if "clip" in args.backbone_name.lower():
             embeddings = backbone.encode_image(batch_X).detach().float()
         elif "audio" in args.backbone_name.lower():
-            embeddings = backbone.encode_audio(batch_X).detach().float()
+            ((embeddings, _, _), _), _ = backbone(audio=batch_X)
         else:
             embeddings = backbone(batch_X).detach()
+        
         projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy() # why does the intercept matter for the clip case?
         embeddings = embeddings.detach().cpu().numpy()
         if all_embs is None:

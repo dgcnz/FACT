@@ -118,9 +118,12 @@ def get_dataset(args, target:int, preprocess=None):
         df = pd.read_csv(meta_dir)
         indexes = list(df['target'])
         classes = list(df['category'])
+
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
         classes = list(idx_to_class.values())
+
+
 
 
     elif args.dataset.lower() == "us8k":

@@ -131,9 +131,11 @@ def learn_conceptbank(args, concept_list, scenario, model):
         # Note: You can try other forms of prompting, e.g. "photo of {concept}" etc. here.
         if args.backbone_name.lower() == "audio":
             text = [[concept]]
+            ((_, _, text_features), _), _ = model(text=text)
         else:
             text = clip.tokenize(f"{concept}").to(args.device)
-        text_features = model.encode_text(text).cpu().numpy()
+            text_features = model.encode_text(text).cpu().numpy()
+        
         text_features = text_features/np.linalg.norm(text_features)
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
         # `ConceptBank` class (see `concepts/concept_utils.py`).
