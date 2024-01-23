@@ -1,0 +1,34 @@
+seed_everything: 42
+model:
+  n_classes: 5
+  lr: 0.05
+  weight_decay: 0.002
+  n_concepts: 170  # Broden concepts
+data:
+  projector: 
+    class_path: data.metashift.NNProjector
+    init_args: 
+      concept_bank_path: artifacts/outdir/broden_clip_RN50_10.0_50.pkl
+      backbone:
+        class_path: models.clip_encoder.CLIPImageEncoder
+        init_args:
+          model_name: RN50
+  train_batch_size: 8
+  test_batch_size: 8
+  preprocessor_name: CLIP_RESNET50
+trainer:
+  max_epochs: 20
+  check_val_every_n_epoch: 1
+  # logger:
+  #   class_path: lightning.pytorch.loggers.WandbLogger
+  #   init_args:
+  #     project: model-editing-clip-resnet50
+  #     save_dir: artifacts
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        save_last: True
+        verbose: True
+
+
+

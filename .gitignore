@@ -4,3 +4,5 @@
 artifacts
 **/__pycache__/
 out/
+lightning_logs/
+old_logs

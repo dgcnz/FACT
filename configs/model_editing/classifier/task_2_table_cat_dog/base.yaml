@@ -1,0 +1,8 @@
+data:
+  task_name: task_2_table_cat_dog
+# trainer:
+#   logger:
+#     class_path: lightning.pytorch.loggers.TensorBoardLogger
+#     init_args:
+#       save_dir: lightning_logs/
+#       name: task_2_table_cat_dog

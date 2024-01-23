@@ -1,4 +1,5 @@
 import torch
+import pickle
 from collections import defaultdict
 import numpy as np
 from sklearn.svm import SVC
@@ -59,6 +60,12 @@ class ConceptBank:
                                                     requires_grad=False).float().to(device)
         self.concept_info.concept_names = concept_names
         print("Concept Bank is initialized.")
+
+    @classmethod
+    def from_pickle(cls, pickle_path: str, device: str):
+        with open(pickle_path, "rb") as f:
+            concept_dict = pickle.load(f)
+        return cls(concept_dict, device)
 
     def __getattr__(self, item):
         return self.concept_info[item]
