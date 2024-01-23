@@ -36,6 +36,7 @@ class US8KDataset(Dataset):
         audio_path = audio_data[0]
         audio, _ = librosa.load(audio_path, sr=self.sample_rate, dtype=np.float32)
         audio = audio.reshape(1, -1)
+        audio = torch.from_numpy(audio)
 
         class_label = audio_data[1]
         if self.transform:
@@ -97,9 +98,9 @@ def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 
 if __name__ == "__main__":
 
     meta_path = os.path.join(US_DIR, "UrbanSound8K.csv")
-    train_esc, test_esc = load_us_data(meta_path, transform=ToTensor1D())
+    train_esc, test_esc = load_us_data(meta_path)
 
     first_x, first_y = next(iter(train_esc))
     
-    print(first_x)
+    print(first_x.size())
     print(first_y)

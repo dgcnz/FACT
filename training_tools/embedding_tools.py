@@ -14,7 +14,7 @@ def unpack_batch(batch):
         raise ValueError()
     
 
-@torch.no_grad() # Probably need to make if statement so audio data gets put in as list
+@torch.no_grad()
 def get_projections(args, backbone, posthoc_layer, loader):
     all_projs, all_embs, all_lbls = None, None, None
     for batch in tqdm(loader):

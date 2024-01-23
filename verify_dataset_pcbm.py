@@ -34,6 +34,7 @@ def config():
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
+    parser.add_argument("--target", default=3, type=int, help="target index for cocostuff")
     parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
                     "you can determine the fold to use for testing.")
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
