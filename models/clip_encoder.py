@@ -6,17 +6,15 @@ from clip.model import CLIP
 class CLIPImageEncoder(torch.nn.Module):
     clip_model: CLIP
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, device: str = "cpu"):
         super().__init__()
-        clip_model, _ = clip.load(model_name, jit=False)
+        clip_model, _ = clip.load(model_name, jit=False, device=device)
         self.model = clip_model
 
     def forward(self, x: list[torch.Tensor] | torch.Tensor) -> torch.Tensor:
         """Return image embeddings from batch of images."""
         with torch.no_grad():
             if isinstance(x, torch.Tensor):
-                print(f"INPUT DEVICE {x.device}")
-                print(f"MODEL DEVICE {next(self.model.visual.parameters()).device}")
                 return self.model.encode_image(x)
             else:
                 return torch.stack([self.model.encode_image(i) for i in x], dim=0)

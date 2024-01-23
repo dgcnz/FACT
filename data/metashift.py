@@ -30,9 +30,9 @@ class NNProjector(torch.nn.Module):
 
 
 class CLIPPreprocessor(torch.nn.Module):
-    def __init__(self, clip_model_name: str):
+    def __init__(self, clip_model_name: str, device: str = "cpu"):
         super().__init__()
-        _, self.preprocess = clip.load(clip_model_name, jit=True)
+        _, self.preprocess = clip.load(clip_model_name, jit=True, device=device)
 
     def __call__(self, x: list[Image.Image]) -> torch.Tensor:
         with torch.no_grad():
