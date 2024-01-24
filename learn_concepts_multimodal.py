@@ -289,13 +289,56 @@ if __name__ == "__main__":
         import json
 
         # Read the JSON file
-        with open('concepts\ontology.json', 'r') as file:
+        with open('concepts/ontology.json', 'r') as file:
             data = json.load(file)
 
         # Extract the names into a list
-        names_list = [entry['name'] for entry in data]
+        all_concepts = [entry['name'] for entry in data]
 
-        learn_conceptbank(args, names_list, args.classes, model)
+    elif args.classes == "audioset+us8k+ecs50":
+        import json
+        from data.constants import ESC_DIR
+        
+        # Read the JSON file
+        with open('concepts/ontology.json', 'r') as file:
+            data = json.load(file)
+
+        # Extract the names into a list
+        all_concepts = [entry['name'] for entry in data]
+
+        all_concepts.append([
+        # The four main concepts (level one)
+        'Human', 'Nature', 'Mechanical', 'Music',
+
+        # Nodes directly below main concepts (level two)
+        'Voice', 'Movement', 'Elements', 'Animals', 'Plants',
+        'Construction', 'Ventilation', 'Non-motor Vehicle',
+        'Signals', 'Motor Vehicle', 'Non-amplified Music', 'Amplified Music',
+
+        # Nodes directly below level two concepts (level three)
+        'Bicycle', 'Skateboard', 'Marine', 'Rail', 'Road', 'Air',
+        'Live Music', 'Recorded Music',
+
+        # Nodes directly below level three concepts (level four)
+        'Boat', 'Train', 'Subway', 'Car', 'Motorcycle', 'Bus', 'Truck'
+        ])
+
+        meta_dir = os.path.join(ESC_DIR, "esc50.csv")
+        df = pd.read_csv(meta_dir)
+
+        all_classes = list(set(df['category']))
+        all_concepts = get_concept_data(all_classes)
+        all_concepts = clean_concepts(all_concepts)
+        all_concepts = all_concepts.append(list(set(all_concepts).difference(set(all_classes))))
+
+        # If we'd like to recurse in the conceptnet graph, specify `recurse > 1`.
+        for i in range(1, args.recurse):
+            all_concepts = get_concept_data(all_concepts)
+            all_concepts = list(set(all_concepts))
+            all_concepts = clean_concepts(all_concepts)
+            all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
+        learn_conceptbank(args, all_concepts, args.classes, model)
 
     else:
         raise ValueError(f"Unknown classes: '{args.classes}'. Define your dataset here!")
