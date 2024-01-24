@@ -9,7 +9,7 @@ CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
 # COCO-Stuff Constants
 # COCO-Stuff data is obtained from : https://github.com/nightrome/cocostuff
-# The dataset used in this project is from : https://drive.google.com/file/d/1gkOF4CO-zBA9mXWpcJN-TDtigVgNzx_9/view?usp=sharing
+# The dataset used in this project is from : https://drive.google.com/file/d/1RW8hAjVF61FfPpkTYwJP-dJPlsDpTXP_/view?usp=drive_link
 COCO_STUFF_DIR = "artifacts/data/COCO_STUFF"
 
 # Derm data constants
