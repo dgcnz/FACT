@@ -27,21 +27,23 @@ class COCODataset(Dataset):
         img_data = self.data[idx]
         img_path = os.path.join(COCO_STUFF_DIR, img_data[0])
         img = Image.open(img_path).convert('RGB')
-        img = transforms.ToTensor()(img)
         class_label = img_data[1]
         if self.transform:
             img = self.transform(img)
 
         return img, class_label
 
-# function for converting 'coco_target_indexes.txt" to a dict
-def cid_to_class(pathtxt, target_labs): # "cid = COCO ID"
+# function for converting 'coco_target_indexes.txt" to a dict for binary classification
+def cid_to_class(pathtxt, target_labs, target_idx): # "cid = COCO ID"
     labeldict = {}
     with open(pathtxt) as f:
         for line in f.readlines():
-            idx, label = line.strip("\n").split(": ")
+            label, idx = line.strip("\n").split(": ")
             if (label in target_labs) or (target_labs is None):
-                labeldict[idx] = label
+                if int(idx) == target_idx:
+                   labeldict[1] = label
+                else:
+                   labeldict[0] = 'other'
 
     return labeldict
 

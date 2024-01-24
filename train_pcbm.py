@@ -3,6 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
+from re import sub
 from training_tools.utils import train_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
@@ -90,22 +91,20 @@ def main(args, target, concept_bank, backbone, preprocess):
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0]
     num_classes = len(classes)
 
-    print(concept_bank.vectors, "concept bank vectors")
-    
     # Initialize the PCBM module.
     posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
     posthoc_layer = posthoc_layer.to(args.device)
-    
-    print('concept bank vectors', concept_bank.vectors)
+
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
-
-    print(train_projs, "train projs")
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
 
-    print(weights, "weights")
-    print(train_projs, "proj")
+    if args.print_out == True:
+        print(concept_bank.vectors, "concept bank vectors")
+        print(train_projs, "train projs")
+        print(weights, "weights")
+        print(train_projs, "proj")
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
@@ -113,6 +112,7 @@ def main(args, target, concept_bank, backbone, preprocess):
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
     model_id = f"{model_id}_target_{target}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+    model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)
 
     run_info_file = os.path.join(args.out_dir, f"rinf_pcbm_{model_id}.pkl")

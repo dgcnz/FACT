@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix
-from utils import *
+from .utils import *
 from .embedding_tools import load_or_compute_projections
 
 
