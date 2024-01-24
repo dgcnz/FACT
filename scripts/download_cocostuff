@@ -11,8 +11,6 @@ curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO
 
 curl http://images.cocodataset.org/annotations/annotations_trainval2017.zip --output artifacts/data/COCO_STUFF_ANNOT.zip
 
-curl https://raw.githubusercontent.com/nightrome/cocostuff/master/labels.txt --output artifacts/data/COCO_STUFF/labels.txt
-
 # extract data
 
 unzip artifacts/data/COCO_STUFF_TRAIN.zip -d artifacts/data/COCO_STUFF
