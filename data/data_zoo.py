@@ -107,6 +107,8 @@ def get_dataset(args, preprocess=None):
         dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.token)
 
         transform = transforms.Compose([
+          #we have some grayscale images, convert them to RGB
+          transforms.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
           transforms.Resize((224, 224)),
           transforms.ToTensor(),
         ])
