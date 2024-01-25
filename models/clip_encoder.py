@@ -21,12 +21,13 @@ class CLIPImageEncoder(torch.nn.Module):
 
 
 class CLIPClassifier(torch.nn.Module):
-    def __init__(self, model_name: str, n_classes: int):
+    def __init__(self, model_name: str, n_classes: int, grads=False):
         super().__init__()
         self.backbone = CLIPImageEncoder(model_name=model_name)
+        features_dtype = self.backbone.model.ln_final.weight.dtype
         self.classifier = torch.nn.Linear(
-            self.backbone.clip_model.transformer.width, n_classes
-        )
+            self.backbone.model.ln_final.weight.size(0), n_classes
+        ).to(dtype=features_dtype)
 
     def forward(self, x: list[torch.Tensor] | torch.Tensor) -> torch.Tensor:
         with torch.no_grad():

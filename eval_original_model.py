@@ -12,43 +12,39 @@ import argparse
 import os
 import numpy as np
 import torch
-import clip
 import pytorch_lightning as pl
-
 from copy import deepcopy
 from tqdm import tqdm
-from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 from scipy.special import softmax
 from data import get_dataset
 from concepts import ConceptBank
-from models import PosthocLinearCBM, get_model
+from models import get_model, clip_pl
 from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
 
 
-
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", default="artifacts/outdir", type=str, help="Output folder for model/run info.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
-
-    parser.add_argument("--datasets", default=None, nargs='+', type=str)
+    parser.add_argument("--datasets", default=['cifar10'], nargs='+', type=str)
     parser.add_argument("--eval_all", action="store_true", default=False)
-
+    parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
+    parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
+
     return args
 
 @torch.no_grad()
 def eval_model(args, model, loader, num_classes, use_clip=False):
     tqdm_loader = tqdm(loader)
-
     all_preds = []
     all_labels = []
     
@@ -78,40 +74,38 @@ def eval_model(args, model, loader, num_classes, use_clip=False):
     return final_accuracy
 
 
-def cifar10(args):
-    backbone, preprocess = get_model(args, backbone_name="clip:RN50", full_model=False)
-    backbone = backbone.to(args.device)
-    backbone.eval()
+def eval_cifar(args):
+    _ , preprocess = get_model(args, backbone_name="clip:RN50", full_model=False)
 
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     num_classes = len(classes)
-    print(num_classes)
-    print(classes)
+    print("Evaluating  for CIFAR10")
+    print("========================")
+    print("Number of Classes:", num_classes)
+    print("Classes:", classes)
 
-    #first apply linear probing and instantiate the classifier module 
+    # first apply linear probing and instantiate the classifier module
+    finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=1e-3)
+    trainer   = pl.Trainer(max_epochs=20)
+    trainer.fit(finetuner, train_loader)
 
-
-    # the evaluate the model
-
-    results = eval_model(args, model, test_loader, num_classes, use_clip=True)
+    # then evaluate the model
+    results = trainer.test(test_dataloaders=test_loader)
     print('final acc' + str(results))
+    print("=======================")
 
     return results #average accuracy over the batches
 
-
-def cifar100():
+def eval_ham():
     pass
 
-def ham10k():
+def eval_cub():
     pass
 
-def cub():
+def eval_isic():
     pass
 
-def isic():
-    pass
-
-def coco_stuff():
+def eval_coco():
     pass
 
 
@@ -119,39 +113,38 @@ if __name__ == "__main__":
     args = config()
 
     # Get the backbone from the model zoo.
-
     metrics = {}
 
     if "cifar10" in args.datasets or args.eval_all:
         new_args = deepcopy(args)
         new_args.dataset = "cifar10"
-        metrics['cifar10'] = cifar10(new_args)
+        metrics['cifar10'] = eval_cifar(new_args)
     
     if "cifar100" in args.datasets or args.eval_all:
         new_args = deepcopy(args)
         new_args.dataset = "cifar100"
-        metrics['cifar100'] = cifar100(new_args)
+        metrics['cifar100'] = eval_cifar(new_args)
     
     if "ham10k" in args.datasets or args.eval_all:
         new_args = deepcopy(args)
         new_args.dataset = "ham10000"
-        metrics['ham10k'] = ham10k(new_args)
+        metrics['ham10k'] = eval_ham(new_args)
 
     if "cub" in args.datasets or args.eval_all:
         new_args = deepcopy(args)
         new_args.dataset = "cub"
-        metrics['cub'] = cub(new_args)  
+        metrics['cub'] = eval_cub(new_args)  
     
     if "isic" in args.datasets or args.eval_all:
         new_args = deepcopy(args)
         new_args.dataset = "isic"
-        metrics['isic'] = isic(new_args)
+        metrics['isic'] = eval_isic(new_args)
 
     if "coco_stuff" in args.datasets or args.eval_all:
         
         #new_args = deepcopy(args)
         #new_args.dataset = "coco_stuff"
-        #metrics['coco_stuff'] = coco_stuff()
+        #metrics['coco_stuff'] = eval_coco(new_args)
         pass
 
     print(metrics)
