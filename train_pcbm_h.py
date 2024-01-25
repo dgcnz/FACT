@@ -3,8 +3,8 @@ import os
 import pickle
 import numpy as np
 import torch
-import sys
 import torch.nn as nn
+from re import sub
 from training_tools.utils import train_runs
 from tqdm import tqdm
 from pathlib import Path
@@ -30,7 +30,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action=argparse.BooleanOptionalAction)
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
@@ -110,7 +110,9 @@ def main(args, target, backbone, preprocess):
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
-    run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
+    hybrid_model_path = sub(":", "", hybrid_model_path)
+    hybrid_model_path = sub("target_[0-9]+", "target_" + str(target), hybrid_model_path) # now we only have to input one file destination as a general form
+    run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "rinf-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
     train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)

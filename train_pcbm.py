@@ -27,7 +27,7 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action=argparse.BooleanOptionalAction)
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
@@ -99,7 +99,7 @@ def main(args, target, concept_bank, backbone, preprocess):
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
-
+    
     if args.print_out == True:
         print(concept_bank.vectors, "concept bank vectors")
         print(train_projs, "train projs")
