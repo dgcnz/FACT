@@ -24,6 +24,10 @@ class CLIPClassifier(torch.nn.Module):
     def __init__(self, model_name: str, n_classes: int, grads=False):
         super().__init__()
         self.backbone = CLIPImageEncoder(model_name=model_name)
+        if grads == False:
+            for param in self.backbone.model.parameters():
+                param.requires_grad = False
+
         self.features_dtype = self.backbone.model.ln_final.weight.dtype
         self.classifier = torch.nn.Linear(
             self.backbone.model.ln_final.weight.size(0) * 2, n_classes
