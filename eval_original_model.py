@@ -77,11 +77,10 @@ def eval_model(args, model, loader, num_classes, use_clip=False):
 def eval_cifar(args):
     _ , preprocess = get_model(args, backbone_name="clip:RN50", full_model=False)
 
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
     num_classes = len(classes)
     print("Evaluating  for CIFAR10")
     print("========================")
-    print("Number of Classes:", num_classes)
     print("Classes:", classes)
 
     # first apply linear probing and instantiate the classifier module
@@ -91,7 +90,7 @@ def eval_cifar(args):
 
     # then evaluate the model
     results = trainer.test(test_dataloaders=test_loader)
-    print('final acc' + str(results))
+    print('Final Accuracy: ' + str(results))
     print("=======================")
 
     return results #average accuracy over the batches
