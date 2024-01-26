@@ -13,7 +13,6 @@ import os
 import pickle
 import numpy as np
 import torch
-
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -27,7 +26,7 @@ from torch.utils.data import DataLoader, random_split
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)

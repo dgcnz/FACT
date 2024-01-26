@@ -16,7 +16,7 @@ from training_tools import export
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", default="artifacts/outdir", type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default=[42, 43, 44], type=int, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
@@ -68,7 +68,6 @@ def eval_cifar(args, seed):
 
     train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
     num_classes = len(classes)
-    dataset = args.dataset.upper()
 
     print(f"Evaluating for seed: {seed}")
 
@@ -86,7 +85,7 @@ def eval_cifar(args, seed):
 
 def eval_ham(args, seed):
     model, _ , preprocess = get_model(args, backbone_name="ham10000_inception", full_model=True)
-    _ , test_loader, _ , classes = get_dataset(args, preprocess)
+    _ , test_loader, _ , _ = get_dataset(args, preprocess)
 
     results = eval_model(args, model, test_loader, seed)
     print('Current AUC: ' + str(results))
@@ -96,7 +95,7 @@ def eval_ham(args, seed):
 
 def eval_cub(args, seed):
     model, _ , preprocess = get_model(args, backbone_name="resnet18_cub", full_model=True)
-    _ , test_loader, _ , classes = get_dataset(args, preprocess)
+    _ , test_loader, _ , _ = get_dataset(args, preprocess)
 
     results = eval_model(args, model, test_loader, seed)
     print('Current Accuracy: ' + str(results))
@@ -106,7 +105,7 @@ def eval_cub(args, seed):
 
 def eval_isic(args, seed):
     model, _ , preprocess = get_model(args, backbone_name="ham10000_inception", full_model=True)
-    _ , test_loader, _ , classes = get_dataset(args, preprocess)
+    _ , test_loader, _ , _ = get_dataset(args, preprocess)
 
     results = eval_model(args, model, test_loader, seed)
     print('Current AUC: ' + str(results))
