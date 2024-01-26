@@ -8,21 +8,19 @@
 # 2) lam
 # 3) alpha
 
-
 import argparse
 import os
 import pickle
 import numpy as np
 import torch
-
+from training_tools.utils import test_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
-from torch.utils.data import DataLoader, random_split
 
 
 def config():
@@ -35,6 +33,13 @@ def config():
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     #if one of the tree parameters below is set to None a grid search will be performed 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
@@ -42,6 +47,7 @@ def config():
 
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
+
     return args
 
 
@@ -111,19 +117,21 @@ def run_linear_probe(args, train_data, test_data):
         print(f"{lbl}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
-                "cls_acc": cls_acc,
+                "cls_acc": cls_acc
                 }
 
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
+
     return run_info, classifier.coef_, classifier.intercept_
 
 
-def main(args, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
-    
+def main(args, concept_bank, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']}
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, **tar)
+
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
@@ -143,7 +151,7 @@ def main(args, concept_bank, backbone, preprocess):
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
-    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
     torch.save(posthoc_layer, model_path)
 
@@ -151,7 +159,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
     
     if num_classes > 1:
         # Prints the Top-5 Concept Weigths for each class.
@@ -159,6 +166,7 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+
     return run_info
 
 if __name__ == "__main__":
@@ -179,19 +187,19 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir + "_" + str(seed)
-        run_info = main(args, concept_bank, backbone, preprocess)
+        run_info = test_runs(args, main, concept_bank, backbone, preprocess, mode="vcr")
 
         if "test_auc" in run_info:
-            print("auc used")
+            print("AUC used")
             metric = run_info['test_auc']
 
         else:
-            print("acc used")
+            print("Accuracy used")
             metric = run_info['test_acc']
 
         metric_list.append(metric)
-
     
     # export results
     out_name = "verify_results_clip_concepts_pcbm"
     export.export_to_json(out_name, metric_list)
+    print("Verification results exported!")

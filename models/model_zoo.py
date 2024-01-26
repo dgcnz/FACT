@@ -1,7 +1,11 @@
+import sys
+sys.path.append("./models")
+
 import torch
 import torch.nn as nn
 import numpy as np
-
+import argparse
+import os
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchvision.models import ResNet18_Weights
@@ -29,7 +33,7 @@ class ResNetTop(nn.Module):
 
 
 def get_model(args, backbone_name="resnet18_cub", full_model=False):
-    if "clip" in backbone_name.lower():
+    if "clip" in backbone_name:
         import clip
         # We assume clip models are passed of the form : clip:RN50
         clip_backbone_name = backbone_name.split(":")[1]
@@ -68,6 +72,26 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                         transforms.ToTensor(),
                         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                       ])
+
+    # For some of the extension experiments
+    elif backbone_name.lower() == "audio":
+        from models.AudioCLIP.model import AudioCLIP
+        from models.AudioCLIP.utils.transforms import ToTensor1D
+
+        # Done like this to ensure that it does not do relative imports w.r.t. from where
+        # the user is running the script
+        filedir = os.path.abspath(__file__)
+        filedir = os.path.dirname(filedir)
+        pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
+        
+        # loading the model and transforms (only audio is used)
+        backbone = AudioCLIP(pretrained=pt_path)
+        backbone.eval()
+        preprocess = transforms.Compose([
+                        ToTensor1D()
+                      ])
+        model = None
+        
     else:
         raise ValueError(backbone_name)
 
@@ -76,4 +100,17 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
     else:
         return backbone, preprocess
 
+# For testing
+def config():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--backbone-name", default="audio", type=str)
+    parser.add_argument("--out-dir", default="artifacts/outdir", type=str)
+    parser.add_argument("--device", default="cuda", type=str)
+    return parser.parse_args()
 
+
+if __name__ == "__main__":
+    args = config()
+    backbone, preprocess = get_model(args, args.backbone_name)
+
+    print(backbone)

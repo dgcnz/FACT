@@ -1,11 +1,10 @@
 import argparse
-import os
 import pickle
 import numpy as np
 import torch
-import sys
 import torch.nn as nn
-
+from re import sub
+from training_tools.utils import test_runs
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
@@ -29,6 +28,13 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
@@ -95,16 +101,20 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["args"] = args
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+        print("Final Test Accuracy:", latest_info["test_acc"])
 
     return latest_info
 
 
-def main(args, backbone, preprocess):
-    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+
+def main(args, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']}
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **tar)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
+    hybrid_model_path = sub(":", "", hybrid_model_path)
+    hybrid_model_path = sub("target_[0-9]+", "target_" + str(kwargs['target']), hybrid_model_path) # now we only have to input one file destination as a general form
     run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
@@ -143,7 +153,7 @@ if __name__ == "__main__":
         seed = args.seeds[i]
         # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
         #args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
-        args.pcbm_path = 'artifacts/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam:4.464285714285714e-07__alpha:0.99__seed:'+str(seed)+'.ckpt'
+        args.pcbm_path = 'artifacts/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam_4.464285714285714e-07__alpha_0.99__seed_'+str(seed)+'.ckpt'
         # Load the PCBM
         posthoc_layer = torch.load(args.pcbm_path)
         posthoc_layer = posthoc_layer.eval()
@@ -155,18 +165,20 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir
-        run_info = main(args, backbone, preprocess)
+        run_info = test_runs(args, main, concept_bank="", 
+                             backbone=backbone, preprocess=preprocess, mode="vdh")
+
         metric = run_info['test_acc']
 
         if isinstance(metric, (int, float)):
-            print("auc used")
+            print("AUC used")
             metric_list.append(metric)
 
         else:
-            print("acc used")
+            print("Accuracy used")
             metric_list.append(metric.avg)
-
     
     # export results
     out_name = "verify_dataset_pcbm_h"
     export.export_to_json(out_name, metric_list)
+    print("Verification results exported!")

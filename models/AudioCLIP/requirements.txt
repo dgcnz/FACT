@@ -1,0 +1,3 @@
+Assuming the FACT environment is being used,
+all dependencies for AudioCLIP should be
+automatically included alongside the installation.

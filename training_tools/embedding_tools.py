@@ -12,7 +12,7 @@ def unpack_batch(batch):
         return batch
     else:
         raise ValueError()
-
+    
 
 @torch.no_grad()
 def get_projections(args, backbone, posthoc_layer, loader, n_batches = np.inf):
@@ -21,10 +21,13 @@ def get_projections(args, backbone, posthoc_layer, loader, n_batches = np.inf):
     for batch in tqdm(loader):
         batch_X, batch_Y = unpack_batch(batch)
         batch_X = batch_X.to(args.device)
-        if "clip" in args.backbone_name:
+        if "clip" in args.backbone_name.lower():
             embeddings = backbone.encode_image(batch_X).detach().float()
+        elif "audio" in args.backbone_name.lower():
+            ((embeddings, _, _), _), _ = backbone(audio=batch_X)
         else:
             embeddings = backbone(batch_X).detach()
+
         projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
         embeddings = embeddings.detach().cpu().numpy()
         if all_embs is None:
@@ -35,9 +38,11 @@ def get_projections(args, backbone, posthoc_layer, loader, n_batches = np.inf):
             all_embs = np.concatenate([all_embs, embeddings], axis=0)
             all_projs = np.concatenate([all_projs, projs], axis=0)
             all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
+
         batches += 1
         if batches == n_batches:
           break
+
     return all_embs, all_projs, all_lbls
 
 @torch.no_grad()
@@ -78,7 +83,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     
-    # To make it easier to analyize results/rerun with different params, we'll extract the embeddings and save them
+    # To make it easier to analyze results/rerun with different params, we'll extract the embeddings and save them
     train_file = f"train-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
     test_file = f"test-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
     train_proj_file = f"train-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
@@ -86,7 +91,6 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     train_lbls_file = f"train-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
     test_lbls_file = f"test-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
     
-
     train_file = os.path.join(args.out_dir, train_file)
     test_file = os.path.join(args.out_dir, test_file)
     train_proj_file = os.path.join(args.out_dir, train_proj_file)

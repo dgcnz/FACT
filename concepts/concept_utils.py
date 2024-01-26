@@ -145,4 +145,5 @@ def learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, C, device="c
     concept_info = {}
     for c in C:
         concept_info[c] = get_cavs(X_train, y_train, X_val, y_val, c)
+        
     return concept_info

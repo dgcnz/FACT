@@ -9,6 +9,7 @@ CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
 # COCO-Stuff Constants
 # COCO-Stuff data is obtained from : https://github.com/nightrome/cocostuff
+# The dataset used in this project is from : https://drive.google.com/file/d/1RW8hAjVF61FfPpkTYwJP-dJPlsDpTXP_/view?usp=drive_link
 COCO_STUFF_DIR = "artifacts/data/COCO_STUFF"
 
 # Derm data constants
@@ -28,3 +29,11 @@ SIIM_DATA_DIR = "artifacts/data/SIIM_ISIC"
 
 # BRODEN concept bank
 BRODEN_CONCEPTS = "artifacts/data/broden_concepts"
+
+
+# CONSTANTS FOR EXTENSION EXPERIMENTS
+# ESC_50 can be obtained from : https://github.com/karolpiczak/ESC-50
+ESC_DIR = "artifacts/data/ESC_50"
+
+# UrbanSound8k can be obtained from : https://www.kaggle.com/datasets/chrisfilo/urbansound8k
+US_DIR = "artifacts/data/US8K"
