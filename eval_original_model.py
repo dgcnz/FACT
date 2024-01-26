@@ -206,7 +206,7 @@ if __name__ == "__main__":
         print("Evaluating for COCO-Stuff")
         print("========================")
         new_args = deepcopy(args)
-        new_args.dataset = "coco-stuff"
+        new_args.dataset = "coco_stuff"
         metrics = eval_per_seed(metrics, new_args, eval_coco, args.seeds)
 
     print("=======================\n")
