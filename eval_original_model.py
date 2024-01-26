@@ -12,6 +12,10 @@ from scipy.special import softmax
 from data import get_dataset
 from models import get_model, clip_pl
 from training_tools import export
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+from lightning.pytorch.callbacks import TQDMProgressBar
+from lightning.pytorch.callbacks import ModelCheckpoint
+
 
 
 def config():
@@ -73,13 +77,24 @@ def eval_cifar(args, seed):
 
     print(f"Evaluating for seed: {seed}")
 
+    #define a checkpoint callback
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(
+                            monitor='val_loss',
+                            dirpath=args.out_dir/'checkpoints/',
+                            save_top_k=3,
+                            mode='min',
+                        )
+
     # first apply linear probing and instantiate the classifier module
     finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
-    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True)
+    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, callbacks=[EarlyStopping(monitor="val_loss", mode="min")])
     trainer.fit(finetuner, train_loader)
 
+    # load the best checkpoint
+    best_model = finetuner.load_from_checkpoint(checkpoint_callback.best_model_path)
+
     # then evaluate the model
-    results = trainer.test(dataloaders=test_loader)
+    results = trainer.test(model = best_model, dataloaders=test_loader)
     print('Current Accuracy: ' + str(results))
 
     return results # average accuracy over the batches
