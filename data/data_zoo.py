@@ -91,7 +91,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         print(idx_to_class)
 
         # For printing
-        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
+        print(f"\nEvaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
 
 
     elif args.dataset.lower() == "siim_isic":

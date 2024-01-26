@@ -27,6 +27,9 @@ def config():
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
     parser.add_argument("--max-epochs", default=20, type=int, help="Maximum number of epochs.")
+    parser.add_argument("--coco-targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                                   43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                                   type=int, nargs='+', help="target indexes for cocostuff")
     args = parser.parse_args()
 
     return args
@@ -115,8 +118,32 @@ def eval_isic(args, seed):
     return results 
 
 
-def eval_coco(args):
-    pass
+def eval_coco(args, seed):
+    # setting the seed
+    pl.seed_everything(seed, workers=True)
+    results = []
+    targets = args.coco_targets
+    for target in targets:
+
+        _ , preprocess = get_model(args, backbone_name="clip:RN50")
+
+        train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **{'target': target})
+        num_classes = len(classes)
+
+        print(f"Evaluating for seed: {seed}")
+
+        # first apply linear probing and instantiate the classifier module
+        finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
+        trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True)
+        trainer.fit(finetuner, train_loader)
+
+        # then evaluate the model
+        result = trainer.test(dataloaders=test_loader)
+        curr   = results['test_accuracy']
+        print(f'Current Accuracy: {round(curr, 3)}')
+        results.append(curr)
+
+    return results
 
 
 def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
@@ -129,7 +156,8 @@ def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
         else:
             metrics[args.dataset].append(result)
 
-    print(f"Average performance per seed: {np.mean(metrics[args.dataset])}")
+    curr_mean = np.mean(metrics[args.dataset])
+    print(f"Average performance per seed: {round(curr_mean, 3)}")
 
     return metrics
 
@@ -168,20 +196,19 @@ if __name__ == "__main__":
         metrics = eval_per_seed(metrics, new_args, eval_cub, args.seeds)
     
     if "siim_isic" in args.datasets or args.eval_all:
-        print("Evaluating for SIIM_ISIC")
+        print("Evaluating for SIIM-ISIC")
         print("========================")
         new_args = deepcopy(args)
         new_args.dataset = "siim_isic"
         metrics = eval_per_seed(metrics, new_args, eval_isic, args.seeds)
 
     if "coco_stuff" in args.datasets or args.eval_all:
-        
-        #new_args = deepcopy(args)
-        #new_args.dataset = "coco_stuff"
-        #metrics['coco_stuff'] = eval_coco(new_args)
+        print("Evaluating for COCO-Stuff")
+        print("========================")
+        new_args = deepcopy(args)
+        new_args.dataset = "coco-stuff"
+        metrics = eval_per_seed(metrics, new_args, eval_coco, args.seeds)
 
-        pass
-    
     print("=======================\n")
     
     assert (metrics != {}), "It appears that none of the datasets you've specified are supported."

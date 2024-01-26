@@ -83,7 +83,7 @@ def load_coco_data(annot_dir, target:int, n_samples:int=500,
     # sample with replacement if too little data is present    
     replace = True if (len(pos_data) < npc) else False
     pos_sample = np.random.choice(pos_data, size=npc, replace=replace)
-    neg_sample = np.random.choice(pos_data, size=npc, replace=replace)
+    neg_sample = np.random.choice(neg_data, size=npc, replace=replace)
     
     pos_sample = [[pos_sample[idx], 1] for idx in range(npc)]
     neg_sample = [[neg_sample[idx], 0] for idx in range(npc)]
