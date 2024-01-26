@@ -146,7 +146,7 @@ def main(args, concept_bank, backbone, preprocess):
                     dot_product_embs = np.dot(train_embs[i], train_embs[j]) 
                     dot_product_projs = np.dot(train_projs[i], train_projs[j])
 
-                    dot_product_error = dot_product_embs - np.sqrt(original_dimensionality/new_dimensionality)*dot_product_projs
+                    dot_product_error = dot_product_projs - dot_product_embs
                     dot_product_error_list.append(dot_product_error)
                     
                     distance_embs = np.linalg.norm(train_embs[i] - train_embs[j])
@@ -160,7 +160,7 @@ def main(args, concept_bank, backbone, preprocess):
                     dot_product_embs = np.dot(test_embs[i], test_embs[j])
                     dot_product_projs = np.dot(test_projs[i], test_projs[j])
 
-                    dot_product_error = dot_product_embs - np.sqrt(original_dimensionality/new_dimensionality)*dot_product_projs
+                    dot_product_error = dot_product_projs - dot_product_embs
                     dot_product_error_list.append(dot_product_error)
 
                     distance_embs = np.linalg.norm(train_embs[i] - train_embs[j])
