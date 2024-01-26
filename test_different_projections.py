@@ -131,25 +131,25 @@ def main(args, concept_bank, backbone, preprocess):
         dot_product_error_list = []
         #compute the euclidean distance between the train_embs and the train_projs, and the test_embs and the test_projs only for the matching vectors
         for i in range(len(train_embs)):
-            distance = torch.dist(train_embs[i], train_projs[i], p=2) #p=2 gives euclidean distance 
+            distance = np.linalg.norm(train_embs[i] - train_projs[i])
             distance_list.append(distance)
 
         for i in range(len(test_embs)):
-            distance = torch.dist(test_embs[i], test_projs[i], p=2)
+            distance = np.linalg.norm(test_embs[i] - test_projs[i])
             distance_list.append(distance)
 
         for i in range(len(train_embs)):
             for j in range(i + 1, len(train_embs)):
-                    dot_product_embs = torch.dot(train_embs[i], train_embs[j])
-                    dot_product_projs = torch.dot(train_projs[i], train_projs[j])
+                    dot_product_embs = np.dot(train_embs[i], train_embs[j]) 
+                    dot_product_projs = np.dot(train_projs[i], train_projs[j])
 
                     dot_product_error = dot_product_embs - dot_product_projs
                     dot_product_error_list.append(dot_product_error)
         
         for i in range(len(test_embs)):
             for j in range(i + 1, len(test_embs)):
-                    dot_product_embs = torch.dot(test_embs[i], test_embs[j])
-                    dot_product_projs = torch.dot(test_projs[i], test_projs[j])
+                    dot_product_embs = np.dot(test_embs[i], test_embs[j])
+                    dot_product_projs = np.dot(test_projs[i], test_projs[j])
 
                     dot_product_error = dot_product_embs - dot_product_projs
                     dot_product_error_list.append(dot_product_error)
