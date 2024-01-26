@@ -3,6 +3,7 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from models.clip_encoder import CLIPClassifier
 import torch
 from torch import Tensor
+import torch.optim as optim
 
 class CLIPClassifierTrainer(L.LightningModule):
     def __init__(self, model_name: str, n_classes: int, lr: float):
@@ -26,6 +27,8 @@ class CLIPClassifierTrainer(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.classifier.parameters(), lr=self.lr)
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
+
+        return [optimizer], [scheduler]
     
 

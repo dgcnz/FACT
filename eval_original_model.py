@@ -18,13 +18,15 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seeds", default=[42, 43, 44], type=int, help="Random seeds")
+    parser.add_argument("--seeds", default=[42, 43, 44], nargs='+', type=int, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--datasets", default=['ham10k'], nargs='+', type=str)
     parser.add_argument("--eval_all", action="store_true", default=False)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
+    parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
+    parser.add_argument("--max-epochs", default=20, type=int, help="Maximum number of epochs.")
     args = parser.parse_args()
 
     return args
@@ -72,8 +74,8 @@ def eval_cifar(args, seed):
     print(f"Evaluating for seed: {seed}")
 
     # first apply linear probing and instantiate the classifier module
-    finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=1e-3)
-    trainer   = pl.Trainer(max_epochs=20, deterministic=True)
+    finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
+    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True)
     trainer.fit(finetuner, train_loader)
 
     # then evaluate the model
