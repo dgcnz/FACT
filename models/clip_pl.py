@@ -1,5 +1,5 @@
-import lightning as L
-from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
+import pytorch_lightning as L
+from pytorch_lightning.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from models.clip_encoder import CLIPClassifier
 import torch
 from torch import Tensor

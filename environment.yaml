@@ -18,3 +18,4 @@ dependencies:
   - kaggle=1.6.3
   - nltk=3.8.1
   - matplotlib=3.8.2
+  - pytorch-lightning=2.1.3

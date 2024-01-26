@@ -87,6 +87,7 @@ def run_linear_probe(args, train_data, test_data):
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
+        
     return run_info, classifier.coef_, classifier.intercept_
 
 
