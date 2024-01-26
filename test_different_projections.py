@@ -124,35 +124,51 @@ def main(args, concept_bank, backbone, preprocess):
         print(run_info)
 
     if args.test == 'dot_product':
-        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, shuffle = False) 
-        train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, shuffle = True) 
+
+        num_classes = len(classes)
+        
+        # Initialize the PCBM module.
+        posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+        posthoc_layer = posthoc_layer.to(args.device)
+        train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, self_supervised = False, compute=True, n_batches = 100)
 
         distance_list = []
         dot_product_error_list = []
-        #compute the euclidean distance between the train_embs and the train_projs, and the test_embs and the test_projs only for the matching vectors
-        for i in range(len(train_embs)):
-            distance = np.linalg.norm(train_embs[i] - train_projs[i])
-            distance_list.append(distance)
+        original_dimensionality = train_embs.shape[1]
+        new_dimensionality = train_projs.shape[1]
 
-        for i in range(len(test_embs)):
-            distance = np.linalg.norm(test_embs[i] - test_projs[i])
-            distance_list.append(distance)
-
-        for i in range(len(train_embs)):
-            for j in range(i + 1, len(train_embs)):
+        print('original dimensionality', original_dimensionality)
+        print('new dimensionality', new_dimensionality)
+        
+        for i in range(500):
+            for j in range(i + 1, 500):
                     dot_product_embs = np.dot(train_embs[i], train_embs[j]) 
                     dot_product_projs = np.dot(train_projs[i], train_projs[j])
 
-                    dot_product_error = dot_product_embs - dot_product_projs
+                    dot_product_error = dot_product_embs - np.sqrt(original_dimensionality/new_dimensionality)*dot_product_projs
                     dot_product_error_list.append(dot_product_error)
+                    
+                    distance_embs = np.linalg.norm(train_embs[i] - train_embs[j])
+                    distance_projs = np.linalg.norm(train_projs[i] - train_projs[j])
+
+                    distance_error = distance_embs - np.sqrt(original_dimensionality/new_dimensionality) *distance_projs
+                    distance_list.append(distance_error)
         
-        for i in range(len(test_embs)):
-            for j in range(i + 1, len(test_embs)):
+        for i in range(500):
+            for j in range(i + 1, 500):
                     dot_product_embs = np.dot(test_embs[i], test_embs[j])
                     dot_product_projs = np.dot(test_projs[i], test_projs[j])
 
-                    dot_product_error = dot_product_embs - dot_product_projs
+                    dot_product_error = dot_product_embs - np.sqrt(original_dimensionality/new_dimensionality)*dot_product_projs
                     dot_product_error_list.append(dot_product_error)
+
+                    distance_embs = np.linalg.norm(train_embs[i] - train_embs[j])
+                    distance_projs = np.linalg.norm(train_projs[i] - train_projs[j])
+
+                    distance_error = distance_embs - np.sqrt(original_dimensionality/new_dimensionality) * distance_projs
+                    distance_list.append(distance_error)
+        
         
         #plot the distribution of both lists
         plt.hist(distance_list)
@@ -205,9 +221,12 @@ if __name__ == "__main__":
         concept_bank.margin_info = None
         print(concept_bank.vectors)
 
-        concept_bank.vectors = torch.randn(shape).to(args.device)
+        concept_bank.vectors = torch.randn((shape[0], shape[1])).to(args.device)
         print(concept_bank.vectors)
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        print(concept_bank.norms.shape)
+        #concept_bank.vectors /= concept_bank.norms
+        #print(torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach())
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
     elif args.identity_proj:

@@ -15,8 +15,9 @@ def unpack_batch(batch):
 
 
 @torch.no_grad()
-def get_projections(args, backbone, posthoc_layer, loader):
+def get_projections(args, backbone, posthoc_layer, loader, n_batches = np.inf):
     all_projs, all_embs, all_lbls = None, None, None
+    batches = 0
     for batch in tqdm(loader):
         batch_X, batch_Y = unpack_batch(batch)
         batch_X = batch_X.to(args.device)
@@ -34,6 +35,9 @@ def get_projections(args, backbone, posthoc_layer, loader):
             all_embs = np.concatenate([all_embs, embeddings], axis=0)
             all_projs = np.concatenate([all_projs, projs], axis=0)
             all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
+        batches += 1
+        if batches == n_batches:
+          break
     return all_embs, all_projs, all_lbls
 
 @torch.no_grad()
@@ -69,7 +73,7 @@ class EmbDataset(Dataset):
         return len(self.data)
 
 
-def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False, self_supervised = False):
+def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False, self_supervised = False, n_batches = np.inf):
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
@@ -101,8 +105,8 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         return train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls
 
     elif not self_supervised:
-        train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
-        test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
+        train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader, n_batches = n_batches)
+        test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader, n_batches = n_batches)
 
         np.save(train_file, train_embs)
         np.save(test_file, test_embs)
