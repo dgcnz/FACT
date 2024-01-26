@@ -3,9 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
-import sys
 import torch.nn as nn
-
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
@@ -19,7 +17,7 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--pcbm-path", required=True, type=str, help="Trained PCBM module.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)

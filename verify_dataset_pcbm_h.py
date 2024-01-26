@@ -19,7 +19,7 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
@@ -101,14 +101,14 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
 
 
 def main(args, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
     run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
-    train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    train_embs, _ , train_lbls, test_embs, _ , test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)
@@ -156,8 +156,6 @@ if __name__ == "__main__":
         args.seed = seed
         args.out_dir = og_out_dir
         run_info = main(args, backbone, preprocess)
-
-        
         metric = run_info['test_acc']
 
         if isinstance(metric, (int, float)):

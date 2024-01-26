@@ -1,24 +1,21 @@
 import argparse
-import os
 import pickle
 import numpy as np
 import torch
 import torch.nn as nn
-
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
-from concepts import ConceptBank
-from models import PosthocLinearCBM, PosthocHybridCBM, get_model
+from models import PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer, export
 
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
