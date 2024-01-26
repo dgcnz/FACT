@@ -24,7 +24,7 @@ def config():
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
-    parser.add_argument("--num-epochs", default=20, type=int)
+    parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
