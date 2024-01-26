@@ -1,17 +1,22 @@
 import lightning as L
+from torchvision import transforms
+import logging
 import clip
 from PIL import Image
 from enum import Enum
-from lightning.pytorch.utilities.types import EVAL_DATALOADERS
 import torch
 from torch.utils.data import DataLoader
 import datasets
+from pathlib import Path
 from concepts.concept_utils import ConceptBank
 
 
 class NNProjector(torch.nn.Module):
+    name: str
+
     def __init__(self, concept_bank_path: str, backbone: torch.nn.Module):
         super().__init__()
+        self.name = Path(concept_bank_path).stem
         concept_bank = ConceptBank.from_pickle(
             pickle_path=concept_bank_path, device="cpu"
         )
@@ -39,17 +44,40 @@ class CLIPPreprocessor(torch.nn.Module):
             return torch.stack([self.preprocess(img) for img in x])
 
 
+class ImageNetPreprocessor(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.transforms = transforms.Compose(
+            [
+                transforms.Resize(299),
+                transforms.CenterCrop(299),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+    def forward(self, x: list[Image.Image]) -> torch.Tensor:
+        return torch.stack([self.transforms(img.convert("RGB")) for img in x])
+
+
 class PreprocessorEnum(Enum):
     CLIP_RESNET50 = 1
-    RESNET18_IMAGENET = 2
+    RESNET18_IMAGENET_1K_V1 = 2
 
 
 PREPROCESSORS: dict[PreprocessorEnum, callable] = {
     PreprocessorEnum.CLIP_RESNET50: CLIPPreprocessor("RN50"),
+    PreprocessorEnum.RESNET18_IMAGENET_1K_V1: ImageNetPreprocessor(),
 }
 
 
 class MetaShiftDataModule(L.LightningDataModule):
+    classes: list[str]
+    holdout_size: float | None
+    train_on_test: bool
+
     def __init__(
         self,
         task_name: str,
@@ -57,6 +85,8 @@ class MetaShiftDataModule(L.LightningDataModule):
         preprocessor_name: PreprocessorEnum,
         train_batch_size: int = 32,
         test_batch_size: int = 32,
+        train_on_test: bool = False,
+        holdout_size: float | None = None,
     ):
         super().__init__()
         self.task_name = task_name
@@ -64,25 +94,67 @@ class MetaShiftDataModule(L.LightningDataModule):
         self.test_batch_size = test_batch_size
         self.projector = projector
         self.preprocessor = PREPROCESSORS[preprocessor_name]
-
-    def setup(self, stage: str):
-        self.dataset = datasets.load_dataset(
-            "fact-40/pcbm_metashift", name=self.task_name, trust_remote_code=True
-        )
-        self.classes = self.dataset["train"].info.features["label"].names
-        # train requires train and test
-        # test only requires test
-        if stage != "test":
-            self.dataset["train"] = (
-                self.dataset["train"]
-                .map(self.convert_to_features, batched=True, remove_columns="image")
-                .with_format("torch")
+        self.dataset_name = "fact-40/pcbm_metashift"
+        self.cache_dir = Path(".cache")
+        self.logger = logging.getLogger()
+        self.train_on_test = train_on_test
+        self.holdout_size = holdout_size
+        if self.train_on_test:
+            assert holdout_size is not None, "Holdout split must be specified"
+            self.logger.warning(
+                f"Training on test set with holdout split of {holdout_size}"
             )
-        self.dataset["test"] = (
-            self.dataset["test"]
+
+    def _load_dataset(self) -> datasets.DatasetDict:
+        return (
+            datasets.load_dataset(
+                self.dataset_name, name=self.task_name, trust_remote_code=True
+            )
             .map(self.convert_to_features, batched=True, remove_columns="image")
             .with_format("torch")
         )
+
+    def _generate_holdout_size(self):
+        """Generate holdout split for training on test set.
+        Take 1 - `holdout_size` for each class of the test set for training
+        and `holdout_size` for each class of the test set for validation and testing.
+
+        Example:
+            For an original test set with 100 images per class and a holdout_size of 0.2,
+            the new training set will be 80 images per class
+            and the new test set will be 20 images per class.
+        """
+        return self.dataset["test"].train_test_split(
+            test_size=self.holdout_size,
+            shuffle=True,
+            seed=42,
+            stratify_by_column="label",
+        )
+
+    def setup(self, stage: str):
+        dataset_subset = f"{self.dataset_name}/{self.task_name}"
+        cached_dataset_name = self.cache_dir / dataset_subset / self.projector.name
+        try:
+            self.logger.info(
+                f"Attempting to load {dataset_subset} from cache {cached_dataset_name}"
+            )
+            self.dataset = datasets.load_from_disk(cached_dataset_name)
+            self.logger.info(
+                f"Loaded {dataset_subset} from cache {cached_dataset_name}"
+            )
+        except FileNotFoundError:
+            self.logger.info(
+                f"Failed to load {dataset_subset} from cache {cached_dataset_name}"
+            )
+            self.dataset = self._load_dataset()
+            self.logger.info(f"Caching {dataset_subset} to {cached_dataset_name}")
+            self.dataset.save_to_disk(cached_dataset_name)
+            self.logger.info(
+                f"Cached {self.dataset_name}/{self.task_name} to {cached_dataset_name}"
+            )
+        self.classes = self.dataset["train"].info.features["label"].names
+        if self.train_on_test:
+            self.dataset = self._generate_holdout_size()
 
     def train_dataloader(self):
         return DataLoader(
@@ -102,7 +174,3 @@ class MetaShiftDataModule(L.LightningDataModule):
         concept_weights = self.projector(image)
         assert isinstance(concept_weights, torch.Tensor), type(concept_weights)
         return {"concept_weights": concept_weights, "label": label}
-
-
-def collate_fn(self):
-    pass
