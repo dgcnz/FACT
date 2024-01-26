@@ -84,14 +84,13 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         train_annot = os.path.join(COCO_STUFF_DIR, "labels_train.json")
         test_annot = os.path.join(COCO_STUFF_DIR, "labels_val.json")
 
-        train_loader = load_coco_data(train_annot, transform=preprocess, target=target, n_samples=500)
-        test_loader  = load_coco_data(test_annot, transform=preprocess, target=target, n_samples=250)
+        train_loader, test_loader = load_coco_data(train_annot, test_annot, transform=preprocess, target=target)
         idx_to_class = cid_to_class(label_path, target_classes, target_idx=target)
         classes      = target_classes
         print(idx_to_class)
 
         # For printing
-        print(f"\nEvaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
+        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
 
 
     elif args.dataset.lower() == "siim_isic":
