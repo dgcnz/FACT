@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 
-def get_dataset(args, target:int, preprocess=None):
+def get_dataset(args, preprocess=None, **kwargs):
     # note: target is only needed for COCO-Stuff due to the 20 datasets involved
     if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
@@ -69,6 +69,10 @@ def get_dataset(args, target:int, preprocess=None):
     elif args.dataset.lower() == "coco_stuff":
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
+
+        # get target index from the kwargs
+        assert('target' in kwargs.keys()), "Please specify the target index for COCO-Stuff"
+        target = kwargs['target']
 
         # The 20 most biased classes from Singh et al., 2020
         target_classes = ["cup", "wine glass", "handbag", "apple", "car",

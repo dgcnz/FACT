@@ -81,9 +81,9 @@ def run_linear_probe(args, train_data, test_data):
     return run_info, classifier.coef_, classifier.intercept_
 
 
-def main(args, target, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
-    
+def main(args, concept_bank, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']}
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, **tar)
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
@@ -110,7 +110,7 @@ def main(args, target, concept_bank, backbone, preprocess):
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
-    model_id = f"{model_id}_target_{target}" if (args.dataset == "coco_stuff") else model_id
+    model_id = f"{model_id}_target_{kwargs['target']}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
     model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)

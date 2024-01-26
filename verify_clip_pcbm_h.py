@@ -105,15 +105,16 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     return latest_info
 
 
-def main(args, target, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
+def main(args, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']}
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **tar)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
     run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
-    train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    train_embs, _ , train_lbls, test_embs, _ , test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)

@@ -21,12 +21,12 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
         for target in args.targets:
 
             if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
-                run_info = main(args, target, concept_bank, backbone, preprocess)
+                run_info = main(args, concept_bank, backbone, preprocess, **{'target': target})
                 tr_acc_list.append(run_info['train_acc'])
                 t_acc_list.append(run_info['test_acc'])
             
             elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-                run_info = main(args, target, backbone, preprocess)
+                run_info = main(args, backbone, preprocess, **{'target': target})
                 tr_acc_list.append(run_info['train_acc'])
                 t_acc_list.append(run_info['test_acc'])
 
@@ -47,9 +47,9 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
         target = args.targets[0] # This argument does not matter as no other dataset should use this variable
                                  # (i.e., it acts as a dummy variable here)
         if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
-            run_info = main(args, target, concept_bank, backbone, preprocess)
+            run_info = main(args, concept_bank, backbone, preprocess)
         elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-            run_info = main(args, target, backbone, preprocess)
+            run_info = main(args, backbone, preprocess)
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
         
@@ -71,9 +71,9 @@ def train_runs(args, main, concept_bank, backbone, preprocess, mode:str="r"):
         print("Training 20 Model Instances for COCO-Stuff datasets. This may take a while...\n")
         for target in args.targets:
             if mode == 'r':
-                main(args, target, concept_bank, backbone, preprocess)
+                main(args, concept_bank, backbone, preprocess, **{'target': target})
             elif mode == 'h':
-                main(args, target, backbone, preprocess)
+                main(args, backbone, preprocess, **{'target': target})
             else:
                 print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
         
@@ -81,8 +81,8 @@ def train_runs(args, main, concept_bank, backbone, preprocess, mode:str="r"):
         target = args.targets[0] # This argument does not matter as no other dataset should use this variable
                                  # (i.e., it acts as a dummy variable here)
         if mode == 'r':
-            main(args, target, concept_bank, backbone, preprocess)
+            main(args, concept_bank, backbone, preprocess)
         elif mode == 'h':
-            main(args, target, backbone, preprocess)
+            main(args, backbone, preprocess)
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
