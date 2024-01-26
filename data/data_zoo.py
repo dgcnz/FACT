@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 
-def get_dataset(args, preprocess=None):
+def get_dataset(args, preprocess=None, shuffle=True):
     if args.dataset == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
@@ -14,7 +14,7 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                                   shuffle=True, num_workers=args.num_workers)
+                                                   shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
     
@@ -28,7 +28,7 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                                   shuffle=True, num_workers=args.num_workers)
+                                                   shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
 

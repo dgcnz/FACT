@@ -22,6 +22,7 @@ from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 
 
 def config():
@@ -36,6 +37,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
+    parser.add_argument("--test", default='accuracy', type=str)
 
     ## arguments for the different projection matrix weights
     parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
@@ -92,42 +94,103 @@ def run_linear_probe(args, train_data, test_data):
 
 
 def main(args, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
-    
-    # Get a clean conceptbank string
-    # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
-    # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
-    # See `learn_concepts_dataset.py` for details.
-    conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
-    num_classes = len(classes)
-    
-    # Initialize the PCBM module.
-    posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
-    posthoc_layer = posthoc_layer.to(args.device)
 
-    # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
-    
-    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
-    
-    # Convert from the SGDClassifier module to PCBM module.
-    posthoc_layer.set_weights(weights=weights, bias=bias)
+    if args.test == 'accuracy'
+        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+        
+        # Get a clean conceptbank string
+        # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
+        # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
+        # See `learn_concepts_dataset.py` for details.
+        conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
+        num_classes = len(classes)
+        
+        # Initialize the PCBM module.
+        posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+        posthoc_layer = posthoc_layer.to(args.device)
 
-    model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
-    model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
-    torch.save(posthoc_layer, model_path)
+        # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
+        train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+        
+        run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
+        
+        # Convert from the SGDClassifier module to PCBM module.
+        posthoc_layer.set_weights(weights=weights, bias=bias)
 
-    run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
-    
-    with open(run_info_file, "wb") as f:
-        pickle.dump(run_info, f)
-    
-    if num_classes > 1:
-        # Prints the Top-5 Concept Weigths for each class.
-        print(posthoc_layer.analyze_classifier(k=5))
+        model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+        model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+        torch.save(posthoc_layer, model_path)
 
-    print(f"Model saved to : {model_path}")
-    print(run_info)
+        run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
+        
+        with open(run_info_file, "wb") as f:
+            pickle.dump(run_info, f)
+        
+        if num_classes > 1:
+            # Prints the Top-5 Concept Weigths for each class.
+            print(posthoc_layer.analyze_classifier(k=5))
+
+        print(f"Model saved to : {model_path}")
+        print(run_info)
+
+    if args.test == 'dot_product':
+        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, shuffle = False) 
+        train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+
+        distance_list = []
+        dot_product_error_list = []
+        #compute the euclidean distance between the train_embs and the train_projs, and the test_embs and the test_projs only for the matching vectors
+        for i in range(len(train_embs)):
+            distance = torch.dist(train_embs[i], train_projs[i], p=2) #p=2 gives euclidean distance 
+            distance_list.append(distance)
+
+        for i in range(len(test_embs)):
+            distance = torch.dist(test_embs[i], test_projs[i], p=2)
+            distance_list.append(distance)
+
+        for i in range(len(train_embs)):
+            for j in range(i + 1, len(train_embs)):
+                    dot_product_embs = torch.dot(train_embs[i], train_embs[j])
+                    dot_product_projs = torch.dot(train_projs[i], train_projs[j])
+
+                    dot_product_error = dot_product_embs - dot_product_projs
+                    dot_product_error_list.append(dot_product_error)
+        
+        for i in range(len(test_embs)):
+            for j in range(i + 1, len(test_embs)):
+                    dot_product_embs = torch.dot(test_embs[i], test_embs[j])
+                    dot_product_projs = torch.dot(test_projs[i], test_projs[j])
+
+                    dot_product_error = dot_product_embs - dot_product_projs
+                    dot_product_error_list.append(dot_product_error)
+        
+        #plot the distribution of both lists
+        plt.hist(distance_list)
+        plt.title('Euclidean distance between embeddings and projections')
+        plt.xlabel('Euclidean distance')
+        plt.ylabel('Frequency')
+        plt.savefig(f"{args.out_dir}/euclidean_distance.png")
+        print(f'figure save in {args.out_dir}/euclidean_distance.png')
+
+        plt.hist(dot_product_error_list)
+        plt.title('Dot product error between embeddings and projections')
+        plt.xlabel('Dot product error')
+        plt.ylabel('Frequency')
+        plt.savefig(f"{args.out_dir}/dot_product.png")
+        print(f'figure save in {args.out_dir}/dot_product.png')
+
+        distance_mean = np.mean(distance_list)
+        distance_std = np.std(distance_list)
+        dot_product_error_mean = np.mean(dot_product_error_list)
+        dot_product_error_std = np.std(dot_product_error_list)
+
+        print('distance std', distance_std)
+        print('dot product error std', dot_product_error_std)
+
+        print('distance mean', distance_mean)
+        print('dot product error mean', dot_product_error_mean)
+        return
+    
     return run_info
 
 if __name__ == "__main__":
