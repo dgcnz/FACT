@@ -127,7 +127,7 @@ class MetaShiftDataModule(L.LightningDataModule):
         return self.dataset["test"].train_test_split(
             test_size=self.holdout_size,
             shuffle=True,
-            seed=42,
+            seed=42,  # Should we let pytorch lightning handle the randomness?
             stratify_by_column="label",
         )
 

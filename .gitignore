@@ -6,3 +6,7 @@ artifacts
 out/
 lightning_logs/
 old_logs
+.cache
+accuracies*.csv
+*.log
+*.out

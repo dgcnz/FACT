@@ -62,9 +62,11 @@ class ConceptBank:
         print("Concept Bank is initialized.")
 
     @classmethod
-    def from_pickle(cls, pickle_path: str, device: str):
+    def from_pickle(cls, pickle_path: str, device: str, sort_by_keys: bool = True):
         with open(pickle_path, "rb") as f:
-            concept_dict = pickle.load(f)
+            concept_dict: dict = pickle.load(f)
+        if sort_by_keys:
+            concept_dict = dict(sorted(concept_dict.items()))
         return cls(concept_dict, device)
 
     def __getattr__(self, item):

@@ -18,6 +18,66 @@ class PCBMClassifier(torch.nn.Module):
         with torch.no_grad():
             self.classifier.weight[class_ix, concept_ix] = 0.0
 
+    def prune_and_normalize(self, concept_ix: int, class_ix: int):
+        norm_ord = 1
+        with torch.no_grad():
+            previous_norm = torch.linalg.vector_norm(
+                self.classifier.weight[class_ix], ord=norm_ord
+            ).item()
+            pruned_norm = self.classifier.weight[class_ix, concept_ix].item()
+            self.classifier.weight[class_ix, concept_ix] = 0.0
+            unpruned_norm = torch.linalg.vector_norm(
+                self.classifier.weight[class_ix], ord=norm_ord
+            ).item()
+            self.classifier.weight[class_ix] = self.classifier.weight[class_ix] * (
+                1 + pruned_norm / unpruned_norm
+            )
+            rescaled_norm = torch.linalg.vector_norm(
+                self.classifier.weight[class_ix], ord=1
+            ).float()
+            EPS = 1e-4
+            assert (
+                abs(rescaled_norm - previous_norm) < EPS
+            ), f"Rescaled norm {rescaled_norm} != previous norm {previous_norm}, diff {abs(rescaled_norm - previous_norm)}"
+
+
+def analyze_classifier(
+    model: PCBMClassifier,
+    class_names: list[str],
+    concept_names: list[str],
+    k=5,
+    print_lows=False,
+):
+    weights = model.classifier.weight.clone().detach()
+    output = []
+
+    if len(class_names) == 2:
+        weights = [weights.squeeze(), weights.squeeze()]
+
+    for idx, cls in enumerate(class_names):
+        cls_weights = weights[idx]
+        topk_vals, topk_indices = torch.topk(cls_weights, k=k)
+        topk_indices = topk_indices.detach().cpu().numpy()
+        topk_concepts = [concept_names[j] for j in topk_indices]
+        analysis_str = [f"Class : {cls}"]
+        for j, c in enumerate(topk_concepts):
+            analysis_str.append(f"\t {j+1} - {c}: {topk_vals[j]:.3f}")
+        analysis_str = "\n".join(analysis_str)
+        output.append(analysis_str)
+
+        if print_lows:
+            topk_vals, topk_indices = torch.topk(-cls_weights, k=k)
+            topk_indices = topk_indices.detach().cpu().numpy()
+            topk_concepts = [concept_names[j] for j in topk_indices]
+            analysis_str = [f"Class : {cls}"]
+            for j, c in enumerate(topk_concepts):
+                analysis_str.append(f"\t {j+1} - {c}: {-topk_vals[j]:.3f}")
+            analysis_str = "\n".join(analysis_str)
+            output.append(analysis_str)
+
+    analysis = "\n".join(output)
+    return analysis
+
 
 class PCBMLoss(torch.nn.Module):
     def __init__(
@@ -50,14 +110,15 @@ class PCBMLoss(torch.nn.Module):
         self.reduction = reduction
         self.reduce_fn = torch.sum if self.reduction == "sum" else torch.mean
         self.elastic_net_constant = self.lam / (self.n_classes * self.n_concepts)
+        assert 0 <= self.alpha and self.alpha <= 1, self.alpha
 
     def _per_sample_elastic_net(self, param: torch.Tensor):
         """
         Calculates the elastic net for a single parameter
         """
-        l1_norm = torch.norm(param, p=1)
-        l2_norm = torch.norm(param, p=2)
-        return self.alpha * l1_norm + (1 - self.alpha) * l2_norm
+        l1_norm = param.abs().sum()
+        squared_l2_norm = param.square().sum()
+        return self.alpha * l1_norm + (1 - self.alpha) * squared_l2_norm
 
     def forward(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
@@ -132,20 +193,42 @@ class PCBMClassifierTrainer(L.LightningModule):
         self.log("test_accuracy", accuracy)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.model.classifier.parameters(), lr=self.lr)
         return optimizer
 
     def load_state_dict(self, *args, **kwargs):
-        logging.debug(f"Calling custom load_state_dict with {self.pruned_concept_class_pairs}")
+        logging.info(
+            f"Calling custom load_state_dict with {self.pruned_concept_class_pairs}"
+        )
         super().load_state_dict(*args, **kwargs)
-        for concept_ix, class_ix in self.pruned_concept_class_pairs:
-            previous_weight = self.model.classifier.weight[class_ix, concept_ix].item()
-            self.model.prune(concept_ix=concept_ix, class_ix=class_ix)
-            zero_weight = self.model.classifier.weight[class_ix, concept_ix].item()
-            logging.debug(
-                f"Pruned {concept_ix} {class_ix} from {previous_weight} to {zero_weight}"
-            )
-            assert zero_weight == 0.0, zero_weight
-            assert previous_weight != 0.0, previous_weight
-        if self.normalize:
-            raise NotImplementedError("Normalized not implemented")
+        if not self.normalize:
+            for concept_ix, class_ix in self.pruned_concept_class_pairs:
+                previous_weight = self.model.classifier.weight[
+                    class_ix, concept_ix
+                ].item()
+                self.model.prune(concept_ix=concept_ix, class_ix=class_ix)
+                zero_weight = self.model.classifier.weight[class_ix, concept_ix].item()
+                logging.info(
+                    f"Pruned {concept_ix} {class_ix} from {previous_weight} to {zero_weight}"
+                )
+                assert zero_weight == 0.0, zero_weight
+                assert previous_weight != 0.0, previous_weight
+        else:
+            if len(self.pruned_concept_class_pairs) == 1:
+                concept_ix, class_ix = self.pruned_concept_class_pairs[0]
+                previous_weight = self.model.classifier.weight[
+                    class_ix, concept_ix
+                ].item()
+                self.model.prune_and_normalize(
+                    concept_ix=concept_ix,
+                    class_ix=class_ix,
+                )
+                zero_weight = self.model.classifier.weight[class_ix, concept_ix].item()
+                logging.info(
+                    f"Pruned {concept_ix} {class_ix} from {previous_weight} to {zero_weight}"
+                    " and normalized remaining weights."
+                )
+            else:
+                raise NotImplementedError(
+                    f"Currently prune_and_normalize only handles one prune."
+                )
