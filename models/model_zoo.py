@@ -39,7 +39,7 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
     
     elif backbone_name.lower() == "resnet18_cub":
         from pytorchcv.model_provider import get_model as ptcv_get_model
-        model = ptcv_get_model(backbone_name, pretrained=True, root=args.out_dir)
+        model = ptcv_get_model(backbone_name, weights=None, root=args.out_dir)
         backbone, _ = ResNetBottom(model), ResNetTop(model)
         cub_mean_pxs = np.array([0.5, 0.5, 0.5])
         cub_std_pxs = np.array([2., 2., 2.])
