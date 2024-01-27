@@ -85,7 +85,7 @@ def eval_cifar(args, seed):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
                                                    shuffle=True, num_workers=args.num_workers)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size,
-                                                    shuffle=True, num_workers=args.num_workers)
+                                                    shuffle=False, num_workers=args.num_workers)
 
     print(f"Evaluating for seed: {seed}")
 
@@ -101,9 +101,8 @@ def eval_cifar(args, seed):
     finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
 
     trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
-                    callbacks=[EarlyStopping(monitor="val_loss", mode="min"), checkpoint_callback],
-                    val_check_interval=0.25,
-                    check_val_every_n_epoch=1)
+                    callbacks=[checkpoint_callback],
+                    check_val_every_n_epoch=1) #EarlyStopping(monitor="val_loss", mode="min"), 
     
     # I have to actually pass a validation loader to this for it to work correctly. otherwise it will just use the train steps always. 
     trainer.fit(finetuner, train_loader, val_loader)
