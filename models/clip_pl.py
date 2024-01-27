@@ -30,12 +30,14 @@ class CLIPClassifierTrainer(L.LightningModule):
         x, y = batch
         y_hat = self.model(x)
         loss = self.loss(y_hat, y)
-        self.log("val_loss", loss, prog_bar=True)
+        val_accuracy = y_hat.argmax(dim=1) == y
+        self.log('val_acc', val_accuracy, prog_bar=True)
+        self.log("val_loss", loss)
         return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.classifier.parameters(), lr=self.lr)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.6)
 
         return [optimizer], [scheduler]
     

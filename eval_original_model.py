@@ -12,9 +12,10 @@ from scipy.special import softmax
 from data import get_dataset
 from models import get_model, clip_pl
 from training_tools import export
-from lightning.pytorch.callbacks.early_stopping import EarlyStopping
-from lightning.pytorch.callbacks import TQDMProgressBar
-from lightning.pytorch.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint
+
 
 
 
@@ -75,23 +76,40 @@ def eval_cifar(args, seed):
     train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
     num_classes = len(classes)
 
+    #create a validation set from the training set
+    train_size = int(0.8 * len(train_loader.dataset))
+    val_size = len(train_loader.dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(train_loader.dataset, [train_size, val_size])
+
+    #create the dataloaders
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
+                                                   shuffle=True, num_workers=args.num_workers)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size,
+                                                    shuffle=True, num_workers=args.num_workers)
+
     print(f"Evaluating for seed: {seed}")
 
     #define a checkpoint callback
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
                             monitor='val_loss',
-                            dirpath=args.out_dir/'checkpoints/',
+                            dirpath=args.out_dir + '/checkpoints/',
                             save_top_k=3,
                             mode='min',
                         )
 
     # first apply linear probing and instantiate the classifier module
     finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
-    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, callbacks=[EarlyStopping(monitor="val_loss", mode="min")])
-    trainer.fit(finetuner, train_loader)
+
+    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
+                    callbacks=[EarlyStopping(monitor="val_loss", mode="min"), checkpoint_callback],
+                    val_check_interval=0.25,
+                    check_val_every_n_epoch=1)
+    
+    # I have to actually pass a validation loader to this for it to work correctly. otherwise it will just use the train steps always. 
+    trainer.fit(finetuner, train_loader, val_loader)
 
     # load the best checkpoint
-    best_model = finetuner.load_from_checkpoint(checkpoint_callback.best_model_path)
+    best_model = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(checkpoint_callback.best_model_path)
 
     # then evaluate the model
     results = trainer.test(model = best_model, dataloaders=test_loader)
