@@ -319,11 +319,11 @@ if __name__ == "__main__":
 
     if "coco_stuff" in args.datasets or args.eval_all:
         
-        print("Evaluating for SIIM_ISIC")
+        print("Evaluating for COCO-stuff")
         print("========================")
         new_args = deepcopy(args)
-        new_args.dataset = "siim_isic"
-        metrics = eval_per_seed(metrics, new_args, eval_cifar, args.seeds)
+        new_args.dataset = "coco_stuff"
+        metrics = eval_per_seed(metrics, new_args, eval_coco, args.seeds)
     
     print("=======================\n")
     
