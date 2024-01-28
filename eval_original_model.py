@@ -166,11 +166,12 @@ def eval_cifar(args, seed):
                     accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
                     accuracy_list.append(accuracy)
                 peak_idx = np.argmax(accuracy_list)
+                peak_idx = l2_lambda_idx_list[peak_idx]
                 return peak_idx
 
             l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
             peak_idx = find_peak(l2_lambda_init_idx)
-            step_span = 8
+            step_span = 2
             while step_span > 0:
                 left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
                 peak_idx = find_peak([left, peak_idx, right])
@@ -180,6 +181,7 @@ def eval_cifar(args, seed):
         lambda_best = hyperparameter_sweep()
         C = 1 / lambda_best
         print(C, 'best C')
+
     else:
         C = args.C
 
