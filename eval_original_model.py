@@ -177,6 +177,7 @@ def eval_cifar(args, seed):
 
     lambda_best = hyperparameter_sweep()
     C = 1 / lambda_best
+    print(C, 'best C')
 
     # Perform logistic regression
     classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
