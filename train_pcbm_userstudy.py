@@ -25,7 +25,7 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action="store_true", default=True)
 
     return parser.parse_args()
 
