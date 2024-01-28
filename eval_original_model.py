@@ -17,6 +17,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks import ModelCheckpoint
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score
 
 
 
@@ -123,10 +124,7 @@ def eval_cifar_old(args, seed):
 
     return results # average accuracy over the batches
 
-def eval_cifar(args, seed):
-    model, preprocess = get_model(args, backbone_name="clip:RN50")
-
-    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+def eval_clip(args, model, train_loader, test_loader, classes):
     num_classes = len(classes)
 
     def get_features(loader):
@@ -159,14 +157,17 @@ def eval_cifar(args, seed):
             
             def find_peak(l2_lambda_idx_list):
                 """Calculate accuracy on all indexes and return the peak index"""
-                accuracy_list = []
+                metric_list = []
                 for l2_lambda_idx in l2_lambda_idx_list:
                     classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
                     classifier.fit(train_features_sweep, train_labels_sweep)
                     predictions = classifier.predict(val_features_sweep)
-                    accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
-                    accuracy_list.append(accuracy)
-                peak_idx = np.argmax(accuracy_list)
+                    if args.dataset == "coco_stuff":
+                        metric = average_precision_score(val_labels_sweep, predictions) 
+                    else:
+                        metric = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                    metric_list.append(metric)
+                peak_idx = np.argmax(metric_list)
                 peak_idx = l2_lambda_idx_list[peak_idx]
                 return peak_idx
 
@@ -194,8 +195,42 @@ def eval_cifar(args, seed):
 
     # Evaluate using the logistic regression classifier
     predictions = classifier.predict(test_features)
-    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
-    print(f"Accuracy = {accuracy:.3f}")
+    if args.dataset == "coco_stuff":
+        metric = average_precision_score(test_labels, predictions)
+        print(f"Average precision = {metric:.3f}")
+    else:
+        metric = np.mean((test_labels == predictions).astype(float)) * 100.
+        print(f"Accuracy = {metric:.3f}")
+    
+    return metric
+
+def eval_cifar(args, seed):
+    model, preprocess = get_model(args, backbone_name="clip:RN50")
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+
+    accuracy = eval_clip(args, seed, model, train_loader, test_loader, classes)
+
+    return accuracy
+
+def eval_coco(args, seed):
+    model, preprocess = get_model(args, backbone_name="clip:RN50")
+
+    APs = []
+
+    #loop over the 20 targets
+    for i in range(20): 
+        train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **{'target': i})
+        AP = eval_clip(args, seed, model, train_loader, test_loader, classes)
+        APs.append(AP)
+    
+    mean_average_precision = np.mean(APs)
+    print(f"Mean Average Precision = {mean_average_precision:.3f}")
+
+    return mean_average_precision
+
+    
+
+
 
 
 def eval_ham(args, seed):
@@ -226,11 +261,6 @@ def eval_isic(args, seed):
     print('Current AUC: ' + str(results))
     
     return results 
-
-
-def eval_coco(args):
-    pass
-
 
 def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
     for seed in seeds:
