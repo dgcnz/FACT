@@ -3,8 +3,8 @@ import os
 import pickle
 import numpy as np
 import torch
-import sys
 import torch.nn as nn
+from re import sub
 from training_tools.utils import train_runs
 from tqdm import tqdm
 from pathlib import Path
@@ -19,7 +19,7 @@ from training_tools import load_or_compute_projections, AverageMeter, MetricComp
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--pcbm-path", required=True, type=str, help="Trained PCBM module.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
@@ -30,7 +30,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action=argparse.BooleanOptionalAction)
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
@@ -105,15 +105,18 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     return latest_info
 
 
-def main(args, target, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
+def main(args, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **tar)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
-    run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
+    hybrid_model_path = sub(":", "", hybrid_model_path)
+    hybrid_model_path = sub("target_[0-9]+", "target_" + str(kwargs['target']), hybrid_model_path) # now we only have to input one file destination as a general form
+    run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "rinf-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
-    train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    train_embs, _ , train_lbls, test_embs, _ , test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)

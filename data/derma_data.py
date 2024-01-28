@@ -88,14 +88,12 @@ def load_ham_data(args, preprocess):
     df['y'] = df["benign_or_malignant"].map(lambda id: class_to_idx[id])
 
     idx_to_class = {v: k for k, v in class_to_idx.items()}
-    
-    #df = df.groupby("y", group_keys=False).apply(pd.DataFrame.sample, 1000)
 
     _, df_val = train_test_split(df, test_size=0.20, random_state=args.seed, stratify=df["dx"])
     df_train = df[~df.image_id.isin(df_val.image_id)]
     trainset = DermDataset(df_train, preprocess)
     valset = DermDataset(df_val, preprocess)
-    print(f"Train, Val: {df_train.shape}, {df_val.shape}")
+    # print(f"Train, Val: {df_train.shape}, {df_val.shape}")
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
                                           shuffle=True, num_workers=args.num_workers)
     

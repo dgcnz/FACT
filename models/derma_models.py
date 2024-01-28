@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import os
 import torchvision
-
+from re import sub
 
 # google drive paths to models
 MODEL_WEB_PATHS = {
@@ -22,9 +22,9 @@ def load_model(backbone_name, save_dir="./models", download=True):
     """Load the model and download if necessary. Saves model to provided save 
     directory."""
 
-    print(save_dir)
     os.makedirs(save_dir, exist_ok=True)
     model_path = os.path.join(save_dir, f"{backbone_name.lower()}.pth")
+    model_path = sub("_inception", "", model_path)
     if not os.path.exists(model_path):
         if not download:
             raise Exception("Model not downloaded and download option not"\
@@ -34,7 +34,7 @@ def load_model(backbone_name, save_dir="./models", download=True):
             import gdown
             gdown.download(MODEL_WEB_PATHS[backbone_name], model_path)
             
-    model = torchvision.models.inception_v3(init_weights=False, pretrained=False, transform_input=True)
+    model = torchvision.models.inception_v3(init_weights=False, weights=None, transform_input=True)
     model.fc = torch.nn.Linear(2048, 2)
     model.AuxLogits.fc = torch.nn.Linear(768, 2)
     state_dict = torch.load(model_path)

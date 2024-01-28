@@ -1,5 +1,4 @@
 import argparse
-import os
 import pickle
 import numpy as np
 import torch
@@ -11,20 +10,19 @@ from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
-from concepts import ConceptBank
-from models import PosthocLinearCBM, PosthocHybridCBM, get_model
+from models import PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer, export
 
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
-    parser.add_argument("--num-epochs", default=20, type=int)
+    parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
@@ -105,15 +103,16 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     return latest_info
 
 
-def main(args, target, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
+def main(args, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **tar)
     num_classes = len(classes)
     
     hybrid_model_path = args.pcbm_path.replace("pcbm_", "pcbm-hybrid_")
     run_info_file = Path(args.out_dir) / Path(hybrid_model_path.replace("pcbm", "run_info-pcbm")).with_suffix(".pkl").name
     
     # We use the precomputed embeddings and projections.
-    train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    train_embs, _ , train_lbls, test_embs, _ , test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)
@@ -146,8 +145,8 @@ if __name__ == "__main__":
 
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
-        # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
-        args.pcbm_path = 'artifacts/clip/cifar' + args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
+        # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clipRN50__multimodal_concept_clipRN50_cifar10_recurse_1__lam_1e-05__alpha_0.99__seed_42.ckpt'
+        args.pcbm_path = 'artifacts/clip/cifar' + args.dataset + '_' + str(seed) + '/pcbm_cifar10__clipRN50__multimodal_concept_clipRN50_cifar10_recurse_1__lam_1e-05__alpha_0.99__seed_' + str(seed) + '.ckpt'
         # Load the PCBM
         posthoc_layer = torch.load(args.pcbm_path)
         posthoc_layer = posthoc_layer.eval()

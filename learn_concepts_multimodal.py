@@ -22,6 +22,7 @@ def config():
     parser.add_argument("--backbone-name", default="clip:RN50", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--recurse", default=1, type=int, help="How many times to recurse on the conceptnet graph")
+    parser.add_argument('--class_names', type=str, default = 'airplane,bed,car,cow,keyboard')
     return parser.parse_args()
 
 
@@ -136,7 +137,7 @@ def learn_conceptbank(args, concept_list, scenario, model):
             text = clip.tokenize(f"{concept}").to(args.device)
             text_features = model.encode_text(text).cpu().numpy()
         
-        text_features = text_features/np.linalg.norm(text_features)
+        text_features = text_features / np.linalg.norm(text_features)
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
         # `ConceptBank` class (see `concepts/concept_utils.py`).
         concept_dict[concept] = (text_features, None, None, 0, {})
@@ -330,20 +331,31 @@ if __name__ == "__main__":
         all_concepts = get_concept_data(all_classes)
         all_concepts = clean_concepts(all_concepts)
 
-        print(all_concepts, 'fadsfasdfasdfasdfasdfasdfasdf')
+        learn_conceptbank(args, all_concepts, args.classes, model)
+    
+    elif 'task' in args.classes :
+        # Either get class names or pull the dataset ourselves(req token again) 
+        # TODO decide on solution
+        all_classes = args.class_names.split(',') if args.class_names else []
+        all_concepts = get_concept_data(all_classes)
+        all_concepts = clean_concepts(all_concepts)
         all_concepts = list(set(all_concepts).difference(set(all_classes)))
-        print(all_concepts, 'fadsfasdfasdfasdfasdfasdfasdf')
         # If we'd like to recurse in the conceptnet graph, specify `recurse > 1`.
+
         for i in range(1, args.recurse):
             all_concepts = get_concept_data(all_concepts)
             all_concepts = list(set(all_concepts))
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
 
-        print(all_concepts, 'fadsfasdfasdfasdfasdfasdfasdf')
-        all_concepts1.extend(all_concepts)
+        learn_conceptbank(args, all_concepts, args.classes)
 
-        learn_conceptbank(args, all_concepts1, args.classes, model)
-
+    elif args.classes.lower() == "broden":
+        from data.constants import BRODEN_CONCEPTS
+        concept_loaders = {}
+        concepts = [c for c in os.listdir(BRODEN_CONCEPTS) if os.path.isdir(os.path.join(BRODEN_CONCEPTS, c))]
+        
+        learn_conceptbank(args, concepts, args.classes, model)
+        
     else:
         raise ValueError(f"Unknown classes: '{args.classes}'. Define your dataset here!")

@@ -6,3 +6,4 @@ artifacts
 out/
 models/AudioCLIP/assets/audioclip.pt
 models/AudioCLIP/assets/bpe_simple_vocab_16e6.txt.gz
+lightning_logs

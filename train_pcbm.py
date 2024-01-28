@@ -3,6 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
+from re import sub
 from training_tools.utils import train_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
@@ -26,7 +27,7 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action=argparse.BooleanOptionalAction)
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
@@ -80,9 +81,9 @@ def run_linear_probe(args, train_data, test_data):
     return run_info, classifier.coef_, classifier.intercept_
 
 
-def main(args, target, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, target, preprocess)
-    
+def main(args, concept_bank, backbone, preprocess, **kwargs):
+    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
+    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, **tar)
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
@@ -90,29 +91,28 @@ def main(args, target, concept_bank, backbone, preprocess):
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0]
     num_classes = len(classes)
 
-    print(concept_bank.vectors, "concept bank vectors")
-    
     # Initialize the PCBM module.
     posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
     posthoc_layer = posthoc_layer.to(args.device)
-    
-    print('concept bank vectors', concept_bank.vectors)
-    # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
-    print(train_projs, "train projs")
+    # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
+    _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
-
-    print(weights, "weights")
-    print(train_projs, "proj")
+    
+    if args.print_out == True:
+        print(concept_bank.vectors, "concept bank vectors")
+        print(train_projs, "train projs")
+        print(weights, "weights")
+        print(train_projs, "proj")
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
-    model_id = f"{model_id}_target_{target}" if (args.dataset == "coco_stuff") else model_id
+    model_id = f"{model_id}_target_{kwargs['target']}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+    model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)
 
     run_info_file = os.path.join(args.out_dir, f"rinf_pcbm_{model_id}.pkl")
@@ -124,7 +124,7 @@ def main(args, target, concept_bank, backbone, preprocess):
         # Prints the Top-5 Concept Weigths for each class if desired.
         print(posthoc_layer.analyze_classifier(k=5))
 
-    print(f"Model saved to : {model_path}")
+    print(f"Model saved to : {model_path}\n")
     print(run_info)
 
 

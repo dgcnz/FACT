@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 
-def get_dataset(args, target:int, preprocess=None):
+def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
     # note: target is only needed for COCO-Stuff due to the 20 datasets involved
     if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
@@ -15,7 +15,7 @@ def get_dataset(args, target:int, preprocess=None):
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                                   shuffle=True, num_workers=args.num_workers)
+                                                   shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
     
@@ -29,7 +29,7 @@ def get_dataset(args, target:int, preprocess=None):
         class_to_idx = {c: i for (i,c) in enumerate(classes)}
         idx_to_class = {v: k for k, v in class_to_idx.items()}
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-                                                   shuffle=True, num_workers=args.num_workers)
+                                                   shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
 
@@ -70,26 +70,27 @@ def get_dataset(args, target:int, preprocess=None):
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
+        # get target index from the kwargs
+        assert('target' in kwargs.keys()), "Please specify the target index for COCO-Stuff"
+        target = kwargs['target']
+
         # The 20 most biased classes from Singh et al., 2020
         target_classes = ["cup", "wine glass", "handbag", "apple", "car",
                           "bus", "potted plant", "spoon", "microwave", "keyboard",
                           "skis", "clock", "sports ball", "remote", "snowboard",
                           "toaster", "hair drier", "tennis racket", "skateboard", "baseball glove"]
         
-        label_path = "coco_target_indexes.txt"
-        train_path = os.path.join(COCO_STUFF_DIR, "train2017")
-        test_path = os.path.join(COCO_STUFF_DIR, "val2017") # It is presumed that the validation set was used as the test one
-        train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
-        test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
+        label_path = "data/coco_target_indexes.txt"
+        train_annot = os.path.join(COCO_STUFF_DIR, "labels_train.json")
+        test_annot = os.path.join(COCO_STUFF_DIR, "labels_val.json")
 
-        train_loader = load_coco_data(train_path, train_annot, transform=preprocess, target=target, n_samples=500)
-        test_loader  = load_coco_data(test_path, test_annot, transform=preprocess, target=target, n_samples=250)
-        idx_to_class = cid_to_class(label_path, target_classes)
+        train_loader, test_loader = load_coco_data(train_annot, test_annot, transform=preprocess, target=target)
+        idx_to_class = cid_to_class(label_path, target_classes, target_idx=target)
+        classes      = target_classes
+        print(idx_to_class)
 
         # For printing
-        assert (target in idx_to_class.keys()), "This target index is not supported. Please check again what was \
-                                                 inputted into --target."
-        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[target]}'")
+        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
 
 
     elif args.dataset.lower() == "siim_isic":
@@ -104,6 +105,43 @@ def get_dataset(args, target:int, preprocess=None):
         classes = pd.read_csv(meta_dir)['benign_malignant']
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
+
+
+    elif 'task' in args.dataset:
+        from datasets import load_dataset
+        from torch.utils.data import Dataset, DataLoader
+        from torchvision import transforms
+
+        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.token)
+
+        transform = transforms.Compose([
+          #we have some grayscale images, convert them to RGB
+          transforms.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
+          transforms.Resize((224, 224)),
+          transforms.ToTensor(),
+        ])
+
+        class PCBMSurveyDataset(Dataset):
+            def __init__(self, dataset):
+                self.dataset = dataset
+                self.transform  = transform
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def __getitem__(self, idx):
+                item = self.dataset[idx]
+                image = item['image']
+                label = item['label']
+                return self.transform(image), label
+            
+        train_dataset = PCBMSurveyDataset(dataset['train'])
+        test_dataset = PCBMSurveyDataset(dataset['test'])
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+        idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
+        classes = dataset['train'].features['label'].names
 
     # the following two if-statement branches are for the extensions
     elif args.dataset.lower() == "esc50":
@@ -124,8 +162,6 @@ def get_dataset(args, target:int, preprocess=None):
         classes = list(idx_to_class.values())
 
 
-
-
     elif args.dataset.lower() == "us8k":
         from .us8k import load_us_data
         from .constants import US_DIR
@@ -141,9 +177,7 @@ def get_dataset(args, target:int, preprocess=None):
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
 
-
     else:
         raise ValueError(args.dataset)
     
     return train_loader, test_loader, idx_to_class, classes
-
