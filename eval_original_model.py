@@ -1,3 +1,4 @@
+
 # This script has some functions that can be used to verify the performances of the original models
 
 import argparse
@@ -12,6 +13,12 @@ from scipy.special import softmax
 from data import get_dataset
 from models import get_model, clip_pl
 from training_tools import export
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint
+from sklearn.linear_model import LogisticRegression
+
+
 
 
 def config():
@@ -27,9 +34,8 @@ def config():
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
     parser.add_argument("--max-epochs", default=20, type=int, help="Maximum number of epochs.")
-    parser.add_argument("--coco-targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
-                                                   43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
-                                                   type=int, nargs='+', help="target indexes for cocostuff")
+    parser.add_argument("--checkpoint", default=None, type=str)
+    parser.add_argument("--C", default=None, type=float, help="Inverse of regularization strength. Smaller values cause stronger regularization.")
     args = parser.parse_args()
 
     return args
@@ -65,7 +71,7 @@ def eval_model(args, model, loader, seed):
     return final_accuracy
 
 
-def eval_cifar(args, seed):
+def eval_cifar_old(args, seed):
     # setting the seed
     pl.seed_everything(seed, workers=True)
 
@@ -74,18 +80,122 @@ def eval_cifar(args, seed):
     train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
     num_classes = len(classes)
 
+    #create a validation set from the training set
+    train_size = int(0.8 * len(train_loader.dataset))
+    val_size = len(train_loader.dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(train_loader.dataset, [train_size, val_size])
+
+    #create the dataloaders
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
+                                                   shuffle=True, num_workers=args.num_workers)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size,
+                                                    shuffle=False, num_workers=args.num_workers)
+
     print(f"Evaluating for seed: {seed}")
 
+    #define a checkpoint callback
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(
+                            monitor='val_loss',
+                            dirpath=args.out_dir + '/checkpoints/',
+                            save_top_k=1,
+                            mode='min',
+                        )
+
     # first apply linear probing and instantiate the classifier module
-    finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
-    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True)
-    trainer.fit(finetuner, train_loader)
+    if args.checkpoint is not None:
+        finetuner = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(args.checkpoint)
+    else:
+        finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
+
+    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
+                    callbacks=[checkpoint_callback],
+                    check_val_every_n_epoch=1) #EarlyStopping(monitor="val_loss", mode="min"), 
+    
+    # I have to actually pass a validation loader to this for it to work correctly. otherwise it will just use the train steps always. 
+    trainer.fit(finetuner, train_loader, val_loader)
+
+    # load the best checkpoint
+    best_model = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(checkpoint_callback.best_model_path)
 
     # then evaluate the model
-    results = trainer.test(dataloaders=test_loader)
+    results = trainer.test(model = best_model, dataloaders=test_loader)
     print('Current Accuracy: ' + str(results))
 
     return results # average accuracy over the batches
+
+def eval_cifar(args, seed):
+    model, preprocess = get_model(args, backbone_name="clip:RN50")
+
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+    num_classes = len(classes)
+
+    def get_features(loader):
+        all_features = []
+        all_labels = []
+        
+        with torch.no_grad():
+            for images, labels in tqdm(loader):
+                features = model.encode_image(images.to(args.device))
+
+                all_features.append(features)
+                all_labels.append(labels)
+
+        return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
+
+    # Calculate the image features
+    train_features, train_labels = get_features(train_loader)
+    test_features, test_labels = get_features(test_loader)
+
+    #split train set into train and validation in numpy arrays
+    train_size = int(0.8 * len(train_features))
+    train_features_sweep, val_features_sweep = np.split(train_features, [train_size])
+    train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
+
+    # do a hyperparameter sweep to find the best regularization strength lambda.
+    if args.C is None:     
+        def hyperparameter_sweep():
+            print("Performing hyperparameter sweep to find the best regularization strength lambda.")
+            l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
+            
+            def find_peak(l2_lambda_idx_list):
+                """Calculate accuracy on all indexes and return the peak index"""
+                accuracy_list = []
+                for l2_lambda_idx in l2_lambda_idx_list:
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
+                    classifier.fit(train_features_sweep, train_labels_sweep)
+                    predictions = classifier.predict(val_features_sweep)
+                    accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                    accuracy_list.append(accuracy)
+                peak_idx = np.argmax(accuracy_list)
+                peak_idx = l2_lambda_idx_list[peak_idx]
+                return peak_idx
+
+            l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
+            peak_idx = find_peak(l2_lambda_init_idx)
+            step_span = 2
+            while step_span > 0:
+                print(step_span, 'wtffffff why does this run for infinity time')
+                left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
+                peak_idx = find_peak([left, peak_idx, right])
+                step_span //= 2
+                print('current best lambda', l2_lambda_list[peak_idx])
+            return l2_lambda_list[peak_idx]
+
+        lambda_best = hyperparameter_sweep()
+        C = 1 / lambda_best
+        print(C, 'best C')
+
+    else:
+        C = args.C
+
+    # Perform logistic regression
+    classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
+    classifier.fit(train_features, train_labels)
+
+    # Evaluate using the logistic regression classifier
+    predictions = classifier.predict(test_features)
+    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    print(f"Accuracy = {accuracy:.3f}")
 
 
 def eval_ham(args, seed):
@@ -118,32 +228,8 @@ def eval_isic(args, seed):
     return results 
 
 
-def eval_coco(args, seed):
-    # setting the seed
-    pl.seed_everything(seed, workers=True)
-    results = []
-    targets = args.coco_targets
-    for target in targets:
-
-        _ , preprocess = get_model(args, backbone_name="clip:RN50")
-
-        train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **{'target': target})
-        num_classes = len(classes)
-
-        print(f"Evaluating for seed: {seed}")
-
-        # first apply linear probing and instantiate the classifier module
-        finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
-        trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True)
-        trainer.fit(finetuner, train_loader)
-
-        # then evaluate the model
-        result = trainer.test(dataloaders=test_loader)
-        curr   = results['test_accuracy']
-        print(f'Current Accuracy: {round(curr, 3)}')
-        results.append(curr)
-
-    return results
+def eval_coco(args):
+    pass
 
 
 def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
@@ -156,8 +242,7 @@ def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
         else:
             metrics[args.dataset].append(result)
 
-    curr_mean = np.mean(metrics[args.dataset])
-    print(f"Average performance per seed: {round(curr_mean, 3)}")
+    print(f"Average performance per seed: {np.mean(metrics[args.dataset])}")
 
     return metrics
 
@@ -196,19 +281,20 @@ if __name__ == "__main__":
         metrics = eval_per_seed(metrics, new_args, eval_cub, args.seeds)
     
     if "siim_isic" in args.datasets or args.eval_all:
-        print("Evaluating for SIIM-ISIC")
+        print("Evaluating for SIIM_ISIC")
         print("========================")
         new_args = deepcopy(args)
         new_args.dataset = "siim_isic"
         metrics = eval_per_seed(metrics, new_args, eval_isic, args.seeds)
 
     if "coco_stuff" in args.datasets or args.eval_all:
-        print("Evaluating for COCO-Stuff")
+        
+        print("Evaluating for SIIM_ISIC")
         print("========================")
         new_args = deepcopy(args)
-        new_args.dataset = "coco_stuff"
-        metrics = eval_per_seed(metrics, new_args, eval_coco, args.seeds)
-
+        new_args.dataset = "siim_isic"
+        metrics = eval_per_seed(metrics, new_args, eval_cifar, args.seeds)
+    
     print("=======================\n")
     
     assert (metrics != {}), "It appears that none of the datasets you've specified are supported."

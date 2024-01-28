@@ -296,7 +296,7 @@ if __name__ == "__main__":
         # Extract the names into a list
         all_concepts = [entry['name'] for entry in data]
 
-    elif args.classes.lower() == "audioset+us8k+ecs50":
+    elif args.classes == "audioset+us8k+esc50":
         import json
         from data.constants import ESC_DIR
         
@@ -305,9 +305,9 @@ if __name__ == "__main__":
             data = json.load(file)
 
         # Extract the names into a list
-        all_concepts = [entry['name'] for entry in data]
+        all_concepts1 = [entry['name'] for entry in data]
 
-        all_concepts.append([
+        all_concepts1.extend([
         # The four main concepts (level one)
         'Human', 'Nature', 'Mechanical', 'Music',
 
@@ -330,7 +330,6 @@ if __name__ == "__main__":
         all_classes = list(set(df['category']))
         all_concepts = get_concept_data(all_classes)
         all_concepts = clean_concepts(all_concepts)
-        all_concepts = all_concepts.append(list(set(all_concepts).difference(set(all_classes))))
 
         learn_conceptbank(args, all_concepts, args.classes, model)
     
