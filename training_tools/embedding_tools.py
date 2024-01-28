@@ -53,6 +53,8 @@ def get_projections_self_supervised(args, backbone, posthoc_layer, loader):
         batch_X = batch_X.to(args.device)
         if "clip" in args.backbone_name:
             embeddings = backbone.encode_image(batch_X).detach().float()
+        elif "audio" in args.backbone_name.lower():
+            ((embeddings, _, _), _), _ = backbone(audio=batch_X)
         else:
             embeddings = backbone(batch_X).detach()
         projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
