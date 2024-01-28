@@ -160,7 +160,7 @@ def eval_cifar(args, seed):
                 """Calculate accuracy on all indexes and return the peak index"""
                 accuracy_list = []
                 for l2_lambda_idx in l2_lambda_idx_list:
-                    classifier = LogisticRegression(random_state=args.seed, C=l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
                     classifier.fit(train_features_sweep, train_labels_sweep)
                     predictions = classifier.predict(val_features_sweep)
                     accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
