@@ -15,6 +15,7 @@ from training_tools import export
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks import ModelCheckpoint
+from sklearn.linear_model import LogisticRegression
 
 
 
@@ -32,6 +33,7 @@ def config():
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
     parser.add_argument("--max-epochs", default=20, type=int, help="Maximum number of epochs.")
+    parser.add_argument("--checkpoint", default=None, type=str)
     args = parser.parse_args()
 
     return args
@@ -67,7 +69,7 @@ def eval_model(args, model, loader, seed):
     return final_accuracy
 
 
-def eval_cifar(args, seed):
+def eval_cifar_old(args, seed):
     # setting the seed
     pl.seed_everything(seed, workers=True)
 
@@ -93,12 +95,15 @@ def eval_cifar(args, seed):
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
                             monitor='val_loss',
                             dirpath=args.out_dir + '/checkpoints/',
-                            save_top_k=3,
+                            save_top_k=1,
                             mode='min',
                         )
 
     # first apply linear probing and instantiate the classifier module
-    finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
+    if args.checkpoint is not None:
+        finetuner = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(args.checkpoint)
+    else:
+        finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
 
     trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
                     callbacks=[checkpoint_callback],
@@ -115,6 +120,38 @@ def eval_cifar(args, seed):
     print('Current Accuracy: ' + str(results))
 
     return results # average accuracy over the batches
+
+def eval_cifar(args, seed):
+    model, preprocess = get_model(args, backbone_name="clip:RN50")
+
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+    num_classes = len(classes)
+
+    def get_features(loader):
+        all_features = []
+        all_labels = []
+        
+        with torch.no_grad():
+            for images, labels in tqdm(loader):
+                features = model.encode_image(images.to(args.device))
+
+                all_features.append(features)
+                all_labels.append(labels)
+
+        return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
+
+    # Calculate the image features
+    train_features, train_labels = get_features(train_loader)
+    test_features, test_labels = get_features(test_loader)
+
+    # Perform logistic regression
+    classifier = LogisticRegression(random_state=args.seed, C=0.316, max_iter=1000, verbose=1)
+    classifier.fit(train_features, train_labels)
+
+    # Evaluate using the logistic regression classifier
+    predictions = classifier.predict(test_features)
+    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    print(f"Accuracy = {accuracy:.3f}")
 
 
 def eval_ham(args, seed):

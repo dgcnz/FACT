@@ -30,6 +30,7 @@ def config():
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
 
+
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
 
