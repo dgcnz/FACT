@@ -144,8 +144,42 @@ def eval_cifar(args, seed):
     train_features, train_labels = get_features(train_loader)
     test_features, test_labels = get_features(test_loader)
 
+    #split train set into train and validation in numpy arrays
+    train_size = int(0.8 * len(train_features))
+    train_features_sweep, val_features_sweep = np.split(train_features, [train_size])
+    train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
+
+    # do a hyperparameter sweep to find the best regularization strength lambda.
+    def hyperparameter_sweep():
+        print("Performing hyperparameter sweep to find the best regularization strength lambda.")
+        l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
+        
+        def find_peak(l2_lambda_idx_list):
+            """Calculate accuracy on all indexes and return the peak index"""
+            accuracy_list = []
+            for l2_lambda_idx in l2_lambda_idx_list:
+                classifier = LogisticRegression(random_state=args.seed, C=l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
+                classifier.fit(train_features_sweep, train_labels_sweep)
+                predictions = classifier.predict(val_features_sweep)
+                accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                accuracy_list.append(accuracy)
+            peak_idx = np.argmax(accuracy_list)
+            return peak_idx
+
+        l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
+        peak_idx = find_peak(l2_lambda_init_idx)
+        step_span = 8
+        while step_span > 0:
+            left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
+            peak_idx = find_peak([left, peak_idx, right])
+            step_span //= 2
+        return l2_lambda_list[peak_idx]
+
+    lambda_best = hyperparameter_sweep()
+    C = 1 / lambda_best
+
     # Perform logistic regression
-    classifier = LogisticRegression(random_state=args.seed, C=0.316, max_iter=1000, verbose=1)
+    classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
     classifier.fit(train_features, train_labels)
 
     # Evaluate using the logistic regression classifier
