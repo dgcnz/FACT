@@ -108,7 +108,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
 
 
 def main(args, backbone, preprocess, **kwargs):
-    tar = {'target': kwargs['target']}
+    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
     train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **tar)
     num_classes = len(classes)
     

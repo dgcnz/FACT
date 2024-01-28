@@ -137,7 +137,7 @@ def learn_conceptbank(args, concept_list, scenario, model):
             text = clip.tokenize(f"{concept}").to(args.device)
             text_features = model.encode_text(text).cpu().numpy()
         
-        text_features = text_features/np.linalg.norm(text_features)
+        text_features = text_features / np.linalg.norm(text_features)
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
         # `ConceptBank` class (see `concepts/concept_utils.py`).
         concept_dict[concept] = (text_features, None, None, 0, {})

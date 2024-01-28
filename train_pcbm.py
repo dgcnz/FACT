@@ -82,7 +82,7 @@ def run_linear_probe(args, train_data, test_data):
 
 
 def main(args, concept_bank, backbone, preprocess, **kwargs):
-    tar = {'target': kwargs['target']}
+    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, **tar)
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
