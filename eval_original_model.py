@@ -34,6 +34,7 @@ def config():
     parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
     parser.add_argument("--max-epochs", default=20, type=int, help="Maximum number of epochs.")
     parser.add_argument("--checkpoint", default=None, type=str)
+    parser.add_argument("--C", default=None, type=float, help="Inverse of regularization strength. Smaller values cause stronger regularization.")
     args = parser.parse_args()
 
     return args
@@ -150,34 +151,37 @@ def eval_cifar(args, seed):
     train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
 
     # do a hyperparameter sweep to find the best regularization strength lambda.
-    def hyperparameter_sweep():
-        print("Performing hyperparameter sweep to find the best regularization strength lambda.")
-        l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
-        
-        def find_peak(l2_lambda_idx_list):
-            """Calculate accuracy on all indexes and return the peak index"""
-            accuracy_list = []
-            for l2_lambda_idx in l2_lambda_idx_list:
-                classifier = LogisticRegression(random_state=args.seed, C=l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
-                classifier.fit(train_features_sweep, train_labels_sweep)
-                predictions = classifier.predict(val_features_sweep)
-                accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
-                accuracy_list.append(accuracy)
-            peak_idx = np.argmax(accuracy_list)
-            return peak_idx
+    if args.C is None:     
+        def hyperparameter_sweep():
+            print("Performing hyperparameter sweep to find the best regularization strength lambda.")
+            l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
+            
+            def find_peak(l2_lambda_idx_list):
+                """Calculate accuracy on all indexes and return the peak index"""
+                accuracy_list = []
+                for l2_lambda_idx in l2_lambda_idx_list:
+                    classifier = LogisticRegression(random_state=args.seed, C=l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
+                    classifier.fit(train_features_sweep, train_labels_sweep)
+                    predictions = classifier.predict(val_features_sweep)
+                    accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                    accuracy_list.append(accuracy)
+                peak_idx = np.argmax(accuracy_list)
+                return peak_idx
 
-        l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
-        peak_idx = find_peak(l2_lambda_init_idx)
-        step_span = 8
-        while step_span > 0:
-            left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
-            peak_idx = find_peak([left, peak_idx, right])
-            step_span //= 2
-        return l2_lambda_list[peak_idx]
+            l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
+            peak_idx = find_peak(l2_lambda_init_idx)
+            step_span = 8
+            while step_span > 0:
+                left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
+                peak_idx = find_peak([left, peak_idx, right])
+                step_span //= 2
+            return l2_lambda_list[peak_idx]
 
-    lambda_best = hyperparameter_sweep()
-    C = 1 / lambda_best
-    print(C, 'best C')
+        lambda_best = hyperparameter_sweep()
+        C = 1 / lambda_best
+        print(C, 'best C')
+    else:
+        C = args.C
 
     # Perform logistic regression
     classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
