@@ -4,7 +4,7 @@ import torch
 import librosa
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from constants import ESC_DIR
+from .constants import ESC_DIR
 
 class ESCDataset(Dataset):
 
