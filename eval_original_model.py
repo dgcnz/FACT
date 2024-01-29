@@ -21,12 +21,12 @@ from models.AudioCLIP import AudioCLIP
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", default="artifacts", type=str, help="Folder containing model/checkpoints.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default=[42, 43, 44], nargs='+', type=int, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
-    parser.add_argument("--datasets", default=['esc50'], nargs='+', type=str)
+    parser.add_argument("--datasets", default=['cifar10'], nargs='+', type=str)
     parser.add_argument("--eval_all", action="store_true", default=False)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
