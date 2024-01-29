@@ -27,8 +27,9 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
             
             elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
                 run_info = main(args, backbone, preprocess, **{'target': target})
-                tr_acc_list.append(run_info['train_acc'])
-                t_acc_list.append(run_info['test_acc'])
+                tr_acc_list.append(run_info['train_acc'].avg)
+                #below gives AP because the dataset is cocostuff which does classification
+                t_acc_list.append(run_info['test_acc']) 
 
             else:
                 print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
@@ -36,10 +37,8 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
             print(f"Training Accuracy for Class {target} \t: {run_info['train_acc']}")
             print(f"Test Accuracy for Class {target} \t: {run_info['test_acc']}")
 
-        if "test_auc" in run_info: # averaging AUC curves makes no sense
-            out_dict = {'train_auc': tr_acc_list, 'test_auc': t_acc_list}
-        else: # but averaging accuracies does
-            out_dict = {'train_acc': np.mean(tr_acc_list), 'test_acc': np.mean(t_acc_list)}
+        #dataset is coco_stuff so compute the mean of the returned APs
+        out_dict = {'train_acc': np.mean(tr_acc_list), 'test_acc': np.mean(t_acc_list)}
 
         return out_dict
 
