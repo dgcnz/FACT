@@ -4,7 +4,7 @@ import torch
 import librosa
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from .constants import ESC_DIR
+from constants import ESC_DIR
 
 class ESCDataset(Dataset):
 
@@ -60,13 +60,14 @@ def prepare_data(df, testfold:int=1):
     return train_data, test_data
 
 
-def load_esc_data(meta_dir, transform=None, batch_size:int=1, testfold:int=5):
+def load_esc_data(meta_dir, transform=None, batch_size:int=1, testfold:int=5, num_workers:int=4):
     """
     Arguments:
     meta_dir: path to CSV file containing all metadata
     transform: transformations to use
     batch_size: number of datapoints in a batch
     testfold: fold used for testing (the rest would then be used for training, see prepare_data above for more details)
+    num_workers: the amount of workers to use for the torch dataloaders created
 
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[audio_path1, audio_label1], [audio_path2, audio_label2], ...]'
@@ -79,8 +80,8 @@ def load_esc_data(meta_dir, transform=None, batch_size:int=1, testfold:int=5):
     train_data = ESCDataset(train_data, transform)
     test_data = ESCDataset(test_data, transform)
 
-    train_loader = DataLoader(train_data, batch_size=batch_size)
-    test_loader = DataLoader(test_data, batch_size=batch_size)
+    train_loader = DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
+    test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)
 
     return train_loader, test_loader
 
@@ -88,7 +89,7 @@ def load_esc_data(meta_dir, transform=None, batch_size:int=1, testfold:int=5):
 if __name__ == "__main__":
 
     meta_path = os.path.join(ESC_DIR, "esc50.csv")
-    train_esc, test_esc = load_esc_data(meta_path)
+    train_esc, test_esc = load_esc_data(meta_path, num_workers=2)
 
     first_x, first_y = next(iter(train_esc))
     
