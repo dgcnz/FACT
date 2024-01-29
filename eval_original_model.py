@@ -1,35 +1,32 @@
 
 # This script has some functions that can be used to verify the performances of the original models
+import sys
+sys.path.append("./models")
 
 import argparse
-import os
 import numpy as np
 import torch
-import pytorch_lightning as pl
+import os
 from copy import deepcopy
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score
 from scipy.special import softmax
 from data import get_dataset
-from models import get_model, clip_pl
+from models import get_model
 from training_tools import export
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks import TQDMProgressBar
-from pytorch_lightning.callbacks import ModelCheckpoint
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
-
-
+from models.AudioCLIP import AudioCLIP
 
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
+    parser.add_argument("--out-dir", default="artifacts", type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seeds", default=[42, 43, 44], nargs='+', type=int, help="Random seeds")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
-    parser.add_argument("--datasets", default=['ham10k'], nargs='+', type=str)
+    parser.add_argument("--datasets", default=['esc50'], nargs='+', type=str)
     parser.add_argument("--eval_all", action="store_true", default=False)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
@@ -72,77 +69,28 @@ def eval_model(args, model, loader, seed):
     return final_accuracy
 
 
-def eval_cifar_old(args, seed):
-    # setting the seed
-    pl.seed_everything(seed, workers=True)
-
-    _ , preprocess = get_model(args, backbone_name="clip:RN50")
-
-    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
-    num_classes = len(classes)
-
-    #create a validation set from the training set
-    train_size = int(0.8 * len(train_loader.dataset))
-    val_size = len(train_loader.dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(train_loader.dataset, [train_size, val_size])
-
-    #create the dataloaders
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
-                                                   shuffle=True, num_workers=args.num_workers)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size,
-                                                    shuffle=False, num_workers=args.num_workers)
-
-    print(f"Evaluating for seed: {seed}")
-
-    #define a checkpoint callback
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(
-                            monitor='val_loss',
-                            dirpath=args.out_dir + '/checkpoints/',
-                            save_top_k=1,
-                            mode='min',
-                        )
-
-    # first apply linear probing and instantiate the classifier module
-    if args.checkpoint is not None:
-        finetuner = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(args.checkpoint)
-    else:
-        finetuner = clip_pl.CLIPClassifierTrainer("RN50", n_classes=num_classes, lr=args.lr)
-
-    trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
-                    callbacks=[checkpoint_callback],
-                    check_val_every_n_epoch=1) #EarlyStopping(monitor="val_loss", mode="min"), 
+def get_features(model, loader, backbone:str="clip"):
+    all_features = []
+    all_labels = []
     
-    # I have to actually pass a validation loader to this for it to work correctly. otherwise it will just use the train steps always. 
-    trainer.fit(finetuner, train_loader, val_loader)
+    with torch.no_grad():
+        for inputs, labels in tqdm(loader):
+            if backbone == "clip":
+                features = model.encode_image(inputs.to(args.device))
 
-    # load the best checkpoint
-    best_model = clip_pl.CLIPClassifierTrainer.load_from_checkpoint(checkpoint_callback.best_model_path)
+            elif backbone == "audio":
+                ((features, _, _), _), _ = model(audio=inputs.to(args.device))
 
-    # then evaluate the model
-    results = trainer.test(model = best_model, dataloaders=test_loader)
-    print('Current Accuracy: ' + str(results))
+            all_features.append(features)
+            all_labels.append(labels)
 
-    return results # average accuracy over the batches
+    return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
 
-def eval_clip(args, model, train_loader, test_loader, classes):
-    num_classes = len(classes)
 
-    def get_features(loader):
-        all_features = []
-        all_labels = []
-        
-        with torch.no_grad():
-            for images, labels in tqdm(loader):
-                features = model.encode_image(images.to(args.device))
-
-                all_features.append(features)
-                all_labels.append(labels)
-
-        return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
-
+def eval_clip(args, model, train_loader, test_loader):
     # Calculate the image features
-    train_features, train_labels = get_features(train_loader)
-    test_features, test_labels = get_features(test_loader)
+    train_features, train_labels = get_features(model, train_loader)
+    test_features, test_labels = get_features(model, test_loader)
 
     #split train set into train and validation in numpy arrays
     train_size = int(0.8 * len(train_features))
@@ -204,13 +152,43 @@ def eval_clip(args, model, train_loader, test_loader, classes):
     
     return metric
 
+
+def eval_audio(args, seed):
+
+    # AudioCLIP does not need the seed: The results should stay constant per dataset
+    # However, we do want to do cross-validation
+    accuracies = []
+    model, preprocess = get_model(args, backbone_name="audio")
+    for fold in args.folds:
+
+        new_args = deepcopy(args)
+        new_args.escfold, new_args.usfolds = fold, fold
+        train_loader, test_loader, _ , _ = get_dataset(new_args, preprocess)
+        train_features, train_labels = get_features(model, train_loader, backbone="audio")
+        test_features, test_labels = get_features(model, test_loader, backbone="audio")
+
+        classifier = LogisticRegression(random_state=new_args.seed, C=0.01, max_iter=1000, verbose=1)
+        classifier.fit(train_features, train_labels)
+        predictions = classifier.predict(test_features)
+        accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+        print(f"Accuracy for fold {fold}: {accuracy:.3f}")
+        
+        accuracies.append(accuracy)
+
+    final_acc = np.mean(accuracies)
+    print(f"Average Performance Across Folds: {final_acc:.3f}")
+
+    return final_acc # average accuracy over the batches
+
+
 def eval_cifar(args, seed):
     model, preprocess = get_model(args, backbone_name="clip:RN50")
-    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+    train_loader, test_loader, _ , _ = get_dataset(args, preprocess)
 
-    accuracy = eval_clip(args, seed, model, train_loader, test_loader, classes)
+    accuracy = eval_clip(args, seed, model, train_loader, test_loader)
 
     return accuracy
+
 
 def eval_coco(args, seed):
     model, preprocess = get_model(args, backbone_name="clip:RN50")
@@ -219,18 +197,14 @@ def eval_coco(args, seed):
 
     #loop over the 20 targets
     for i in range(20): 
-        train_loader, test_loader, _ , classes = get_dataset(args, preprocess, **{'target': i})
-        AP = eval_clip(args, seed, model, train_loader, test_loader, classes)
+        train_loader, test_loader, _ , _ = get_dataset(args, preprocess, **{'target': i})
+        AP = eval_clip(args, seed, model, train_loader, test_loader)
         APs.append(AP)
     
     mean_average_precision = np.mean(APs)
     print(f"Mean Average Precision = {mean_average_precision:.3f}")
 
     return mean_average_precision
-
-    
-
-
 
 
 def eval_ham(args, seed):
@@ -262,6 +236,7 @@ def eval_isic(args, seed):
     
     return results 
 
+
 def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
     for seed in seeds:
         new_args = deepcopy(args)
@@ -275,6 +250,7 @@ def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
     print(f"Average performance per seed: {np.mean(metrics[args.dataset])}")
 
     return metrics
+
 
 if __name__ == "__main__":
     args = config()
@@ -324,7 +300,25 @@ if __name__ == "__main__":
         new_args = deepcopy(args)
         new_args.dataset = "coco_stuff"
         metrics = eval_per_seed(metrics, new_args, eval_coco, args.seeds)
+
+    if "esc50" in args.datasets or args.eval_all:
+        
+        print("Evaluating for ESC-50")
+        print("========================")
+        new_args = deepcopy(args)
+        new_args.dataset = "esc50"
+        new_args.folds = [1, 2, 3, 4, 5]
+        metrics = eval_per_seed(metrics, new_args, eval_audio, args.seeds)
     
+    if "us8k" in args.datasets or args.eval_all:
+        
+        print("Evaluating for UrbanSound8K")
+        print("========================")
+        new_args = deepcopy(args)
+        new_args.dataset = "us8k"
+        new_args.folds = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+        metrics = eval_per_seed(metrics, new_args, eval_audio, args.seeds)
+
     print("=======================\n")
     
     assert (metrics != {}), "It appears that none of the datasets you've specified are supported."

@@ -12,7 +12,6 @@ import pandas as pd
 from models.AudioCLIP import AudioCLIP
 from re import sub
 from tqdm import tqdm
-from data.data_zoo import get_dataset
 
 
 def config():
