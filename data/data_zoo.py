@@ -98,6 +98,40 @@ def get_dataset(args, preprocess=None):
         classes = pd.read_csv(meta_dir)['benign_malignant']
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
+    
+    elif args.dataset.startswith("metashift_"):
+        from datasets import load_dataset
+        from torch.utils.data import Dataset, DataLoader
+        from torchvision import transforms
+        task_name = args.dataset[len("metashift_"):]
+        dataset = load_dataset("fact-40/pcbm_metashift", name=task_name)#, use_auth_token=args.token)
+
+        transform = transforms.Compose([
+            # transforms.Grayscale(num_output_channels=3),
+            transforms.Resize(299),
+            transforms.ToTensor(),
+        ])
+
+        class PCBMMetashiftDataset(Dataset):
+            def __init__(self, dataset):
+                self.dataset = dataset
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def __getitem__(self, idx):
+                item = self.dataset[idx]
+                image = item['image']
+                label = item['label']
+                return transform(image), label
+        
+        train_dataset = PCBMMetashiftDataset(dataset['train'])
+        test_dataset = PCBMMetashiftDataset(dataset['test'])
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+        idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
+        classes = dataset['train'].features['label'].names
 
     elif 'task' in args.dataset:
         from datasets import load_dataset

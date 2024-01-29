@@ -1,17 +1,22 @@
 import torch
 import lightning as L
-from typing import Literal
+from typing import Literal, Any, Callable
 import logging
+from concepts import ConceptBank
+from torchmetrics.classification import MulticlassAccuracy, MulticlassConfusionMatrix
+import matplotlib.pyplot as plt
+from torch import Tensor
 
 
 class PCBMClassifier(torch.nn.Module):
-    def __init__(self, n_concepts: int, n_classes: int = 5):
+    def __init__(self, n_concepts: int, n_classes: int, concept_bank: ConceptBank):
         super(PCBMClassifier, self).__init__()
         self.n_concepts = n_concepts
         self.n_classes = n_classes
+        self.concept_bank = concept_bank
         self.classifier = torch.nn.Linear(self.n_concepts, self.n_classes)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: Tensor):
         return self.classifier(x)
 
     def prune(self, concept_ix: int, class_ix: int):
@@ -35,7 +40,7 @@ class PCBMClassifier(torch.nn.Module):
             rescaled_norm = torch.linalg.vector_norm(
                 self.classifier.weight[class_ix], ord=1
             ).float()
-            EPS = 1e-4
+            EPS = 1e-1
             assert (
                 abs(rescaled_norm - previous_norm) < EPS
             ), f"Rescaled norm {rescaled_norm} != previous norm {previous_norm}, diff {abs(rescaled_norm - previous_norm)}"
@@ -112,30 +117,48 @@ class PCBMLoss(torch.nn.Module):
         self.elastic_net_constant = self.lam / (self.n_classes * self.n_concepts)
         assert 0 <= self.alpha and self.alpha <= 1, self.alpha
 
-    def _per_sample_elastic_net(self, param: torch.Tensor):
+    def _per_param_l1_norm(self, param: Tensor):
+        return param.abs().sum()
+
+    def _per_param_squared_l2_norm(self, param: Tensor):
+        return param.square().sum()
+
+    def _per_sample_elastic_net(self, param: Tensor):
         """
         Calculates the elastic net for a single parameter
         """
-        l1_norm = param.abs().sum()
-        squared_l2_norm = param.square().sum()
+        l1_norm = self._per_param_l1_norm(param)
+        squared_l2_norm = self._per_param_squared_l2_norm(param)
         return self.alpha * l1_norm + (1 - self.alpha) * squared_l2_norm
 
-    def forward(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def _aggregate_param_fun(self, per_param_fun: Callable[[Tensor], Tensor]) -> Tensor:
+        return self.reduce_fn(
+            torch.stack(
+                [per_param_fun(param) for param in self.classifier.parameters()]
+            )
+        )
+
+    def forward(self, y_hat: Tensor, y: Tensor) -> Tensor:
         """
         Calculates the PCBM loss
         """
-        base_loss = torch.nn.functional.cross_entropy(
-            y_hat, y, reduction=self.reduction
-        )
-        elastic_net = self.reduce_fn(
-            torch.stack(
-                [
-                    self._per_sample_elastic_net(param)
-                    for param in self.classifier.parameters()
-                ]
-            )
-        )
+        base_loss = self.base_loss(y_hat=y_hat, y=y)
+        elastic_net = self._aggregate_param_fun(self._per_sample_elastic_net)
         return base_loss + self.elastic_net_constant * elastic_net
+
+    def l1_loss(self):
+        return self.alpha * self._aggregate_param_fun(self._per_param_l1_norm)
+
+    def l2_loss(self):
+        return (1 - self.alpha) * self._aggregate_param_fun(self._per_param_squared_l2_norm)
+
+    def elastic_net_loss(self):
+        return self.elastic_net_constant * self._aggregate_param_fun(
+            self._per_sample_elastic_net
+        )
+
+    def base_loss(self, y_hat: Tensor, y: Tensor):
+        return torch.nn.functional.cross_entropy(y_hat, y, reduction=self.reduction)
 
 
 class PCBMClassifierTrainer(L.LightningModule):
@@ -146,16 +169,20 @@ class PCBMClassifierTrainer(L.LightningModule):
         lr: float,
         lam: float,
         alpha: float,
+        concept_bank: ConceptBank | Any,  # Any allows classmethods for jsonargparse
         pruned_concept_class_pairs: list[tuple[int, int]] = [],
         normalize: bool = False,
     ):
         super().__init__()
-        self.model = PCBMClassifier(n_concepts=n_concepts, n_classes=n_classes)
+        self.model = PCBMClassifier(
+            n_concepts=n_concepts, n_classes=n_classes, concept_bank=concept_bank
+        )
         self.lr = lr
         self.pruned_concept_class_pairs = pruned_concept_class_pairs
         self.normalize = normalize
         self.lam = lam
         self.alpha = alpha
+        self.n_classes = n_classes
         self.loss = PCBMLoss(
             lam=self.lam,
             n_concepts=n_concepts,
@@ -168,29 +195,74 @@ class PCBMClassifierTrainer(L.LightningModule):
         ), "If normalize is true, pruned_concept_class_pairs must be nonempty"
         self.save_hyperparameters()
 
+        self._setup_metrics()
+
+    def _setup_metrics(self):
+        self.train_accuracy = MulticlassAccuracy(num_classes=self.n_classes)
+        self.val_accuracy = MulticlassAccuracy(num_classes=self.n_classes)
+        self.test_accuracy = MulticlassAccuracy(num_classes=self.n_classes)
+        self.cm = {
+            "train": MulticlassConfusionMatrix(num_classes=self.n_classes),
+            "test": MulticlassConfusionMatrix(num_classes=self.n_classes),
+        }
+
+    def forward(self, batch):
+        x = batch["concept_weights"]
+        return self.model(x)
+
     def training_step(self, batch, batch_idx):
-        x, y = batch["concept_weights"], batch["label"]
-        y_hat = self.model(x)
+        y = batch["label"]
+        y_hat = self.forward(batch)
         loss = self.loss(y_hat, y)
-        accuracy = torch.sum(torch.argmax(y_hat, dim=1) == y) / len(y)
-        self.log("train_accuracy", accuracy)
+        self.train_accuracy(y_hat, y)
+        self.log("train_accuracy", self.train_accuracy)
         self.log("train_loss", loss)
+        self.log("train_l1_loss", self.loss.l1_loss())
+        self.log("train_l2_loss", self.loss.l2_loss())
+        self.log("train_elastic_net_loss", self.loss.elastic_net_loss())
+        self.log("train_base_loss", self.loss.base_loss(y_hat, y))
+        self.cm["train"].update(y_hat.cpu().detach(), y.cpu().detach())
         return loss
 
+    def on_train_epoch_start(self):
+        # Reset on each epoch start so that only the last epoch is logged
+        self.cm["train"].reset()
+
+    def on_train_end(self):
+        self._log_confusion_matrix_and_reset("train")
+
     def validation_step(self, batch, batch_idx):
-        x, y = batch["concept_weights"], batch["label"]
-        y_hat = self.model(x)
+        y = batch["label"]
+        y_hat = self.forward(batch)
         loss = self.loss(y_hat, y)
-        accuracy = torch.sum(torch.argmax(y_hat, dim=1) == y) / len(y)
+        self.val_accuracy(y_hat, y)
         self.log("val_loss", loss)
-        self.log("val_accuracy", accuracy)
+        self.log("val_accuracy", self.val_accuracy)
         return loss
 
     def test_step(self, batch, batch_idx):
-        x, y = batch["concept_weights"], batch["label"]
-        y_hat = self.model(x)
-        accuracy = torch.sum(torch.argmax(y_hat, dim=1) == y) / len(y)
-        self.log("test_accuracy", accuracy)
+        y = batch["label"]
+        y_hat = self.forward(batch)
+        self.test_accuracy(y_hat, y)
+        self.log("test_accuracy", self.test_accuracy)
+        self.cm["test"].update(y_hat.cpu().detach(), y.cpu().detach())
+
+    def _log_confusion_matrix_and_reset(self, stage: str):
+        fig, ax = plt.subplots(1, figsize=(10, 10))
+        ax.title.set_text(f"{stage} confusion matrix")
+        self.cm[stage].plot(ax=ax)
+        self.logger.experiment.add_figure(
+            f"{stage}_confusion_matrix",
+            fig,
+        )
+        plt.close(fig)
+        self.cm[stage].reset()
+
+    def on_test_end(self):
+        # log histogram of classifier weights to tensorboard
+        weights = self.model.classifier.weight.detach().cpu().reshape(-1).numpy()
+        self.logger.experiment.add_histogram("classifier_weights", weights, 0)
+        self._log_confusion_matrix_and_reset("test")
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.classifier.parameters(), lr=self.lr)

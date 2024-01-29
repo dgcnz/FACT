@@ -174,3 +174,26 @@ class MetaShiftDataModule(L.LightningDataModule):
         concept_weights = self.projector(image)
         assert isinstance(concept_weights, torch.Tensor), type(concept_weights)
         return {"concept_weights": concept_weights, "label": label}
+
+
+class MetaShiftDataModuleSK(MetaShiftDataModule):
+    TRAIN_SIZE: int = 500
+    TEST_SIZE: int = 500
+
+    def __init__(
+        self,
+        task_name: str,
+        projector: NNProjector,
+        preprocessor_name: PreprocessorEnum,
+        train_on_test: bool = False,
+        holdout_size: float | None = None,
+    ):
+        super().__init__(
+            task_name,
+            projector,
+            preprocessor_name,
+            self.TRAIN_SIZE,
+            self.TEST_SIZE,
+            train_on_test,
+            holdout_size,
+        )
