@@ -1,0 +1,28 @@
+seed_everything: 42
+model:
+  n_classes: 5
+  lr: 0.05
+  lam: 0.05
+  alpha: 0.99 
+  n_concepts: 170  # Broden concepts
+data:
+  projector: 
+    class_path: data.metashift.NNProjector
+    init_args: 
+      concept_bank_path: artifacts/outdir/broden_resnet18_imagenet1k_v1_0.1_50.pkl
+      backbone:
+        class_path: models.resnet.ResNet18FeatureExtractor
+  train_batch_size: 16
+  test_batch_size: 64
+  preprocessor_name: RESNET18_IMAGENET_1K_V1
+trainer:
+  deterministic: True
+  max_epochs: 10
+  check_val_every_n_epoch: 1
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        verbose: True
+
+
+
