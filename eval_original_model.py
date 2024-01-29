@@ -95,7 +95,7 @@ def eval_audio(args, seed):
         if args.checkpoint is not None:
             finetuner = clip_pl.AudioCLIPClassifierTrainer.load_from_checkpoint(args.checkpoint)
         else:
-            finetuner = clip_pl.AudioCLIPClassifierTrainer(pretrained=False, n_classes=num_classes, lr=args.lr)
+            finetuner = clip_pl.AudioCLIPClassifierTrainer(pretrained=True, n_classes=num_classes, lr=args.lr)
 
         trainer   = pl.Trainer(max_epochs=args.max_epochs, deterministic=True, 
                         callbacks=[checkpoint_callback],
