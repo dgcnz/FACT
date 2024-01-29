@@ -1,66 +1,87 @@
+# This is a function to help determine if we use multiple datasets (mainly COCO-Stuff)
+# used for both train and verify files
 import numpy as np
-from sklearn.metrics import confusion_matrix
-from .utils import *
-from .embedding_tools import load_or_compute_projections
 
 
-class AverageMeter(object):
-    def __init__(self):
-        self.reset()
+def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
+    """
+    Arguments:
+    args: argparser arguments which contains at least all the arguments from the other files (i.e., in "train_pcbm.py")
+    main: the main function of the file
+    concept_bank: concept bank to use
+    backbone: the model backbone to use
+    preprocess: the preprocessing to use on the data
+    mode: codename for the file being used (i.e., in "verify_datasets_pcbm.py" -> vdr)
+    """
 
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
+    if args.dataset.lower() == "coco_stuff":
+        print("Running 20-way Binary Classification on COCO-Stuff dataset. This may take a while...\n")
+        tr_acc_list = []
+        t_acc_list = []
+        for target in args.targets:
 
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-    
-    def __str__(self):
-        return f'AverageMeter(val={self.val}, avg={self.avg}, sum={self.sum}, count={self.count})'
+            if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
+                run_info = main(args, concept_bank, backbone, preprocess, **{'target': target})
+                tr_acc_list.append(run_info['train_acc'])
+                t_acc_list.append(run_info['test_acc'])
+            
+            elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
+                run_info = main(args, backbone, preprocess, **{'target': target})
+                tr_acc_list.append(run_info['train_acc'].avg)
+                #below gives AP because the dataset is cocostuff which does classification
+                t_acc_list.append(run_info['test_acc']) 
 
+            else:
+                print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
+        
+            print(f"Training Accuracy for Class {target} \t: {run_info['train_acc']}")
+            print(f"Test Accuracy for Class {target} \t: {run_info['test_acc']}")
 
-class MetricComputer(object):
-    def __init__(self, metric_names=None, n_classes=5):
-        __all_metrics__ = {"accuracy": self._accuracy, 
-                            "class-level-accuracy": self._class_level_accuracy,
-                            "confusion_matrix": self._confusion_matrix}
-        all_names = list(__all_metrics__.keys())
-        if metric_names is None:
-            metric_names = all_names
-        for n in metric_names: assert n in all_names
-        self.metrics = {m: __all_metrics__[m] for m in metric_names}
-        self.n_classes = n_classes
-    
-    def __call__(self, out, target):
-        """
-        Args:
-            out (torch.Tensor): Model output
-            target (torch.Tensor): Target labels
-        """
-        pred = out.argmax(dim=1)
-        result = {m: self.metrics[m](out, pred, target) for m in self.metrics.keys()}
-        return result
-    
-    def _accuracy(self, out, pred, target):
-        acc = (pred == target).float().detach().mean()
-        return acc.item()
+        #dataset is coco_stuff so compute the mean of the returned APs
+        out_dict = {'train_acc': np.mean(tr_acc_list), 'test_acc': np.mean(t_acc_list)}
 
-    def _class_level_accuracy(self, out, pred, target):
-        per_class_acc = {}
-        for c in range(self.n_classes):
-            count = (target == c).sum().detach().item()
-            if count == 0:
-                continue
-            class_true = ((pred == target) * (target == c)).float().sum().item()
-            per_class_acc[c] = (class_true, count)
-        return per_class_acc
-    
-    def _confusion_matrix(self, out, pred, target):
-        y_true = target.detach().cpu()
-        y_pred = pred.detach().cpu()
-        return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
+        return out_dict
+
+    else:
+        target = args.targets[0] # This argument does not matter as no other dataset should use this variable
+                                 # (i.e., it acts as a dummy variable here)
+        if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
+            run_info = main(args, concept_bank, backbone, preprocess)
+        elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
+            run_info = main(args, backbone, preprocess)
+        else:
+            print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
+        
+        return run_info
+
+# for train_pcbm specifically as it requires the concept bank
+def train_runs(args, main, concept_bank, backbone, preprocess, mode:str="r"):
+    """
+    Arguments:
+    args: argparser arguments which contains at least all the arguments from the other files (i.e., in "train_pcbm.py")
+    main: the main function of the file
+    concept_bank: concept bank to use (not needed for PCBM-h)
+    backbone: the model backbone to use
+    preprocess: the preprocessing to use on the data
+    mode: whether we're training a regular PCBM or a hybrid PCBM (inputs = 'r'/'h')
+    """
+
+    if args.dataset.lower() == "coco_stuff":
+        print("Training 20 Model Instances for COCO-Stuff datasets. This may take a while...\n")
+        for target in args.targets:
+            if mode == 'r':
+                main(args, concept_bank, backbone, preprocess, **{'target': target})
+            elif mode == 'h':
+                main(args, backbone, preprocess, **{'target': target})
+            else:
+                print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
+        
+    else:
+        target = args.targets[0] # This argument does not matter as no other dataset should use this variable
+                                 # (i.e., it acts as a dummy variable here)
+        if mode == 'r':
+            main(args, concept_bank, backbone, preprocess)
+        elif mode == 'h':
+            main(args, backbone, preprocess)
+        else:
+            print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")

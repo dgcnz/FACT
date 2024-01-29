@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from .constants import COCO_STUFF_DIR
+import re
 
 
 # By default focuses on the 20 most biased classes mentioned in Singh et al., 2020
@@ -24,7 +25,10 @@ class COCODataset(Dataset):
 
     def __getitem__(self, idx):
         img_data = self.data[idx]
-        img_path = os.path.join(COCO_STUFF_DIR, img_data[0])
+        #print(img_data[0])
+        fixed_path = re.sub(r'\\', '/', img_data[0])
+        img_path = os.path.join(COCO_STUFF_DIR, fixed_path)
+        #print("Generated image path:", img_path)
         img = Image.open(img_path).convert('RGB')
         class_label = img_data[1]
         if self.transform:

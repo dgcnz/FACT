@@ -14,6 +14,7 @@ from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer, export
+from sklearn.metrics import average_precision_score
 
 
 def config():
@@ -24,7 +25,7 @@ def config():
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
-    parser.add_argument("--num-epochs", default=20, type=int)
+    parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
@@ -63,7 +64,12 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     
     all_preds = np.concatenate(all_preds, axis=0)
     all_labels = np.concatenate(all_labels, axis=0)
-    if all_labels.max() == 1:
+
+    if args.dataset == 'coco_stuff':
+      AP = average_precision_score(all_labels, softmax(all_preds, axis=1)[:, 1])
+      return AP
+
+    elif all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
         
         return auc
@@ -153,7 +159,7 @@ if __name__ == "__main__":
         seed = args.seeds[i]
         # format the following path with these seeds #'artifacts/clip/cifar10_42/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:42.ckpt'
         #args.pcbm_path = 'artifacts/clip/cifar' +args.dataset + '_' + str(seed) + '/pcbm_cifar10__clip:RN50__multimodal_concept_clip:RN50_cifar10_recurse:1__lam:1e-05__alpha:0.99__seed:' + str(seed) + '.ckpt'
-        args.pcbm_path = 'artifacts/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam_4.464285714285714e-07__alpha_0.99__seed_'+str(seed)+'.ckpt'
+        args.pcbm_path = 'artifacts/pcbm_coco_stuff__clip:RN50__broden_clipRN50_10__lam_0.001__alpha_0.99__seed_'+str(seed)+'.ckpt'
         # Load the PCBM
         posthoc_layer = torch.load(args.pcbm_path)
         posthoc_layer = posthoc_layer.eval()

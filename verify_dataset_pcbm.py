@@ -22,6 +22,7 @@ from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
 from torch.utils.data import DataLoader, random_split
+from sklearn.metrics import average_precision_score
 
 
 def config():
@@ -121,6 +122,10 @@ def run_linear_probe(args, train_data, test_data):
                 }
 
     # If it's a binary task, we compute auc
+    if args.dataset == 'coco_stuff':
+      run_info["test_auc"] = average_precision_score(test_labels, classifier.decision_function(test_features))
+      run_info["train_auc"] = average_precision_score(train_labels, classifier.decision_function(train_features))
+    
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
