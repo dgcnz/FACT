@@ -74,7 +74,7 @@ class CLIPClassifierTrainer(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.model.classifier.parameters(), lr=self.lr,
-                                    nesterov=True, dampening=0.9)
+                                    nesterov=True, momentum=0.9)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 
         return [optimizer], [scheduler]
