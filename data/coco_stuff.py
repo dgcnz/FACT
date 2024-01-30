@@ -66,7 +66,7 @@ def load_coco_data(train_dir, test_dir, target:int, n_train:int=500, n_test:int=
     Outputs:
     dataloader: torch dataloader instance containing the data
     """
-    # set the seeds
+    # set the random seed for numpy
     np.random.seed(seed)
 
     # open the files
