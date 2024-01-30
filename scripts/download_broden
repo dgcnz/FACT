@@ -3,7 +3,7 @@
 # download data
 
 curl -X GET \
-https://Hugging Face.co/datasets/fact-40/broden_concepts/resolve/main/data/broden_concepts.zip?download=true |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/broden_concepts.zip
+"https://huggingface.co/datasets/fact-40/broden_concepts/resolve/main/data/broden_concepts.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/broden_concepts.zip
 
 # extract data
 
