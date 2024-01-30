@@ -44,7 +44,6 @@ def config():
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
 
-
 def run_linear_probe(args, train_data, test_data):
     print("START LINEAR PROBE...")
     train_features, train_labels = train_data
@@ -79,7 +78,7 @@ def run_linear_probe(args, train_data, test_data):
         print(f"{lbl}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
-                "cls_acc": cls_acc
+                "cls_acc": cls_acc,
                 }
 
     # If it's a binary task, we compute auc
@@ -90,10 +89,10 @@ def run_linear_probe(args, train_data, test_data):
     return run_info, classifier.coef_, classifier.intercept_
 
 
-def main(args, concept_bank, backbone, preprocess, **kwargs):
-    tar = {'target': kwargs['target']} if ('target' in kwargs.keys()) else {'target': 3}
-    if args.test.lower() == 'accuracy':
-        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, **tar)
+def main(args, concept_bank, backbone, preprocess):
+
+    if args.test == 'accuracy':
+        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
         
         # Get a clean conceptbank string
         # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
@@ -130,8 +129,8 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
         print(f"Model saved to : {model_path}")
         print(run_info)
 
-    if args.test.lower() == 'dot_product':
-        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, shuffle = True, **tar) 
+    if args.test == 'dot_product':
+        train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess, shuffle = True) 
 
         num_classes = len(classes)
         
@@ -205,7 +204,6 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
         return
     
     return run_info
-  
 
 if __name__ == "__main__":
     args = config()
@@ -242,13 +240,14 @@ if __name__ == "__main__":
         concept_bank.intercepts = None
         concept_bank.norms = None
         concept_bank.margin_info = None
-        print('Identity projection used')
+        print('identity projection used')
         concept_bank.vectors = torch.eye(n=shape[1]).to(args.device) #(embedding dim x embedding dim identity matrix)
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
+
     
-    print(f'Cconcept Vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}. \n')
+    print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
 
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
@@ -261,19 +260,19 @@ if __name__ == "__main__":
         print(f"Seed: {seed}")
         args.seed = seed
         args.out_dir = og_out_dir 
-        run_info = test_runs(args, main, concept_bank, backbone, preprocess, mode="vcr")
+        run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
-            print("AUC used")
+            print("auc used")
             metric = run_info['test_auc']
 
         else:
-            print("Accuracy used")
+            print("acc used")
             metric = run_info['test_acc']
 
         metric_list.append(metric)
 
+    
     # export results
-    out_name = "test_different_projections"
+    out_name = "verify_dataset_pcbm_h"
     export.export_to_json(out_name, metric_list)
-    print("Verification results exported!")

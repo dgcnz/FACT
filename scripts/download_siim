@@ -3,7 +3,7 @@
 # download data
 
 curl -X GET \
-"https://huggingface.co/datasets/fact-40/pcbm-siim-isic/resolve/main/data.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/SIIM_ISIC.zip
+"https://huggingface.co/datasets/fact-40/pcbm-siim-isic/resolve/main/data/images.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/SIIM_ISIC.zip
 
 # extract data
 
