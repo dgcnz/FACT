@@ -25,6 +25,7 @@ def config():
     parser.add_argument("--seeds", default='42', type=str, help="Random seeds")
     parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
+    parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
@@ -150,6 +151,7 @@ if __name__ == "__main__":
 
     for i in range(len(args.seeds)):
         seed = args.seeds[i]
+        args.seed = seed
 
     # Load the PCBM
         conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0]
@@ -167,7 +169,6 @@ if __name__ == "__main__":
         backbone.eval()
 
         print(f"Seed: {seed}")
-        args.seed = seed
         args.out_dir = og_out_dir
         run_info = test_runs(args, main, concept_bank="", 
                              backbone=backbone, preprocess=preprocess, mode="vch")
