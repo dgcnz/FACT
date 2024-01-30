@@ -330,6 +330,8 @@ if __name__ == "__main__":
         all_concepts = get_concept_data(all_classes)
         all_concepts = clean_concepts(all_concepts)
 
+        all_concepts.extend(all_concepts1)
+
         learn_conceptbank(args, all_concepts, args.classes, model)
     
     elif 'task' in args.classes :
