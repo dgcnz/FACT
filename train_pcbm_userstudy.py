@@ -29,7 +29,10 @@ def config():
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument("--greedy-pruning", default=False, type=bool)
+    parser.add_argument("--prune", default="dog", type=str)   
 
+    args.pruning = [concept for concept in args.prune.split(',')]
     return parser.parse_args()
 
 def run_linear_probe(args, train_data, test_data, classes):
@@ -163,9 +166,10 @@ def main(args, concept_bank, backbone, preprocess):
         print(f"Best accuracy after pruning: {best_accuracy}")
 
     if args.pruning:
-        concept_to_prune = 0  
-        class_to_prune = 0 
-        posthoc_layer.prune(concept_to_prune, class_to_prune)
+        for concept_to_prune in args.pruning:
+            posthoc_layer.prune(get_concept_index(concept_to_prune), get_class_index(concept_to_prune))
+            get_concept_index(concept_to_prune)
+            get_class_index(concept_to_prune)
         run_info_after_pruning, pruning_weights, _ = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
         print("Performance before pruning:", run_info)
         print("Performance after pruning:", run_info_after_pruning)
