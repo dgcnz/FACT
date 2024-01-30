@@ -164,6 +164,9 @@ Furthermore, ...
 
 Any additional models can be added by editing `models/model_zoo.py`.
 
+# Replicating the Original Results
+To replicate the original results, we have prepared a function where all the datasets can be evaluated using the parameters specified by the authors. This can be found [here](/notebook/main.ipynb).
+
 # Learning Concepts
 In the original paper, two different ways to learn concepts activations vectors were proposed to build concepts banks which are used here. 
 

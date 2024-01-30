@@ -70,13 +70,14 @@ def prepare_data(df, testfolds:list=[9, 10]):
     return train_data, test_data
 
 
-def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 10]):
+def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 10], num_workers:int=4):
     """
     Arguments:
     meta_dir: path to CSV file containing all metadata
     transform: transformations to use
     batch_size: number of datapoints in a batch
     testfold: fold(s) used for testing (the rest would then be used for training, see prepare_data above for more details)
+    num_workers: the amount of workers to use for the torch dataloaders created
 
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[audio_path1, audio_label1], [audio_path2, audio_label2], ...]'
@@ -89,8 +90,8 @@ def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 
     train_data = US8KDataset(train_data, transform)
     test_data = US8KDataset(test_data, transform)
 
-    train_loader = DataLoader(train_data, batch_size=batch_size)
-    test_loader = DataLoader(test_data, batch_size=batch_size)
+    train_loader = DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
+    test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)
 
     return train_loader, test_loader
 

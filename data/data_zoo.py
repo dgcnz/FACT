@@ -96,7 +96,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
     elif args.dataset.lower() == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
-        meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+        meta_dir = os.path.join(SIIM_DATA_DIR, "metadata.csv")
         train_loader, test_loader = load_siim_data(meta_dir, 
                                                    batch_size=args.batch_size, 
                                                    seed=args.seed)
@@ -150,7 +150,8 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         meta_dir = os.path.join(ESC_DIR, "esc50.csv")
         train_loader, test_loader = load_esc_data(meta_dir, 
                                                   batch_size=args.batch_size,
-                                                  testfold=args.escfold)
+                                                  testfold=args.escfold,
+                                                  num_workers=args.num_workers)
         
         # for the idx_to_class variable (need to read metadata table for this)
         df = pd.read_csv(meta_dir)
@@ -168,7 +169,8 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
         train_loader, test_loader = load_us_data(meta_dir, 
                                                  batch_size=args.batch_size,
-                                                 testfolds=args.usfolds)
+                                                 testfolds=args.usfolds,
+                                                 num_workers=args.num_workers)
         
         # for the idx_to_class variable (need to read metadata table for this)
         df = pd.read_csv(meta_dir)

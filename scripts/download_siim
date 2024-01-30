@@ -1,15 +1,10 @@
-#!/usr/bin/env python
-import gdown
-import zipfile
+#! /bin/bash
 
 # download data
 
-url = 'https://drive.google.com/file/d/1H7cTkuEF2vg7UsiLjnFKJ7kBPIN1Y3IL/view?usp=sharing'
-output = 'artifacts/data/SIIM_ISIC_data.zip'
-gdown.download(url, output, quiet=False, fuzzy=True)
+curl -X GET \
+https://Hugging Face.co/datasets/fact-40/pcbm-siim-isic/resolve/main/data/data.zip?download=true |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/SIIM_ISIC.zip
 
 # extract data
 
-with zipfile.ZipFile(output, 'r') as zip_ref:
-    zip_ref.extractall("artifacts/data")
-    
+unzip artifacts/data/SIIM_ISIC.zip -d artifacts/data/SIIM_ISIC
