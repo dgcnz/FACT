@@ -4113,24 +4113,6 @@
     "restrictions": []
   },
   {
-    "id": "/m/03kmc9",
-    "name": "Siren",
-    "description": "The sound of a loud noise-making device used to provide warnings to people nearby. A siren typically consists of a single pitch that changes either smoothly or abruptly on timescales around one second.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Siren_(alarm)",
-    "positive_examples": ["youtu.be/ZHnpad4e8rI?start=16&end=26", "youtu.be/bUmokBhoTlw?start=29&end=39", "youtu.be/kn09Reh4DZc?start=30&end=40", "youtu.be/BaZiXQC0aAw?start=30&end=40", "youtu.be/BxXcX0kuZTI?start=4&end=14", "youtu.be/b1dvYzcVcKA?start=30&end=40", "youtu.be/6g-ttVYeOX4?start=180&end=190", "youtu.be/o3nq59MHsTU?start=30&end=40", "youtu.be/Cldv-kSc7kU?start=30&end=40", "youtu.be/KjO-sgL8_10?start=60&end=70"],
-    "child_ids": ["/m/04qvtq", "/m/012n7d", "/m/012ndj", "/m/0dgbq"],
-    "restrictions": []
-  },
-  {
-    "id": "/m/0dgbq",
-    "name": "Civil defense siren",
-    "description": "The sound of a siren used to provide emergency population warning of approaching danger such as hurricanes, earthquakes, or military attacks.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Civil_defense_siren",
-    "positive_examples": ["youtu.be/ExSi3SDF45o?start=30&end=40", "youtu.be/wVbDqtAXCug?start=30&end=40", "youtu.be/AY7UQYV1GpM?start=30&end=40", "youtu.be/fsaCfxi_VAs?start=30&end=40", "youtu.be/Xy4aPDjvXkQ?start=400&end=410", "youtu.be/rM4XSEZw-ug?start=30&end=40", "youtu.be/Q3ckbWJ9aI4?start=260&end=270", "youtu.be/Kc2-IHeqq0o?start=30&end=40", "youtu.be/8A30tAwXdzM?start=30&end=40"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
     "id": "/m/030rvx",
     "name": "Buzzer",
     "description": "Sounds of a mechanical, electromechanical, or piezoelectric signaling device that emits a steady, highly-audible tone with a spectrum extending to high frequencies.",
