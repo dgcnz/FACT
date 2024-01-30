@@ -178,9 +178,28 @@ if __name__ == "__main__":
     
     elif args.classes == "cub":
         #from data.constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
+
+        # Read lines from the file into a list
+        with open("concepts\attributes.txt", "r") as file:
+            lines = file.readlines()
+
+        # Extract and format names from each line
+        concepts = []
+        for line in lines:
+            parts = line.split("::")
+            if len(parts) > 1:
+                name = parts[1].strip().replace("_", " ")
+                concepts.append(name)
+            else:
+                concepts.append(line.strip())
+
+        # Remove the numbers at the beginning of each line
+        all_concepts = [line.split(' ', 1)[-1] for line in concepts]
+        
+        print(all_concepts)
        
         # Get the class names.
-        
+
         learn_conceptbank(args, all_concepts, args.classes)
     
     elif 'task' in args.classes :
