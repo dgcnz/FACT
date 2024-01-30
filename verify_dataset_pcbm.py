@@ -13,6 +13,7 @@ import os
 import pickle
 import numpy as np
 import torch
+from re import sub
 from training_tools.utils import test_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
@@ -149,7 +150,7 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
     posthoc_layer = posthoc_layer.to(args.device)
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     
@@ -157,7 +158,9 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
+    model_id = f"{model_id}_target_{kwargs['target']}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+    model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)
 
     run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
