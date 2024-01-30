@@ -7,8 +7,11 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
 from concepts import ConceptBank
-from models import PosthocLinearCBM, get_model
+from models import PCBMUserStudy, get_model
 from training_tools import load_or_compute_projections
+import copy
+import time
+import itertools
 
 
 def config():
@@ -63,7 +66,7 @@ def run_linear_probe(args, train_data, test_data, classes):
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
                 }
-
+    
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
@@ -71,7 +74,20 @@ def run_linear_probe(args, train_data, test_data, classes):
                                               
     return run_info, classifier.coef_, classifier.intercept_
 
+def evaluate_model_accuracy(model, test_data, args):
+    test_features, test_labels = test_data
+    predictions = model.predict(test_features)
+    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    return accuracy
 
+def get_concept_index(concept_name, concept_bank):
+    return concept_bank.concept_names.index(concept_name)
+
+def get_class_index(class_name, idx_to_class):
+    for idx, name in idx_to_class.items():
+        if name == class_name:
+            return idx
+    return None
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
@@ -84,7 +100,7 @@ def main(args, concept_bank, backbone, preprocess):
     num_classes = len(classes)
     
     # Initialize the PCBM module.
-    posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+    posthoc_layer = PCBMUserStudy(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
     posthoc_layer = posthoc_layer.to(args.device)
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
@@ -108,15 +124,51 @@ def main(args, concept_bank, backbone, preprocess):
         # Prints the Top-10 Concept Weigths for each class if desired.
         print(posthoc_layer.analyze_classifier(k=10))
         import pandas as pd
-        _, analysis_data = posthoc_layer.analyze_classifier_withResults(k=10)
-        df = pd.DataFrame(analysis_data)
+        _, top_concepts = posthoc_layer.analyze_classifier_withResults(k=10)
+        df = pd.DataFrame(top_concepts)
         csv_path = os.path.join(args.out_dir, args.dataset+"_weights.csv")
         df.to_csv(csv_path, index=False)
         print(f"Analysis saved to {csv_path}")
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+    
 
+    if args.greedy_pruning:
+        best_accuracy = evaluate_model_accuracy(posthoc_layer, (test_projs, test_lbls))
+        best_state = copy.deepcopy(posthoc_layer.state_dict())
+        best_combination = []
+
+        start_time = time.time() 
+        # Greedy search for best pruning
+        for r in range(1, len(top_concepts) + 1):
+            for combination in itertools.combinations(top_concepts, r):
+                for concept in combination:
+                    posthoc_layer.prune(get_concept_index(concept), get_class_index(concept))
+
+                current_accuracy = evaluate_model_accuracy(posthoc_layer, (test_projs, test_lbls))
+
+                if current_accuracy > best_accuracy:
+                    best_accuracy = current_accuracy
+                    best_state = copy.deepcopy(posthoc_layer.state_dict())
+                    best_combination = combination
+                else:
+                    #Revert to previous best state
+                    posthoc_layer.load_state_dict(best_state)
+
+        end_time = time.time() 
+        pruning_time = end_time - start_time
+        print(f"Greeding pruning process took {pruning_time:.2f} seconds.")
+        print(f"Best pruning combination: {best_combination}")
+        print(f"Best accuracy after pruning: {best_accuracy}")
+
+    if args.pruning:
+        concept_to_prune = 0  
+        class_to_prune = 0 
+        posthoc_layer.prune(concept_to_prune, class_to_prune)
+        run_info_after_pruning, pruning_weights, _ = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
+        print("Performance before pruning:", run_info)
+        print("Performance after pruning:", run_info_after_pruning)
 
 if __name__ == "__main__":
     args = config()
