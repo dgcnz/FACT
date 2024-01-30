@@ -96,7 +96,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
     elif args.dataset.lower() == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
-        meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+        meta_dir = os.path.join(SIIM_DATA_DIR, "metadata.csv")
         train_loader, test_loader = load_siim_data(meta_dir, 
                                                    batch_size=args.batch_size, 
                                                    seed=args.seed)

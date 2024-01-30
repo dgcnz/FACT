@@ -88,7 +88,7 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
 # For testing:
 if __name__ == "__main__":
 
-    meta_path = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
+    meta_path = os.path.join(SIIM_DATA_DIR, "metadata.csv")
     train_siim, test_siim = load_siim_data(meta_path)
 
     first_x, first_y = next(iter(train_siim))
