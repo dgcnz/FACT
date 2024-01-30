@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 from data.data_zoo import get_dataset
+import re
 
 
 def config():
@@ -180,23 +181,20 @@ if __name__ == "__main__":
         #from data.constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
 
         # Read lines from the file into a list
-        with open("concepts\attributes.txt", "r") as file:
+        with open("concepts/attributes.txt", "r") as file:
             lines = file.readlines()
 
         # Extract and format names from each line
-        concepts = []
+        all_concepts = []
         for line in lines:
-            parts = line.split("::")
-            if len(parts) > 1:
-                name = parts[1].strip().replace("_", " ")
-                concepts.append(name)
-            else:
-                concepts.append(line.strip())
-
-        # Remove the numbers at the beginning of each line
-        all_concepts = [line.split(' ', 1)[-1] for line in concepts]
+            concept = re.sub(r'\d', '', line)
+            concept = re.sub('_', ' ', concept)
+            concept = re.sub('::', ' ', concept)
+            concept = re.sub('\n', '', concept)
+            all_concepts.append(concept.strip())
         
         print(all_concepts)
+       
        
         # Get the class names.
 
