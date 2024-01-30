@@ -1,3 +1,4 @@
+
 # This script has some functions that can be used to verify the performances of the original models
 
 import argparse
@@ -160,7 +161,7 @@ def eval_cifar(args, seed):
                 """Calculate accuracy on all indexes and return the peak index"""
                 accuracy_list = []
                 for l2_lambda_idx in l2_lambda_idx_list:
-                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
                     classifier.fit(train_features_sweep, train_labels_sweep)
                     predictions = classifier.predict(val_features_sweep)
                     accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
@@ -173,9 +174,11 @@ def eval_cifar(args, seed):
             peak_idx = find_peak(l2_lambda_init_idx)
             step_span = 2
             while step_span > 0:
+                print(step_span, 'next iteration of the step span')
                 left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
                 peak_idx = find_peak([left, peak_idx, right])
                 step_span //= 2
+                print('current best lambda', l2_lambda_list[peak_idx])
             return l2_lambda_list[peak_idx]
 
         lambda_best = hyperparameter_sweep()

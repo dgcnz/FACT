@@ -178,54 +178,9 @@ if __name__ == "__main__":
     
     elif args.classes == "cub":
         #from data.constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
-        #create some placeholder args such that we can get the dataset labels of cub
-        #classes = open(os.path.join(CUB_DATA_DIR, "classes.txt")).readlines()
-        #classes = [a.split(".")[1].strip() for a in classes]
-
-        # Assuming get_dataset is a function that retrieves the CUB dataset.
-        #print("Number of classes in CUB dataset:", len(classes))
-        #all_classes = list(classes)
-        #all_concepts = get_concept_data(all_classes)
-        #all_concepts = clean_concepts(all_concepts)
-        #all_concepts = list(set(all_concepts).difference(set(all_classes)))
-
-        all_concepts = [
-        # Physical Features
-        'Plumage', 'Wing Shape', 'Beak Structure', 'Tail Length', 'Leg Length', 'Eye Color',
+       
+        # Get the class names.
         
-        # Habitat and Distribution
-        'Geographic Location', 'Preferred Habitat', 'Altitude',
-        
-        # Behavioral Traits
-        'Nesting', 'Migration', 'Feeding', 'Vocalization',
-        
-        # Size and Weight
-        'Size', 'Wingspan', 'Weight',
-        
-        # Social Structure
-        'Social Behavior', 'Mating', 'Hierarchy',
-        
-        # Adaptations
-        'Specialization', 'Physical Traits',
-        
-        # Ecological Niche
-        'Ecosystem Role', 'Species Interaction',
-        
-        # Conservation Status
-        'Threat Level',
-        
-        # Taxonomic Information
-        'Family', 'Genus', 'Species', 'Order', 'Class',
-        
-        # Notable Characteristics
-        'Markings', 'Crest', 'Tufts', 'Facial Disk'
-        ]
-        # If we'd like to recurse in the conceptnet graph, specify `recurse > 1`.
-        #for i in range(1, args.recurse):
-        #    all_concepts = get_concept_data(all_concepts)
-        #    all_concepts = list(set(all_concepts))
-        #    all_concepts = clean_concepts(all_concepts)
-        #    #all_concepts = list(set(all_concepts).difference(set(all_classes)))
         learn_conceptbank(args, all_concepts, args.classes)
     
     elif 'task' in args.classes :
@@ -249,8 +204,8 @@ if __name__ == "__main__":
         concepts = [c for c in os.listdir(BRODEN_CONCEPTS) if os.path.isdir(os.path.join(BRODEN_CONCEPTS, c))]
         
         learn_conceptbank(args, concepts, args.classes)
-        
-        
+
+
 
 
     else:
