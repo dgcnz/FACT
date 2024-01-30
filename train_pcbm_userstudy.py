@@ -7,7 +7,8 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
 from concepts import ConceptBank
-from models import PCBMUserStudy, get_model
+from models import get_model
+from models.pcbm_utils_prune import PCBMUserStudy
 from training_tools import load_or_compute_projections
 import copy
 import time
@@ -32,9 +33,11 @@ def config():
     parser.add_argument("--greedy-pruning", default=False, type=bool)
     parser.add_argument("--prune", default="dog", type=str)   
 
-    args.pruning = [concept for concept in args.prune.split(',')]
+    args = parser.parse_args()
+    if args.pruning:
+      args.pruning = [concept for concept in args.prune.split(',')]
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
-    return parser.parse_args()
+    return args
 
 def run_linear_probe(args, train_data, test_data, classes):
     train_features, train_labels = train_data
