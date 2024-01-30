@@ -1,6 +1,8 @@
 # This is a function to help determine if we use multiple datasets (mainly COCO-Stuff)
 # used for both train and verify files
 import numpy as np
+import torch
+from re import sub
 
 
 def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
@@ -26,9 +28,16 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
                 t_acc_list.append(run_info['test_acc'])
             
             elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-                run_info = main(args, backbone, preprocess, **{'target': target})
+
+                # We need to adjust the posthoc layer per class here
+                args.pcbm_path = sub('.ckpt', f'_target_{target}.ckpt', args.pcbm_path)
+                posthoc_layer = torch.load(args.pcbm_path)
+                posthoc_layer = posthoc_layer.eval()
+                print("Current Checkpoint:", args.pcbm_path)
+
+                run_info = main(args, backbone, preprocess, posthoc_layer, **{'target': target})
                 tr_acc_list.append(run_info['train_acc'].avg)
-                #below gives AP because the dataset is cocostuff which does classification
+                # Below gives AP because the dataset is cocostuff which does classification
                 t_acc_list.append(run_info['test_acc']) 
 
             else:
@@ -48,7 +57,10 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
         if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
             run_info = main(args, concept_bank, backbone, preprocess)
         elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-            run_info = main(args, backbone, preprocess)
+            posthoc_layer = torch.load(args.pcbm_path)
+            posthoc_layer = posthoc_layer.eval()
+            
+            run_info = main(args, backbone, preprocess, posthoc_layer, **{'target': target})
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
         
@@ -82,6 +94,6 @@ def train_runs(args, main, concept_bank, backbone, preprocess, mode:str="r"):
         if mode == 'r':
             main(args, concept_bank, backbone, preprocess)
         elif mode == 'h':
-            main(args, backbone, preprocess)
+            main(args, backbone, preprocess, **{'target': target})
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
