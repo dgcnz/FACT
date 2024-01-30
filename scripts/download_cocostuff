@@ -1,24 +1,10 @@
 #! /bin/bash
 
-# create output folder
-mkdir -p artifacts/data/COCO_STUFF
-
 # download data
 
-curl http://images.cocodataset.org/zips/train2017.zip --output artifacts/data/COCO_STUFF_TRAIN.zip
-
-curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
-
-curl http://images.cocodataset.org/annotations/annotations_trainval2017.zip --output artifacts/data/COCO_STUFF_ANNOT.zip
+curl -X GET \
+https://Hugging Face.co/datasets/fact-40/pcbm-coco-stuff/resolve/main/data/data.zip?download=true |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/COCO_STUFF.zip
 
 # extract data
 
-unzip artifacts/data/COCO_STUFF_TRAIN.zip -d artifacts/data/COCO_STUFF
-
-unzip artifacts/data/COCO_STUFF_VAL.zip -d artifacts/data/COCO_STUFF
-
-unzip artifacts/data/COCO_STUFF_ANNOT.zip -d artifacts/data/COCO_STUFF
-
-# There is one missing image in the validation set based on the JSON file, so we need to manually download it
-
-curl http://images.cocodataset.org/val2017/000000308165.jpg --output artifacts/data/COCO_STUFF/val2017/000000308165.png
+unzip artifacts/data/COCO_STUFF.zip -d artifacts/data/COCO_STUFF
