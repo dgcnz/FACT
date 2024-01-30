@@ -1,13 +1,3 @@
-# This script has some functions that can be used to verify the results of PCBM with clip features
-# First run the comand below 
-# python learn_concepts_multimodal.py --backbone-name="clip:RN50" --classes=cifar10 --out-dir="artifacts/multimodal" --recurse=1
-# This script has only the "recurse" hyperparameter which we leave at its default value of 1.
-
-# The code will run a gridsearch over the hyperparameters of the method. In particular:
-# 1) lr
-# 2) lam
-# 3) alpha
-
 import argparse
 import os
 import pickle
