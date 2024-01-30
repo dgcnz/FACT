@@ -185,7 +185,7 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
     posthoc_layer = posthoc_layer.to(args.device)
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     

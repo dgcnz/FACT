@@ -3,6 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
+from re import sub
 from training_tools.utils import test_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
@@ -142,7 +143,9 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}"
+    model_id = f"{model_id}_target_{kwargs['target']}" if (args.dataset == "coco_stuff") else model_id
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+    model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)
 
     run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
