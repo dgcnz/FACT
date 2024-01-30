@@ -96,7 +96,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
     elif args.dataset.lower() == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
-        meta_dir = os.path.join(SIIM_DATA_DIR, "metadata.csv")
+        meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
         train_loader, test_loader = load_siim_data(meta_dir, 
                                                    batch_size=args.batch_size, 
                                                    seed=args.seed)
@@ -178,6 +178,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         classes = list(df['class'])
         idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
         idx_to_class = dict(sorted(idx_to_class.items()))
+        classes = list(idx_to_class.values())
 
     else:
         raise ValueError(args.dataset)
