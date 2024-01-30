@@ -1,9 +1,12 @@
 # This is a function to help determine if we use multiple datasets (mainly COCO-Stuff)
 # used for both train and verify files
 import numpy as np
+import torch
+from re import sub
+import copy
 
 
-def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
+def test_runs(args, main, concept_bank, backbone, preprocess, get_model = None, mode:str="vdr"):
     """
     Arguments:
     args: argparser arguments which contains at least all the arguments from the other files (i.e., in "train_pcbm.py")
@@ -18,6 +21,7 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
         print("Running 20-way Binary Classification on COCO-Stuff dataset. This may take a while...\n")
         tr_acc_list = []
         t_acc_list = []
+        #pcbm_path_original = args.pcbm_path
         for target in args.targets:
 
             if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
@@ -26,9 +30,23 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
                 t_acc_list.append(run_info['test_acc'])
             
             elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-                run_info = main(args, backbone, preprocess, **{'target': target})
+                new_args = copy.copy(args)
+                new_args.pcbm_path = args.pcbm_path 
+
+                # We need to adjust the posthoc layer per class here
+                new_args.pcbm_path = sub('.ckpt', f'target{target}.ckpt', new_args.pcbm_path)
+                posthoc_layer = torch.load(new_args.pcbm_path)
+                posthoc_layer = posthoc_layer.eval()
+                print("Current Checkpoint:", args.pcbm_path)
+                
+                posthoc_layer.eval()
+                backbone, preprocess = get_model(new_args, backbone_name=args.backbone_name)
+                backbone = backbone.to(args.device)
+                backbone.eval()
+
+                run_info = main(args, backbone, preprocess, posthoc_layer, **{'target': target})
                 tr_acc_list.append(run_info['train_acc'].avg)
-                #below gives AP because the dataset is cocostuff which does classification
+                # Below gives AP because the dataset is cocostuff which does classification
                 t_acc_list.append(run_info['test_acc']) 
 
             else:
@@ -48,7 +66,10 @@ def test_runs(args, main, concept_bank, backbone, preprocess, mode:str="vdr"):
         if mode == "vdr" or mode == "vcr": #  Verify Datasets PCBM | Verify Results Clip Concepts PCBM
             run_info = main(args, concept_bank, backbone, preprocess)
         elif mode == "vdh" or mode == "vch": # Verify Datasets PCBM-h | Verify Clip PCBM-h
-            run_info = main(args, backbone, preprocess)
+            posthoc_layer = torch.load(args.pcbm_path)
+            posthoc_layer = posthoc_layer.eval()
+            
+            run_info = main(args, backbone, preprocess, posthoc_layer, **{'target': target})
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
         
@@ -82,6 +103,6 @@ def train_runs(args, main, concept_bank, backbone, preprocess, mode:str="r"):
         if mode == 'r':
             main(args, concept_bank, backbone, preprocess)
         elif mode == 'h':
-            main(args, backbone, preprocess)
+            main(args, backbone, preprocess, **{'target': target})
         else:
             print(f"Mode '{mode}' not supported. Use either 'r' or 'h' for regular and hybrid respectively.")
