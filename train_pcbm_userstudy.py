@@ -9,7 +9,7 @@ from data import get_dataset
 from concepts import ConceptBank
 from models import get_model
 from models.pcbm_utils_prune import PCBMUserStudy
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, export
 import copy
 import time
 import itertools
@@ -31,10 +31,10 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
     parser.add_argument("--greedy-pruning", default=False, type=bool)
-    parser.add_argument("--prune", default="dog", type=str)   
+    parser.add_argument("--prune", default="", type=str)   
 
     args = parser.parse_args()
-    if args.pruning:
+    if args.pune:
       args.pruning = [concept for concept in args.prune.split(',')]
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
@@ -169,7 +169,7 @@ def main(args, concept_bank, backbone, preprocess):
         print(f"Best pruning combination: {best_combination}")
         print(f"Best accuracy after pruning: {best_accuracy}")
 
-    if args.pruning:
+    if args.prune:
         for concept_to_prune in args.pruning:
             posthoc_layer.prune(get_concept_index(concept_to_prune), get_class_index(concept_to_prune))
             get_concept_index(concept_to_prune)
@@ -177,6 +177,9 @@ def main(args, concept_bank, backbone, preprocess):
         run_info_after_pruning, pruning_weights, _ = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
         print("Performance before pruning:", run_info)
         print("Performance after pruning:", run_info_after_pruning)
+    
+    return run_info
+
 
 if __name__ == "__main__":
     args = config()
@@ -207,3 +210,6 @@ if __name__ == "__main__":
             metric = run_info['test_acc']
 
         metric_list.append(metric)
+
+    out_name = "UserStudy_results_"+args.dataset
+    export.export_to_json(out_name, metric_list)
