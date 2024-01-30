@@ -46,7 +46,7 @@
   },
   {
     "id": "/m/0ytgt",
-    "name": "Child speech, kid speaking",
+    "name": "speech, speaking",
     "description": "Speech uttered by a human child, i.e. a human whose voice does not yet resemble that of an adult.",
     "citation_uri": "",
     "positive_examples": ["youtu.be/iPIGoScYduI?start=210&end=220", "youtu.be/DiJgMH7vg1E?start=30&end=40", "youtu.be/yy0LZBmZRvE?start=60&end=70", "youtu.be/arz0xujSWdY?start=230&end=240", "youtu.be/-oC3FVOx62g?start=210&end=220", "youtu.be/5-R8zaohZrU?start=10&end=20", "youtu.be/OXJ77G_TqDc?start=40&end=50", "youtu.be/koW60o-aLjI?start=470&end=480", "youtu.be/uBVLhywbCQk?start=30&end=40"],
@@ -136,7 +136,7 @@
   },
   {
     "id": "/t/dd00135",
-    "name": "Children shouting",
+    "name": "shouting",
     "description": "The boisterous vocalizations of a group of children, for instance in a playground.",
     "citation_uri": "",
     "positive_examples": ["youtu.be/W4AptCGYj5w?start=30&end=40", "youtu.be/w4VqralR-6E?start=10&end=20", "youtu.be/vsgHNEEOKxk?start=150&end=160", "youtu.be/7koyNkRHO8U?start=20&end=30", "youtu.be/Q8NC8aHonOU?start=70&end=80"],
@@ -325,7 +325,7 @@
   },
   {
     "id": "/t/dd00005",
-    "name": "Child singing",
+    "name": "singing",
     "description": "Singing produced by a young human whose voice has not yet reached its adult state.",
     "citation_uri": "",
     "positive_examples": ["youtu.be/0aqR4zaYEn4?start=30&end=40", "youtu.be/RmaUdIhQhsI?start=60&end=70", "youtu.be/5pIdH6p3kuo?start=30&end=40", "youtu.be/hnJhbClGpNI?start=90&end=100", "youtu.be/4d9EfAmGVFs?start=30&end=40", "youtu.be/77ojcYuZn7A?start=30&end=40", "youtu.be/B8wfW-vq_Pk?start=60&end=70", "youtu.be/-UFvq4-iS-Y?start=560&end=570", "youtu.be/265WZznzbko?start=30&end=40"],
@@ -738,15 +738,6 @@
     "restrictions": []
   },
   {
-    "id": "/t/dd00013",
-    "name": "Children playing",
-    "description": "The sound of children at play, including any of vocalization or the sounds of their activities.",
-    "citation_uri": "",
-    "positive_examples": ["youtu.be/oxj5zL56UNQ?start=400&end=410", "youtu.be/MkLjgMq-XWo?start=20&end=30", "youtu.be/ZUu13n3vyT8?start=290&end=300", "youtu.be/H867X9MA2x4?start=130&end=140", "youtu.be/SjkBir6CfV8?start=20&end=30", "youtu.be/sQDMqzfpd-Q?start=10&end=20"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
     "id": "/m/0jbk",
     "name": "Animal",
     "description": "All sound produced by the bodies and actions of nonhuman animals.",
@@ -762,24 +753,6 @@
     "citation_uri": "http://en.wikipedia.org/wiki/Pet",
     "positive_examples": ["youtu.be/3SQwwK4JU2I?start=50&end=60", "youtu.be/88AWuXFZkTU?start=17&end=27", "youtu.be/Byo0kKnIASM?start=10&end=20", "youtu.be/6Flj55tSIQE?start=10&end=20", "youtu.be/3Cu8KEB9C74?start=70&end=80", "youtu.be/bTLrBsAy-cE?start=30&end=40", "youtu.be/xwJUplydiuw?start=70&end=80"],
     "child_ids": ["/m/0bt9lr", "/m/01yrx"],
-    "restrictions": []
-  },
-  {
-    "id": "/m/0bt9lr",
-    "name": "Dog",
-    "description": "Any sounds coming from the familiar domesticated canid which has been selectively bred over millennia for companionship, protection, as well as for superior sensory capabilities, and other useful behaviors.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Dog",
-    "positive_examples": ["youtu.be/2M9XExD5qZc?start=30&end=40", "youtu.be/x5Z7h8G-tYs?start=30&end=40", "youtu.be/8UQNzfJX-O8?start=80&end=90", "youtu.be/7h0FRbJSy7I?start=30&end=40", "youtu.be/iyg_5TVi7_Q?start=450&end=460", "youtu.be/1spRiYwd09c?start=70&end=80", "youtu.be/TsePRLNK3Ho?start=40&end=50", "youtu.be/7ajTgyQVczE?start=50&end=60", "youtu.be/azavLi-x9Cw?start=310&end=320"],
-    "child_ids": ["/m/05tny_", "/m/07r_k2n", "/m/07qf0zm", "/m/07rc7d9", "/m/0ghcn6", "/t/dd00136", "/m/07srf8z"],
-    "restrictions": []
-  },
-  {
-    "id": "/m/05tny_",
-    "name": "Bark",
-    "description": "Principal communication sound produced by dogs. Often transliterated as woof, especially for large dogs.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Bark_(sound)",
-    "positive_examples": ["youtu.be/PGfUJCl4M2E?start=80&end=90", "youtu.be/o-a6xZnOvP4?start=40&end=50", "youtu.be/G8BSfIQcDI0?start=110&end=120", "youtu.be/NKfyi7q0JNU?start=20&end=30", "youtu.be/IYFq35F80hY?start=20&end=30", "youtu.be/YlgYRxOe7vA?start=170&end=180", "youtu.be/RVKEE-0WdLM?start=30&end=40", "youtu.be/CecFyrZB-FM?start=60&end=70"],
-    "child_ids": [],
     "restrictions": []
   },
   {
@@ -1261,7 +1234,7 @@
   },
   {
     "id": "/m/01z5f",
-    "name": "Canidae, dogs, wolves",
+    "name": "Canidae, wolves",
     "description": "Sounds associated with the wild relatives of domesticated dogs.",
     "citation_uri": "http://en.wikipedia.org/wiki/Canidae",
     "positive_examples": ["youtu.be/OFBbWkmHWok?start=40&end=50", "youtu.be/IRcPJNZkCTc?start=40&end=50", "youtu.be/L_1BdQxn5Is?start=30&end=40", "youtu.be/0HMa_BIbTo0?start=60&end=70", "youtu.be/ExcQZFswFks?start=60&end=70", "youtu.be/HV346cLZxpA?start=30&end=40", "youtu.be/zxEWn0uqw0A?start=30&end=40", "youtu.be/CqKcyXt6laA?start=14&end=24"],
@@ -2664,15 +2637,6 @@
     "restrictions": []
   },
   {
-    "id": "/m/05fw6t",
-    "name": "Music for children",
-    "description": "Music performed for children, often designed to provide an entertaining means of teaching about cultures, good behavior, facts, and skills.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Children's_music",
-    "positive_examples": [],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
     "id": "/m/02v2lh",
     "name": "New-age music",
     "description": "A genre of music intended to create artistic inspiration, relaxation, and optimism used by listeners for yoga, massage, meditation, and reading as a method of stress management or to create a peaceful atmosphere. Includes both electronic and acoustic forms.",
@@ -3321,38 +3285,11 @@
     "restrictions": []
   },
   {
-    "id": "/m/0k4j",
-    "name": "Car",
-    "description": "Sounds of a self-powered motor vehicle with usually four wheels used for transportation of one to eight people, designed to run primarily on roads.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Car",
-    "positive_examples": ["youtu.be/EiyEPSJY_cM?start=20&end=30", "youtu.be/dThSTe35jb0?start=250&end=260", "youtu.be/a_35ez_FOY4?start=40&end=50", "youtu.be/S-VtBVNXxHw?start=30&end=40", "youtu.be/qKUVlPkkWNc?start=30&end=40", "youtu.be/TrczACxTtrg?start=270&end=280", "youtu.be/1dOV9NEPc60?start=8&end=18", "youtu.be/717m6D03130?start=100&end=110", "youtu.be/5xOlEfsD0_8?start=14&end=24"],
-    "child_ids": ["/m/0912c9", "/m/02mfyn", "/m/04gxbd", "/m/07rknqz", "/m/0h9mv", "/t/dd00134", "/m/0ltv"],
-    "restrictions": []
-  },
-  {
-    "id": "/m/0912c9",
-    "name": "Vehicle horn, car horn, honking",
-    "description": "The sound of a motor vehicle accessory whose purpose is to provide an audible alert of the vehicle's presence.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Vehicle_horn",
-    "positive_examples": ["youtu.be/tlyFVJ7P-po?start=23&end=33", "youtu.be/_waM2-2QnK8?start=30&end=40", "youtu.be/-aYumc8KoXg?start=60&end=70"],
-    "child_ids": ["/m/07qv_d5"],
-    "restrictions": []
-  },
-  {
     "id": "/m/07qv_d5",
     "name": "Toot",
     "description": "A blast of a horn.",
     "citation_uri": "http://wordnetweb.princeton.edu/perl/webwn?s=toot",
     "positive_examples": ["youtu.be/PrNMIEfwmm4?start=240&end=250", "youtu.be/ikJlmuxCMgo?start=50&end=60", "youtu.be/0SoVB6iEHTU?start=100&end=110", "youtu.be/wN0i4-VxOgc?start=120&end=130", "youtu.be/Mcuclfu6kcg?start=100&end=110", "youtu.be/EYsAX8CaJ-4?start=20&end=30"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
-    "id": "/m/02mfyn",
-    "name": "Car alarm",
-    "description": "The loud sound of an electronic device installed in a vehicle in an attempt to discourage theft of the vehicle or its contents.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Car_alarm",
-    "positive_examples": ["youtu.be/17VuPl9Wxvs?start=20&end=30", "youtu.be/o799nvBLsaQ?start=50&end=60", "youtu.be/VC9nqtFULW4?start=280&end=290", "youtu.be/n8gnTTCrC98?start=40&end=50", "youtu.be/4A1Ar1TIXIY?start=30&end=40", "youtu.be/0ct9AETvIdE?start=30&end=40"],
     "child_ids": [],
     "restrictions": []
   },
@@ -3385,7 +3322,7 @@
   },
   {
     "id": "/t/dd00134",
-    "name": "Car passing by",
+    "name": "Vehicle passing by",
     "description": "The sound of a motorized vehicle as it passes by a listener close to the vehicle's path. The sound may include engine and tire noise and will typically involve a clear build-up and/or decay of intensity as the vehicle approaches and retreats, as well as possible Doppler shift.",
     "citation_uri": "",
     "positive_examples": ["youtu.be/-5-jLuQ6U_E?start=19&end=29", "youtu.be/NvReVInFNxk?start=30&end=40", "youtu.be/2FyalYzSF6g?start=17&end=27", "youtu.be/31iv4K9G_4E?start=30&end=40"],
@@ -3466,7 +3403,7 @@
   },
   {
     "id": "/m/04qvtq",
-    "name": "Police car (siren)",
+    "name": "Police (siren)",
     "description": "The sound of a siren fitted to a ground vehicle used by police when responding to incidents.",
     "citation_uri": "http://en.wikipedia.org/wiki/Police_car",
     "positive_examples": ["youtu.be/C8Ne4NNA_CA?start=10&end=20", "youtu.be/lWDYbFDhV8k?start=40&end=50", "youtu.be/QRBD2TjXpcc?start=250&end=260", "youtu.be/ieDcpj6T7XI?start=30&end=40", "youtu.be/TBhbEn20dLs?start=120&end=130", "youtu.be/k9u987RcH64?start=2&end=12"],
@@ -4383,24 +4320,6 @@
     "restrictions": []
   },
   {
-    "id": "/m/03l9g",
-    "name": "Hammer",
-    "description": "Sounds made by a tool or device that delivers a blow to an object. Most hammers are hand tools used to drive nails, fit parts, forge metal, and break apart objects.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Hammer",
-    "positive_examples": ["youtu.be/DPWTr_fAamU?start=50&end=60", "youtu.be/gwz2RRFSp_I?start=70&end=80", "youtu.be/UJubaPeUu58?start=100&end=110", "youtu.be/rUyjioYts8k?start=220&end=230", "youtu.be/hqeM4MaM8AY?start=270&end=280", "youtu.be/QnKuwMUYhIo?start=120&end=130", "youtu.be/oy_ZYPJ_i4U?start=130&end=140"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
-    "id": "/m/03p19w",
-    "name": "Jackhammer",
-    "description": "The sound of a pneumatic or electro-mechanical tool that combines a hammer directly with a chisel, usually used to break up rock, pavement, and concrete.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Jackhammer",
-    "positive_examples": ["youtu.be/D8ZGG2r9rw4?start=70&end=80", "youtu.be/9PXlmLwYdSU?start=30&end=40", "youtu.be/2OVIxKp0tDY?start=30&end=40", "youtu.be/4qWfY_x6hpA?start=20&end=30", "youtu.be/2_MZIyjeHkg?start=30&end=40"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
     "id": "/m/01b82r",
     "name": "Sawing",
     "description": "Sounds of a tool consisting of a tough blade, wire, or chain with a hard toothed edge, used to cut through material, most often wood.  Includes both manual and motorized saws.",
@@ -4455,24 +4374,6 @@
     "restrictions": []
   },
   {
-    "id": "/m/032s66",
-    "name": "Gunshot, gunfire",
-    "description": "The sound of the discharge of a firearm, or multiple such discharges.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Gunshot",
-    "positive_examples": ["youtu.be/--PG66A3lo4?start=80&end=90", "youtu.be/PKEhOxE-Ovs?start=130&end=140", "youtu.be/c9030y4sJo0?start=140&end=150", "youtu.be/6slrju_ar9U?start=290&end=300", "youtu.be/K1cnDXbkPu0?start=170&end=180", "youtu.be/AjIQf3HK_Vc?start=130&end=140", "youtu.be/klCJfirqUF8?start=30&end=40", "youtu.be/Ma65O2T_hN0?start=10&end=20", "youtu.be/-Ho5tDtuah0?start=50&end=60"],
-    "child_ids": ["/m/04zjc", "/m/02z32qm", "/m/0_1c", "/m/073cg4"],
-    "restrictions": []
-  },
-  {
-    "id": "/m/04zjc",
-    "name": "Machine gun",
-    "description": "Sounds of a fully automatic mounted or portable firearm, designed to fire bullets in quick succession from an ammunition belt or magazine, typically at a rate of 300 to 1800 rounds per minute.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Machine_gun",
-    "positive_examples": ["youtu.be/CMsuBmtxj1c?start=50&end=60", "youtu.be/DFVVjacIPJc?start=40&end=50", "youtu.be/HrQ_2pDcXgk?start=200&end=210", "youtu.be/YGzn9Xn-hxU?start=540&end=550"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
     "id": "/m/02z32qm",
     "name": "Fusillade",
     "description": "The sound of the simultaneous and continuous firing of a group of firearms on command.",
@@ -4487,15 +4388,6 @@
     "description": "The sound of large military weapons built to fire munitions far beyond the range and power of infantry's small arms.",
     "citation_uri": "http://en.wikipedia.org/wiki/Artillery",
     "positive_examples": ["youtu.be/PqXCkCGMd_Y?start=30&end=40", "youtu.be/pEDafzZbNwE?start=30&end=40", "youtu.be/RaSAyTj1oQ8?start=22&end=32", "youtu.be/SoDJkvxOYKA?start=30&end=40", "youtu.be/ZtK9HZGMyDo?start=30&end=40", "youtu.be/7G0L7iR1J30?start=30&end=40", "youtu.be/v6BTFTJnkN8?start=30&end=40", "youtu.be/DmfwH6q4nSA?start=30&end=40"],
-    "child_ids": [],
-    "restrictions": []
-  },
-  {
-    "id": "/m/073cg4",
-    "name": "Cap gun",
-    "description": "The sound of a toy gun that creates a loud sound simulating a gunshot and a puff of smoke when a small percussion cap is exploded.",
-    "citation_uri": "http://en.wikipedia.org/wiki/Cap_gun",
-    "positive_examples": ["youtu.be/0Hnrufry54I?start=11&end=21", "youtu.be/a4nkA0NL4Hw?start=0&end=9", "youtu.be/s14pZzKGsdE?start=30&end=40", "youtu.be/FTPLIbmvoSs?start=140&end=150"],
     "child_ids": [],
     "restrictions": []
   },

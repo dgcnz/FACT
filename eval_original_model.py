@@ -87,7 +87,7 @@ def get_features(model, loader, backbone:str="clip"):
     return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
 
 
-def eval_clip(args, model, train_loader, test_loader):
+def eval_clip(args, seed, model, train_loader, test_loader):
     # Calculate the image features
     train_features, train_labels = get_features(model, train_loader)
     test_features, test_labels = get_features(model, test_loader)
@@ -195,8 +195,31 @@ def eval_coco(args, seed):
 
     APs = []
 
+    object_dict = {
+          'car': 3,
+          'bus': 6,
+          'handbag': 31,
+          'skis': 35,
+          'snowboard': 36,
+          'sports ball': 37,
+          'baseball glove': 40,
+          'skateboard': 41,
+          'tennis racket': 43,
+          'wine glass': 46,
+          'cup': 47,
+          'spoon': 50,
+          'apple': 53,
+          'potted plant': 64,
+          'remote': 75,
+          'keyboard': 76,
+          'microwave': 78,
+          'toaster': 80,
+          'clock': 85,
+          'hair drier': 89
+    }
+
     #loop over the 20 targets
-    for i in range(20): 
+    for i in object_dict.values(): 
         train_loader, test_loader, _ , _ = get_dataset(args, preprocess, **{'target': i})
         AP = eval_clip(args, seed, model, train_loader, test_loader)
         APs.append(AP)
