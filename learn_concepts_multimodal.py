@@ -179,6 +179,12 @@ if __name__ == "__main__":
     
     elif args.classes == "cub":
         #from data.constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
+        #list of the exact concepts used from (koh et al. 2020)
+
+        concept_indexes_used = [1, 4, 6, 7, 10, 14, 15, 20, 21, 23, 25, 29, 30, 35, 36, 38, 40, 44, 45, 50, 51, 53, 54, 56, 57, 59, 63, 64, 69, 70, 72, 75, 80, 84, 90, 91, \
+                                93, 99, 101, 106, 110, 111, 116, 117, 119, 125, 126, 131, 132, 134, 145, 149, 151, 152, 153, 157, 158, 163, 164, 168, 172, 178, 179, 181, \
+                                183, 187, 188, 193, 194, 196, 198, 202, 203, 208, 209, 211, 212, 213, 218, 220, 221, 225, 235, 236, 238, 239, 240, 242, 243, 244, 249, 253, \
+                                254, 259, 260, 262, 268, 274, 277, 283, 289, 292, 293, 294, 298, 299, 304, 305, 308, 309, 310, 311]
 
         # Read lines from the file into a list
         with open("concepts/attributes.txt", "r") as file:
@@ -194,11 +200,9 @@ if __name__ == "__main__":
             all_concepts.append(concept.strip())
         
         print(all_concepts)
-       
-       
-        # Get the class names.
+        filtered_concepts = [all_concepts[idx] for idx in concept_indexes_used]
 
-        learn_conceptbank(args, all_concepts, args.classes)
+        learn_conceptbank(args, filtered_concepts, args.classes)
     
     elif 'task' in args.classes :
         # Either get class names or pull the dataset ourselves(req token again) 
