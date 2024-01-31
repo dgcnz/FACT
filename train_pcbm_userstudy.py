@@ -31,10 +31,11 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
     parser.add_argument("--greedy-pruning", default=False, type=bool)
+    parser.add_argument("--pruning-class",  default="", type=str)
     parser.add_argument("--prune", default="", type=str)   
 
     args = parser.parse_args()
-    if args.pune:
+    if args.prune:
       args.pruning = [concept for concept in args.prune.split(',')]
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
@@ -81,12 +82,6 @@ def run_linear_probe(args, train_data, test_data, classes):
                                               
     return run_info, classifier.coef_, classifier.intercept_
 
-def evaluate_model_accuracy(model, test_data, args):
-    test_features, test_labels = test_data
-    predictions = model.predict(test_features)
-    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
-    return accuracy
-
 def get_concept_index(concept_name, concept_bank):
     return concept_bank.concept_names.index(concept_name)
 
@@ -121,7 +116,6 @@ def main(args, concept_bank, backbone, preprocess):
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
     torch.save(posthoc_layer, model_path)
-
     run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
     
     with open(run_info_file, "wb") as f:
@@ -139,44 +133,67 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
-    
 
     if args.greedy_pruning:
-        best_accuracy = evaluate_model_accuracy(posthoc_layer, (test_projs, test_lbls))
-        best_state = copy.deepcopy(posthoc_layer.state_dict())
-        best_combination = []
+        # use clean setting
+        pruning_layer = PCBMUserStudy(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+        pruning_layer = pruning_layer.to(args.device)
 
+        concepts = []
+        for tc in top_concepts:
+            if tc['class'] == args.pruning_class:
+                concepts.append(tc)
+        index_of_class = get_class_index(args.pruning_class, idx_to_class)
+        args.print_out = False
+        initial_run_info, _, _ = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
+        initial_performance = initial_run_info['test_acc']  
+        
+        best_performance = initial_performance
+        best_combination = None
+        performance_history = []
+        current_model_state = copy.deepcopy(pruning_layer.state_dict())
         start_time = time.time() 
         # Greedy search for best pruning
-        for r in range(1, len(top_concepts) + 1):
-            for combination in itertools.combinations(top_concepts, r):
+        for r in range(1, len(concepts) + 1):
+            for combination in itertools.combinations(concepts, r):
                 for concept in combination:
-                    posthoc_layer.prune(get_concept_index(concept), get_class_index(concept))
+                    pruning_layer.prune(get_concept_index(concept['concept'], concept_bank), index_of_class)
 
-                current_accuracy = evaluate_model_accuracy(posthoc_layer, (test_projs, test_lbls))
-
-                if current_accuracy > best_accuracy:
-                    best_accuracy = current_accuracy
-                    best_state = copy.deepcopy(posthoc_layer.state_dict())
+                train_embs, p_train_projs, p_train_lbls, test_embs, p_test_projs, p_test_lbls = load_or_compute_projections(args, backbone, pruning_layer, train_loader, test_loader)
+    
+                run_info_after_pruning, weights, bias = run_linear_probe(args, (p_train_projs, p_train_lbls), (p_test_projs, p_test_lbls), classes)
+    
+                # Convert from the SGDClassifier module to PCBM module.
+                pruning_layer.set_weights(weights=weights, bias=bias)
+                current_performance = run_info_after_pruning['test_acc']  
+                
+                performance_history.append(current_performance)
+                
+                if current_performance >= best_performance:
+                   
+                    best_performance = current_performance
                     best_combination = combination
-                else:
-                    #Revert to previous best state
-                    posthoc_layer.load_state_dict(best_state)
+                pruning_layer.load_state_dict(current_model_state)
 
         end_time = time.time() 
         pruning_time = end_time - start_time
         print(f"Greeding pruning process took {pruning_time:.2f} seconds.")
         print(f"Best pruning combination: {best_combination}")
-        print(f"Best accuracy after pruning: {best_accuracy}")
+        print(f"Best accuracy after pruning: {current_performance}")
 
     if args.prune:
+        #pruning_layer = PCBMUserStudy(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+        #pruning_layer = pruning_layer.to(args.device)
+       
         for concept_to_prune in args.pruning:
-            posthoc_layer.prune(get_concept_index(concept_to_prune), get_class_index(concept_to_prune))
-            get_concept_index(concept_to_prune)
-            get_class_index(concept_to_prune)
-        run_info_after_pruning, pruning_weights, _ = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
-        print("Performance before pruning:", run_info)
-        print("Performance after pruning:", run_info_after_pruning)
+            posthoc_layer.prune(get_concept_index(concept_to_prune, concept_bank), get_class_index(args.pruning_class, idx_to_class))
+
+        train_embs, p_train_projs, p_train_lbls, test_embs, p_test_projs, p_test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    
+        run_info_after_pruning, weights, bias = run_linear_probe(args, (p_train_projs, p_train_lbls), (p_test_projs, p_test_lbls), classes)
+    
+        print("Performance before pruning:", run_info['test_acc'])
+        print("Performance after pruning:", run_info_after_pruning['test_acc'])
     
     return run_info
 
