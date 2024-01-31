@@ -125,6 +125,7 @@ def get_dataset(args, preprocess=None):
                 item = self.dataset[idx]
                 image = item['image']
                 label = item['label']
+                label = torch.tensor(label, dtype=torch.long)
                 return self.transform(image), label
             
         train_dataset = PCBMSurveyDataset(dataset['train'])

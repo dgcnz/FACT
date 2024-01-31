@@ -79,10 +79,10 @@ class PCBMUserStudy(nn.Module):
         return self.classifier.weight
 
     def set_weights(self, weights, bias):
-        self.classifier.weight.data = torch.tensor(weights).to(
+        self.classifier.weight.data = torch.tensor(weights).float().to(
             self.classifier.weight.device
         )
-        self.classifier.bias.data = torch.tensor(bias).to(self.classifier.weight.device)
+        self.classifier.bias.data = torch.tensor(bias).float().to(self.classifier.weight.device)
         return 1
 
     def analyze_classifier(self, k=5, print_lows=False):
@@ -155,6 +155,16 @@ class PCBMUserStudy(nn.Module):
         analysis = "\n".join(output)
         return analysis, analysis_data
     
+    def test_step(self, batch, device):
+        features, labels = batch
+        features = torch.tensor(features).float().to(device)
+        labels = torch.tensor(labels).long().to(device)
+        with torch.no_grad():
+            outputs = self.forward_projs(features)
+            _, predicted = torch.max(outputs.data, 1)
+            accuracy = torch.sum(predicted == labels).item() / labels.size(0)
+        return accuracy* 100.
+
     def get_sparsity(self):
         return (self.classifier.weight > 0).sum().item()
 
