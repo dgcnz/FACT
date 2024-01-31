@@ -156,14 +156,27 @@ class PCBMUserStudy(nn.Module):
         return analysis, analysis_data
     
     def test_step(self, batch, device):
+        ''' Calculate test accuracy and per class accuracy'''
         features, labels = batch
         features = torch.tensor(features).float().to(device)
         labels = torch.tensor(labels).long().to(device)
         with torch.no_grad():
             outputs = self.forward_projs(features)
             _, predicted = torch.max(outputs.data, 1)
-            accuracy = torch.sum(predicted == labels).item() / labels.size(0)
-        return accuracy* 100.
+
+            correct_predictions = torch.zeros(labels.max() + 1).to(device)
+            total_predictions = torch.zeros_like(correct_predictions)
+
+            for i in range(len(labels)):
+                total_predictions[labels[i]] += 1
+                if predicted[i] == labels[i]:
+                    correct_predictions[labels[i]] += 1
+
+            class_accuracies = (correct_predictions / total_predictions) * 100
+
+            overall_accuracy = torch.sum(predicted == labels).item() / labels.size(0) * 100
+
+        return overall_accuracy, class_accuracies
 
     def get_sparsity(self):
         return (self.classifier.weight > 0).sum().item()

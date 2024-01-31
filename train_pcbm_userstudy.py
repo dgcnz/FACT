@@ -142,14 +142,14 @@ def main(args, concept_bank, backbone, preprocess):
             if tc['class'] == args.pruning_class:
                 concepts.append(tc)
         index_of_class = get_class_index(args.pruning_class, idx_to_class)
-        class_original_acc = run_info['cls_acc']['test'][index_of_class]
+        class_original_acc = run_info['cls_acc']['test'][index_of_class] *100.
         best_performance = run_info['test_acc']  
         best_pruning_acc = 0
         pruning_results = []
         best_combination = None
         current_model_state = copy.deepcopy(posthoc_layer.state_dict())
         start_time = time.time() 
-        
+        pruned_class_acc = 0
         # Greedy search for best pruning
         best_pruning_acc = 0
         for r in range(1, len(concepts) + 1):
@@ -157,10 +157,11 @@ def main(args, concept_bank, backbone, preprocess):
                 for concept in combination:
                     posthoc_layer.prune(get_concept_index(concept['concept'], concept_bank), index_of_class)
 
-                total_accuracy = posthoc_layer.test_step((test_projs, test_lbls), args.device)
+                total_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
                 if total_accuracy> best_pruning_acc:
                     best_pruning_acc = total_accuracy
                     best_combination = combination
+                    pruned_class_acc = class_acc[index_of_class].item()
 
                 posthoc_layer.load_state_dict(current_model_state)
 
@@ -174,10 +175,10 @@ def main(args, concept_bank, backbone, preprocess):
                 'combination': best_combination,
                 'original acc':best_performance,
                 'accuracy': best_pruning_acc,
-                'delta':  best_pruning_acc - best_performance
-                #'class original acc':class_original_acc,
-                #'class acc':class_original_acc,
-                #'class delta':class_original_acc
+                'delta':  best_pruning_acc - best_performance,
+                'class original acc':class_original_acc,
+                'class acc':pruned_class_acc,
+                'class delta':pruned_class_acc-class_original_acc
             })
         
 
@@ -186,7 +187,7 @@ def main(args, concept_bank, backbone, preprocess):
         for concept_to_prune in args.pruning:
             posthoc_layer.prune(get_concept_index(concept_to_prune, concept_bank), get_class_index(args.pruning_class, idx_to_class))
 
-        pruning_accuracy = posthoc_layer.test_step((test_projs, test_lbls), args.device)
+        pruning_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
        
         print("Performance before pruning:", run_info['test_acc'])
         print("Performance after pruning:", pruning_accuracy)
