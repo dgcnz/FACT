@@ -166,22 +166,28 @@ if __name__ == "__main__":
 
         # Load the PCBM
         conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
-        args.pcbm_path = "artifacts/outdir/coco-stuff/" if (args.dataset == 'coco-stuff') else "artifacts/outdir/"
-        args.pcbm_path += f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam_{args.lam}__alpha_{args.alpha}__seed_{args.seed}.ckpt"
+        args.pcbm_path = "artifacts/coco-stuff/" if (args.dataset == 'coco-stuff') else "artifacts/"
+        args.pcbm_path += f"pcbm_{args.dataset}_{args.backbone_name}{conceptbank_source}lam{args.lam}_alpha{args.alpha}_seed{args.seed}.ckpt"
         if ":" in args.pcbm_path:
             args.pcbm_path = sub(":", "", args.pcbm_path)
 
-        posthoc_layer = torch.load(args.pcbm_path)
-        args.backbone_name = posthoc_layer.backbone_name
-        posthoc_layer.eval()
-        backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-        backbone = backbone.to(args.device)
-        backbone.eval()
-        print(f"Seed: {seed}")
-        
-        args.out_dir = og_out_dir
-        run_info = test_runs(args, main, concept_bank="", 
+        if args.dataset == 'coco_stuff':
+          args.out_dir = og_out_dir
+          run_info = test_runs(args, main, concept_bank="", 
+                             backbone=None, preprocess=None, mode="vdh", get_model = get_model)
+        else:
+            posthoc_layer = torch.load(args.pcbm_path)
+            args.backbone_name = posthoc_layer.backbone_name
+            posthoc_layer.eval()
+            backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+            backbone = backbone.to(args.device)
+            backbone.eval()
+            print(f"Seed: {seed}")
+            args.out_dir = og_out_dir
+            run_info = test_runs(args, main, concept_bank="", 
                              backbone=backbone, preprocess=preprocess, mode="vdh")
+            
+        
 
         metric = run_info['test_acc']
 
