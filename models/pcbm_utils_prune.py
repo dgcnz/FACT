@@ -182,7 +182,7 @@ class PCBMUserStudy(nn.Module):
         return (self.classifier.weight > 0).sum().item()
 
 
-class PosthocHybridCBM(nn.Module):
+class UserPosthocHybridCBM(nn.Module):
     def __init__(self, bottleneck: PCBMUserStudy):
         """
         PosthocCBM Hybrid Layer.
@@ -191,7 +191,7 @@ class PosthocHybridCBM(nn.Module):
         Args:
             bottleneck (PosthocLinearCBM): [description]
         """
-        super(PosthocHybridCBM, self).__init__()
+        super(UserPosthocHybridCBM, self).__init__()
         # Get the concept information from the bank
         self.bottleneck = bottleneck
         # A single linear layer will be used as the classifier

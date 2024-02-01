@@ -45,6 +45,8 @@ def config():
     if args.prune:
       args.prune = json.loads(args.prune)
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
+    if args.number_of_concepts_to_prune:
+      args.number_of_concepts_to_prune = [int(numbr) for numbr in args.number_of_concepts_to_prune.split(',')]
     return args
 
 def run_linear_probe(args, train_data, test_data, classes):
@@ -251,7 +253,7 @@ def main(args, concept_bank, backbone, preprocess):
                     'accuracy improved': (pruning_accuracy - model_accuracy) >0
             })
     
-    return run_info
+    return run_info, class_original_acc
 
 
 if __name__ == "__main__":
@@ -267,12 +269,13 @@ if __name__ == "__main__":
     backbone.eval()
     
     metric_list = []
+    class_list = []
     # Execute main code
     #main(args, concept_bank, backbone, preprocess)
     for seed in args.seeds:
         print(f"Seed: {seed}")
         args.seed = seed
-        run_info = main(args, concept_bank, backbone, preprocess)
+        run_info, cls_acc = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
             metric = run_info['test_auc']
@@ -281,6 +284,7 @@ if __name__ == "__main__":
             metric = run_info['test_acc']
 
         metric_list.append(metric)
+        class_list.append(cls_acc)
 
     if greedy_pruning_results:
         results_df = pd.DataFrame(greedy_pruning_results)
@@ -300,3 +304,7 @@ if __name__ == "__main__":
 
     out_name = "UserStudy_results_"+args.dataset
     export.export_to_json(out_name, metric_list)
+    print('Spurious class metrics >>>')
+    print(class_list)
+    print('Mean : {}'.format(np.mean(class_list)))
+    print('Std : {}'.format(np.std(class_list)))
