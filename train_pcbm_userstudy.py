@@ -14,6 +14,7 @@ import copy
 import time
 import itertools
 import pandas as pd
+import json
 
 greedy_pruning_results = []
 user_pruning_results = []
@@ -38,11 +39,11 @@ def config():
     parser.add_argument("--random-pruning", default=False,type=bool)
     parser.add_argument("--pruning-class",  default="", type=str)
     parser.add_argument("--prune", default="", type=str)   
-    parser.add_argument("--number-of-concepts-to-prune", default=[1,2,3],type=list)
+    parser.add_argument("--number-of-concepts-to-prune", default="",type=str)
 
     args = parser.parse_args()
     if args.prune:
-      args.pruning = [concept for concept in args.prune.split(',')]
+      args.prune = json.loads(args.prune)
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
 
@@ -140,10 +141,10 @@ def main(args, concept_bank, backbone, preprocess):
     print(f"Model saved to : {model_path}")
     print(run_info)
     index_of_class = get_class_index(args.pruning_class, idx_to_class)
-    print(index_of_class)
-    print('---------------------------------------------------------------------')
     class_original_acc = run_info['cls_acc']['test'][index_of_class] *100.
     model_accuracy = run_info['test_acc']  
+    current_model_state = copy.deepcopy(posthoc_layer.state_dict())
+
     if args.greedy_pruning:
         concepts = []
         for tc in top_concepts:
@@ -151,8 +152,6 @@ def main(args, concept_bank, backbone, preprocess):
                 concepts.append(tc)
 
         best_pruning_acc = 0
-
-        current_model_state = copy.deepcopy(posthoc_layer.state_dict())
         start_time = time.time() 
         # Greedy search for best pruning
         
@@ -195,8 +194,6 @@ def main(args, concept_bank, backbone, preprocess):
                 concepts.append(tc)
 
         best_pruning_acc = 0
-
-        current_model_state = copy.deepcopy(posthoc_layer.state_dict())
         start_time = time.time() 
         # Greedy search for best pruning
         pruning_to_select =[]
@@ -227,29 +224,32 @@ def main(args, concept_bank, backbone, preprocess):
         end_time = time.time() 
         pruning_time = end_time - start_time
         print(f"Random pruning process took {pruning_time:.2f} seconds.")
-
+    
     if args.prune:
-       
-        for concept_to_prune in args.pruning:
-            posthoc_layer.prune(get_concept_index(concept_to_prune, concept_bank), get_class_index(args.pruning_class, idx_to_class))
+        for answer in args.prune:
+            concepts = [concept for concept in answer.split(',')]
+            for concept_to_prune in concepts:
+                posthoc_layer.prune(get_concept_index(concept_to_prune, concept_bank), get_class_index(args.pruning_class, idx_to_class))
 
-        pruning_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
-        pruned_class_acc = class_acc[index_of_class].item()
-        print( class_acc[index_of_class])
-        print("Performance before pruning:", model_accuracy)
-        print("Performance after pruning:", pruning_accuracy)
-        print("Class performance after pruning:", pruned_class_acc)
-        user_pruning_results.append({
-                'seed': args.seed,
-                'number concepts': len(args.pruning),
-                'original acc':model_accuracy,
-                'accuracy': pruning_accuracy,
-                'delta':  pruning_accuracy - model_accuracy,
-                'class original acc':class_original_acc,
-                'class acc':pruned_class_acc,
-                'class delta':pruned_class_acc-class_original_acc,
-                'accuracy improved': (pruned_class_acc-class_original_acc >0)
-        })
+            pruning_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
+            pruned_class_acc = class_acc[index_of_class].item()
+
+            print("Performance before pruning:", model_accuracy)
+            print("Performance after pruning:", pruning_accuracy)
+            print("Class performance after pruning:", pruned_class_acc)
+            posthoc_layer.load_state_dict(current_model_state)
+
+            user_pruning_results.append({
+                    'seed': args.seed,
+                    'number concepts': len(concepts),
+                    'original acc':model_accuracy,
+                    'accuracy': pruning_accuracy,
+                    'delta':  pruning_accuracy - model_accuracy,
+                    'class original acc':class_original_acc,
+                    'class acc':pruned_class_acc,
+                    'class delta':pruned_class_acc-class_original_acc,
+                    'accuracy improved': (pruning_accuracy - model_accuracy) >0
+            })
     
     return run_info
 
