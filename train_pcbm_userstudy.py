@@ -15,7 +15,9 @@ import time
 import itertools
 import pandas as pd
 
-global_pruning_results = []
+greedy_pruning_results = []
+user_pruning_results = []
+random_pruning_results = []
 
 def config():
     parser = argparse.ArgumentParser()
@@ -33,8 +35,10 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
     parser.add_argument("--greedy-pruning", default=False, type=bool)
+    parser.add_argument("--random-pruning", default=False,type=bool)
     parser.add_argument("--pruning-class",  default="", type=str)
     parser.add_argument("--prune", default="", type=str)   
+    parser.add_argument("--number-of-concepts-to-prune", default=[1,2,3],type=list)
 
     args = parser.parse_args()
     if args.prune:
@@ -123,7 +127,7 @@ def main(args, concept_bank, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
 
-    if (num_classes > 1):
+    if (args.print_out):
         # Prints the Top-10 Concept Weigths for each class if desired.
         print(posthoc_layer.analyze_classifier(k=10))
         import pandas as pd
@@ -135,24 +139,27 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
-
+    index_of_class = get_class_index(args.pruning_class, idx_to_class)
+    print(index_of_class)
+    print('---------------------------------------------------------------------')
+    class_original_acc = run_info['cls_acc']['test'][index_of_class] *100.
+    model_accuracy = run_info['test_acc']  
     if args.greedy_pruning:
         concepts = []
         for tc in top_concepts:
             if tc['class'] == args.pruning_class:
                 concepts.append(tc)
-        index_of_class = get_class_index(args.pruning_class, idx_to_class)
-        class_original_acc = run_info['cls_acc']['test'][index_of_class] *100.
-        best_performance = run_info['test_acc']  
+
         best_pruning_acc = 0
-        pruning_results = []
-        best_combination = None
+
         current_model_state = copy.deepcopy(posthoc_layer.state_dict())
         start_time = time.time() 
-        pruned_class_acc = 0
         # Greedy search for best pruning
-        best_pruning_acc = 0
-        for r in range(1, len(concepts) + 1):
+        
+        for r in args.number_of_concepts_to_prune:
+            best_pruning_acc = 0
+            best_combination = None
+            pruned_class_acc = 0
             for combination in itertools.combinations(concepts, r):
                 for concept in combination:
                     posthoc_layer.prune(get_concept_index(concept['concept'], concept_bank), index_of_class)
@@ -164,23 +171,62 @@ def main(args, concept_bank, backbone, preprocess):
                     pruned_class_acc = class_acc[index_of_class].item()
 
                 posthoc_layer.load_state_dict(current_model_state)
-
-        end_time = time.time() 
-        pruning_time = end_time - start_time
-        print(f"Greeding pruning process took {pruning_time:.2f} seconds.")
-        print(f"Best pruning combination: {best_combination}")
-        print(f"Best accuracy after pruning: {best_pruning_acc}")
-        global_pruning_results.append({
+            greedy_pruning_results.append({
                 'seed': args.seed,
+                'concepts pruned':r,
                 'combination': best_combination,
-                'original acc':best_performance,
+                'original acc':model_accuracy,
                 'accuracy': best_pruning_acc,
-                'delta':  best_pruning_acc - best_performance,
+                'delta':  best_pruning_acc - model_accuracy,
                 'class original acc':class_original_acc,
                 'class acc':pruned_class_acc,
                 'class delta':pruned_class_acc-class_original_acc
             })
-        
+
+        end_time = time.time() 
+        pruning_time = end_time - start_time
+        print(f"Greeding pruning process took {pruning_time:.2f} seconds.")
+
+    if args.random_pruning:
+        import random
+        concepts = []
+        for tc in top_concepts:
+            if tc['class'] == args.pruning_class:
+                concepts.append(tc)
+
+        best_pruning_acc = 0
+
+        current_model_state = copy.deepcopy(posthoc_layer.state_dict())
+        start_time = time.time() 
+        # Greedy search for best pruning
+        pruning_to_select =[]
+        for r in args.number_of_concepts_to_prune:
+            best_pruning_acc = 0
+            best_combination = None
+            pruned_class_acc = 0
+            for combination in itertools.combinations(concepts, r):
+                for concept in combination:
+                    posthoc_layer.prune(get_concept_index(concept['concept'], concept_bank), index_of_class)
+
+                total_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
+                pruned_class_acc = class_acc[index_of_class].item()
+                pruning_to_select.append({
+                'seed': args.seed,
+                'concepts pruned':r,
+                'combination': combination,
+                'original acc':model_accuracy,
+                'accuracy': total_accuracy,
+                'delta':  total_accuracy - model_accuracy,
+                'class original acc':class_original_acc,
+                'class acc':pruned_class_acc,
+                'class delta':pruned_class_acc-class_original_acc
+                })
+                posthoc_layer.load_state_dict(current_model_state)
+            random_pruning_results.append(random.choice(pruning_to_select))
+
+        end_time = time.time() 
+        pruning_time = end_time - start_time
+        print(f"Random pruning process took {pruning_time:.2f} seconds.")
 
     if args.prune:
        
@@ -188,9 +234,22 @@ def main(args, concept_bank, backbone, preprocess):
             posthoc_layer.prune(get_concept_index(concept_to_prune, concept_bank), get_class_index(args.pruning_class, idx_to_class))
 
         pruning_accuracy, class_acc = posthoc_layer.test_step((test_projs, test_lbls), args.device)
-       
-        print("Performance before pruning:", run_info['test_acc'])
+        pruned_class_acc = class_acc[index_of_class].item()
+        print( class_acc[index_of_class])
+        print("Performance before pruning:", model_accuracy)
         print("Performance after pruning:", pruning_accuracy)
+        print("Class performance after pruning:", pruned_class_acc)
+        user_pruning_results.append({
+                'seed': args.seed,
+                'number concepts': len(args.pruning),
+                'original acc':model_accuracy,
+                'accuracy': pruning_accuracy,
+                'delta':  pruning_accuracy - model_accuracy,
+                'class original acc':class_original_acc,
+                'class acc':pruned_class_acc,
+                'class delta':pruned_class_acc-class_original_acc,
+                'accuracy improved': (pruned_class_acc-class_original_acc >0)
+        })
     
     return run_info
 
@@ -223,10 +282,21 @@ if __name__ == "__main__":
 
         metric_list.append(metric)
 
-    results_df = pd.DataFrame(global_pruning_results)
-    csv_path = os.path.join(args.out_dir, f"pruning_results_{args.dataset}.csv")
-    results_df.to_csv(csv_path, index=False)
-    print(f"Global pruning results saved to {csv_path}")
+    if greedy_pruning_results:
+        results_df = pd.DataFrame(greedy_pruning_results)
+        csv_path = os.path.join(args.out_dir, f"greedy_pruning_results_{args.dataset}.csv")
+        results_df.to_csv(csv_path, index=False)
+        print(f"Global greedy pruning results saved to {csv_path}")
+    if random_pruning_results:
+        results_df = pd.DataFrame(random_pruning_results)
+        csv_path = os.path.join(args.out_dir, f"random_pruning_results_{args.dataset}.csv")
+        results_df.to_csv(csv_path, index=False)
+        print(f"Random pruning results saved to {csv_path}")
+    if user_pruning_results:
+        results_df = pd.DataFrame(user_pruning_results)
+        csv_path = os.path.join(args.out_dir, f"users_pruning_results_{args.dataset}.csv")
+        results_df.to_csv(csv_path, index=False)
+        print(f"User pruning results saved to {csv_path}")
 
     out_name = "UserStudy_results_"+args.dataset
     export.export_to_json(out_name, metric_list)

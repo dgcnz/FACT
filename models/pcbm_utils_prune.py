@@ -173,7 +173,7 @@ class PCBMUserStudy(nn.Module):
                     correct_predictions[labels[i]] += 1
 
             class_accuracies = (correct_predictions / total_predictions) * 100
-
+            print(class_accuracies)
             overall_accuracy = torch.sum(predicted == labels).item() / labels.size(0) * 100
 
         return overall_accuracy, class_accuracies
