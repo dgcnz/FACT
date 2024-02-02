@@ -23,12 +23,15 @@ lightning = {extras = ["pytorch-extra"], version = "^2.1.3"}
 tensorboardx = "^2.6.2.2"
 torch-tb-profiler = "^0.4.3"
 numpy = ">=1.21,<1.25"
+pytorch-ignite = "^0.4.13"
+visdom = "^0.2.4"
 
 
 [tool.poetry.group.dev.dependencies]
 gdown = "^4.7.1"
 jupyter = "^1.0.0"
 renumics-spotlight = "^1.6.0"
+nbdime = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core"]

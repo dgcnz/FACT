@@ -10,16 +10,19 @@ import pandas as pd
 
 CONFIG_PATH = Path("configs/model_editing/classifier")
 
-logging.basicConfig(
-    # format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    handlers=[logging.FileHandler("debug.log", mode="w"), logging.StreamHandler()],
-)
+logger: logging.Logger
 
-logger = logging.getLogger()
-handler = logging.FileHandler("debug.log")
-logger.addHandler(handler)
-
+def setup_logging(verbose: bool):
+    global logger
+    logging.basicConfig(
+        # format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.ERROR if not verbose else logging.INFO,
+        handlers=[logging.FileHandler("debug.log", mode="w"), logging.StreamHandler()],
+    )
+    logger = logging.getLogger()
+    logger.setLevel(logging.ERROR if not verbose else logging.INFO)
+    handler = logging.FileHandler("debug.log")
+    logger.addHandler(handler)
 
 class LightningScript(object):
     def __init__(self, cli_fn: callable):
@@ -203,8 +206,13 @@ def setup_parser():
     parser.add_argument(
         "--base_config", type=str, default=CONFIG_PATH / "base_clip_resnet50.yaml"
     )
-    parser.add_argument("--device", type=str, default="mps")
+    parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
+    parser.add_argument(
+        "--verbose",
+        type=int,
+        default=0,
+    )
     return parser
 
 
@@ -220,6 +228,7 @@ def get_all_configs():
 def main():
     parser = setup_parser()
     args = parser.parse_args()
+    setup_logging(verbose=args.verbose)
     configs = get_all_configs()
     all_metrics = []
     all_metrics_gain = []

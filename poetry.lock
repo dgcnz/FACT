@@ -2130,6 +2130,20 @@ typing-extensions = ["typing-extensions (>=3.10.0.0)"]
 urls = ["requests (>=2.18.4)"]
 
 [[package]]
+name = "jsonpatch"
+version = "1.33"
+description = "Apply JSON-Patches (RFC 6902)"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*"
+files = [
+    {file = "jsonpatch-1.33-py2.py3-none-any.whl", hash = "sha256:0ae28c0cd062bbd8b8ecc26d7d164fbbea9652a1a3693f3b956c1eae5145dade"},
+    {file = "jsonpatch-1.33.tar.gz", hash = "sha256:9fcd4009c41e6d12348b4a0ff2563ba56a2923a7dfee731d004e212e1ee5030c"},
+]
+
+[package.dependencies]
+jsonpointer = ">=1.9"
+
+[[package]]
 name = "jsonpointer"
 version = "2.4"
 description = "Identify specific nodes in a JSON document (RFC 6901)"
@@ -2345,6 +2359,23 @@ websocket-client = "*"
 [package.extras]
 docs = ["ipykernel", "jinja2", "jupyter-client", "jupyter-server", "myst-parser", "nbformat", "prometheus-client", "pydata-sphinx-theme", "send2trash", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-openapi (>=0.8.0)", "sphinxcontrib-spelling", "sphinxemoji", "tornado", "typing-extensions"]
 test = ["flaky", "ipykernel", "pre-commit", "pytest (>=7.0)", "pytest-console-scripts", "pytest-jupyter[server] (>=0.4)", "pytest-timeout", "requests"]
+
+[[package]]
+name = "jupyter-server-mathjax"
+version = "0.2.6"
+description = "MathJax resources as a Jupyter Server Extension."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "jupyter_server_mathjax-0.2.6-py3-none-any.whl", hash = "sha256:416389dde2010df46d5fbbb7adb087a5607111070af65a1445391040f2babb5e"},
+    {file = "jupyter_server_mathjax-0.2.6.tar.gz", hash = "sha256:bb1e6b6dc0686c1fe386a22b5886163db548893a99c2810c36399e9c4ca23943"},
+]
+
+[package.dependencies]
+jupyter-server = ">=1.1"
+
+[package.extras]
+test = ["jupyter-server[test]", "pytest"]
 
 [[package]]
 name = "jupyter-server-terminals"
@@ -3221,6 +3252,32 @@ qtpng = ["pyqtwebengine (>=5.15)"]
 serve = ["tornado (>=6.1)"]
 test = ["flaky", "ipykernel", "ipywidgets (>=7.5)", "pytest"]
 webpdf = ["playwright"]
+
+[[package]]
+name = "nbdime"
+version = "4.0.1"
+description = "Diff and merge of Jupyter Notebooks"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "nbdime-4.0.1-py3-none-any.whl", hash = "sha256:82538e2b52e0834e9c07607e2dea27aceaaf7e8cf2269a4607c67ea9aa625404"},
+    {file = "nbdime-4.0.1.tar.gz", hash = "sha256:f1a760c0b00c1ba9b4945c16ce92577f393fb51d184f351b7685ba6e8502098e"},
+]
+
+[package.dependencies]
+colorama = "*"
+gitpython = "<2.1.4 || >2.1.4,<2.1.5 || >2.1.5,<2.1.6 || >2.1.6"
+jinja2 = ">=2.9"
+jupyter-server = "*"
+jupyter-server-mathjax = ">=0.2.2"
+nbformat = "*"
+pygments = "*"
+requests = "*"
+tornado = "*"
+
+[package.extras]
+docs = ["recommonmark", "sphinx", "sphinx-rtd-theme"]
+test = ["jsonschema", "jupyter-server[test]", "mock", "notebook", "pytest (>=6.0)", "pytest-cov", "pytest-timeout", "pytest-tornado", "requests", "tabulate"]
 
 [[package]]
 name = "nbformat"
@@ -4334,6 +4391,21 @@ files = [
     {file = "python-json-logger-2.0.7.tar.gz", hash = "sha256:23e7ec02d34237c5aa1e29a070193a4ea87583bb4e7f8fd06d3de8264c4b2e1c"},
     {file = "python_json_logger-2.0.7-py3-none-any.whl", hash = "sha256:f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd"},
 ]
+
+[[package]]
+name = "pytorch-ignite"
+version = "0.4.13"
+description = "A lightweight library to help with training neural networks in PyTorch."
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytorch-ignite-0.4.13.tar.gz", hash = "sha256:f334dd65161cc4f4a77da5d0ed3b1e8bc08235be832016515f8a33c249dac060"},
+    {file = "pytorch_ignite-0.4.13-py3-none-any.whl", hash = "sha256:b17959072af98b1494de603305588a81e22911a122a3ee444d88fc71153778f5"},
+]
+
+[package.dependencies]
+packaging = "*"
+torch = ">=1.3,<3"
 
 [[package]]
 name = "pytorch-lightning"
@@ -6574,6 +6646,27 @@ tooling = ["black (>=23.7.0)", "pyright (>=1.1.325)", "ruff (>=0.0.287)"]
 tooling-extras = ["pyaml (>=23.7.0)", "pypandoc-binary (>=1.11)", "pytest (>=7.4.0)"]
 
 [[package]]
+name = "visdom"
+version = "0.2.4"
+description = "A tool for visualizing live, rich data for Torch and Numpy"
+optional = false
+python-versions = "*"
+files = [
+    {file = "visdom-0.2.4.tar.gz", hash = "sha256:84a911d3c8814a056d54812b381bd938cb44bcfc503a85fe0f701502bb720574"},
+]
+
+[package.dependencies]
+jsonpatch = "*"
+networkx = "*"
+numpy = ">=1.8"
+pillow = "*"
+requests = "*"
+scipy = "*"
+six = "*"
+tornado = "*"
+websocket-client = "*"
+
+[[package]]
 name = "wandb"
 version = "0.16.2"
 description = "A CLI and library for interacting with the Weights & Biases API."
@@ -7117,4 +7210,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "61304da12d0af85393ba5f52c29bd46d7b64400c914fef7e5f4fb69016144b63"
+content-hash = "a881c7831495288ac59604f1ccd168a49076d16ba915f3fb601154b79982623b"
