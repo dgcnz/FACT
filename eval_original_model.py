@@ -17,6 +17,9 @@ from models import get_model
 from training_tools import export
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 
 def config():
@@ -112,7 +115,7 @@ def eval_audio(args, seed):
         accuracies.append(results[0]['test_accuracy'])
 
     return results # average accuracy over the batches
-
+  
 
 def get_features(model, loader, backbone:str="clip"):
     all_features = []
@@ -275,6 +278,80 @@ def eval_coco(args, seed):
     print(f"Mean Average Precision = {mean_average_precision:.3f}")
 
     return mean_average_precision
+
+def eval_cifar(args, seed):
+    model, preprocess = get_model(args, backbone_name="clip:RN50")
+
+    train_loader, test_loader, _ , classes = get_dataset(args, preprocess)
+    num_classes = len(classes)
+
+    def get_features(loader):
+        all_features = []
+        all_labels = []
+        
+        with torch.no_grad():
+            for images, labels in tqdm(loader):
+                features = model.encode_image(images.to(args.device))
+
+                all_features.append(features)
+                all_labels.append(labels)
+
+        return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
+
+    # Calculate the image features
+    train_features, train_labels = get_features(train_loader)
+    test_features, test_labels = get_features(test_loader)
+
+    #split train set into train and validation in numpy arrays
+    train_size = int(0.8 * len(train_features))
+    train_features_sweep, val_features_sweep = np.split(train_features, [train_size])
+    train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
+
+    # do a hyperparameter sweep to find the best regularization strength lambda.
+    if args.C is None:     
+        def hyperparameter_sweep():
+            print("Performing hyperparameter sweep to find the best regularization strength lambda.")
+            l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
+            
+            def find_peak(l2_lambda_idx_list):
+                """Calculate accuracy on all indexes and return the peak index"""
+                accuracy_list = []
+                for l2_lambda_idx in l2_lambda_idx_list:
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
+                    classifier.fit(train_features_sweep, train_labels_sweep)
+                    predictions = classifier.predict(val_features_sweep)
+                    accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                    accuracy_list.append(accuracy)
+                peak_idx = np.argmax(accuracy_list)
+                peak_idx = l2_lambda_idx_list[peak_idx]
+                return peak_idx
+
+            l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
+            peak_idx = find_peak(l2_lambda_init_idx)
+            step_span = 2
+            while step_span > 0:
+                print(step_span, 'next iteration of the step span')
+                left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
+                peak_idx = find_peak([left, peak_idx, right])
+                step_span //= 2
+                print('current best lambda', l2_lambda_list[peak_idx])
+            return l2_lambda_list[peak_idx]
+
+        lambda_best = hyperparameter_sweep()
+        C = 1 / lambda_best
+        print(C, 'best C')
+
+    else:
+        C = args.C
+
+    # Perform logistic regression
+    classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
+    classifier.fit(train_features, train_labels)
+
+    # Evaluate using the logistic regression classifier
+    predictions = classifier.predict(test_features)
+    accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    print(f"Accuracy = {accuracy:.3f}")
 
 
 def eval_ham(args, seed):

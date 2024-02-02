@@ -54,8 +54,16 @@ def main(args, concept_bank, backbone, preprocess):
     negative_projection_magnitude_per_concept = {}
     
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    for concept_name in concept_bank.concept_names:
-        loaders = concept_loaders[concept_name]
+    for i, concept_name in enumerate(concept_bank.concept_names):
+        if args.concept_dataset == 'cub':
+            print(i, f'  {concept_name}')
+            if i in concept_loaders.keys():
+                loaders = concept_loaders[i]
+            else:
+              continue
+            
+        else:
+            loaders = concept_loaders[concept_name]
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
     
         _ , train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)

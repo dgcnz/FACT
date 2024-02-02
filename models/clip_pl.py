@@ -17,7 +17,7 @@ class AudioCLIPClassifierTrainer(L.LightningModule):
         x, y = batch
         y_hat = self.model(x)
         loss = self.loss(y_hat, y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
     
     def test_step(self, batch: tuple[Tensor, Tensor], batch_idx):
@@ -38,8 +38,9 @@ class AudioCLIPClassifierTrainer(L.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.classifier.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
+        #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience = 350)
 
-        return [optimizer], [scheduler]
+        return [optimizer], [scheduler] #[{"scheduler": scheduler, "interval": "step", "monitor": "train_loss" }]
     
 
 class CLIPClassifierTrainer(L.LightningModule):

@@ -333,6 +333,7 @@ if __name__ == "__main__":
         all_concepts.extend(all_concepts1)
 
         learn_conceptbank(args, all_concepts, args.classes, model)
+        
     
     elif 'task' in args.classes :
         # Either get class names or pull the dataset ourselves(req token again) 
@@ -358,5 +359,6 @@ if __name__ == "__main__":
         
         learn_conceptbank(args, concepts, args.classes, model)
         
+
     else:
         raise ValueError(f"Unknown classes: '{args.classes}'. Define your dataset here!")

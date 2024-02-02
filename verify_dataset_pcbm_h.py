@@ -42,6 +42,7 @@ def config():
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
                     "you can determine the folds to use for testing.")
 
+
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
 
