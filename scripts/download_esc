@@ -1,0 +1,15 @@
+#! /bin/bash
+
+# Note: This script is part of the extensions
+# create output folders
+output_directory=artifacts/data/ESC_50
+mkdir -p "${output_directory}"
+
+# download data (done like this because the ESC-50 dataset is not zipped on github)
+# as such, it needs to be directly downloaded from the repo
+
+archive_url="https://github.com/karolpiczak/ESC-50/archive/master.tar.gz"
+
+curl -L "${archive_url}" | tar -xz --strip-components=1 -C "${output_directory}" "ESC-50-master/audio"
+
+curl https://raw.githubusercontent.com/karolpiczak/ESC-50/master/meta/esc50.csv --output "${output_directory}/esc50.csv"

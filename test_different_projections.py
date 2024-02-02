@@ -3,7 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch
-
+from training_tools.utils import test_runs
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -28,6 +28,13 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--test", default='accuracy', type=str)
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
+    parser.add_argument("--escfold", default=5, type=int, help="If using ESC-50 as the dataset," \
+                    "you can determine the fold to use for testing.")
+    parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
+                    "you can determine the folds to use for testing.")
 
     ## arguments for the different projection matrix weights
     parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
@@ -36,7 +43,6 @@ def config():
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
     return args
-
 
 def run_linear_probe(args, train_data, test_data):
     print("START LINEAR PROBE...")

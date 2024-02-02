@@ -1,24 +1,10 @@
 #! /bin/bash
 
-# create output folder
-mkdir -p artifacts/data/COCO_STUFF
-
 # download data
 
-curl http://images.cocodataset.org/zips/train2017.zip --output artifacts/data/COCO_STUFF_TRAIN.zip
-
-curl http://images.cocodataset.org/zips/val2017.zip --output artifacts/data/COCO_STUFF_VAL.zip
-
-curl http://images.cocodataset.org/annotations/annotations_trainval2017.zip --output artifacts/data/COCO_STUFF_ANNOT.zip
-
-curl https://raw.githubusercontent.com/nightrome/cocostuff/master/labels.txt --output artifacts/data/COCO_STUFF/labels.txt
+curl -X GET \
+"https://huggingface.co/datasets/fact-40/pcbm-coco-stuff/resolve/main/data.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/COCO_STUFF.zip
 
 # extract data
 
-unzip artifacts/data/COCO_STUFF_TRAIN.zip -d artifacts/data/COCO_STUFF
-
-unzip artifacts/data/COCO_STUFF_VAL.zip -d artifacts/data/COCO_STUFF
-
-unzip artifacts/data/COCO_STUFF_ANNOT.zip -d artifacts/data/COCO_STUFF
-
-# Need to figure out how labels work here (I assume that it's using the captions based on the CLIP ResNet Paper)
+unzip artifacts/data/COCO_STUFF.zip -d artifacts/data/COCO_STUFF

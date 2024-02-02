@@ -4,8 +4,9 @@ import os
 import pandas as pd
 
 
-def get_dataset(args, preprocess=None, shuffle=True):
-    if args.dataset == "cifar10":
+def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
+    # note: target is only needed for COCO-Stuff due to the 20 datasets involved
+    if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
         testset  = datasets.CIFAR10(root=args.out_dir, train=False,
@@ -19,7 +20,7 @@ def get_dataset(args, preprocess=None, shuffle=True):
                                                    shuffle=False, num_workers=args.num_workers)
     
     
-    elif args.dataset == "cifar100":
+    elif args.dataset.lower() == "cifar100":
         trainset = datasets.CIFAR100(root=args.out_dir, train=True,
                                      download=True, transform=preprocess)
         testset  = datasets.CIFAR100(root=args.out_dir, train=False,
@@ -33,7 +34,7 @@ def get_dataset(args, preprocess=None, shuffle=True):
                                                    shuffle=False, num_workers=args.num_workers)
 
 
-    elif args.dataset == "cub":
+    elif args.dataset.lower() == "cub":
         from .cub import load_cub_data
         from .constants import CUB_PROCESSED_DIR, CUB_DATA_DIR
         from torchvision import transforms
@@ -53,23 +54,25 @@ def get_dataset(args, preprocess=None, shuffle=True):
         classes = [a.split(".")[1].strip() for a in classes]
         idx_to_class = {i: classes[i] for i in range(num_classes)}
         classes = [classes[i] for i in range(num_classes)]
-        print(len(classes), "num classes for cub")
+        print(len(classes), "number of classes for CUB")
         print(len(train_loader.dataset), "training set size")
         print(len(test_loader.dataset), "test set size")
         
 
-    elif args.dataset == "ham10000":
+    elif args.dataset.lower() == "ham10000":
         from .derma_data import load_ham_data
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
 
-    elif args.dataset == "coco_stuff":
+    elif args.dataset.lower() == "coco_stuff":
         from .coco_stuff import load_coco_data, cid_to_class
         from .constants import COCO_STUFF_DIR
 
-        return NotImplemented
+        # get target index from the kwargs
+        assert('target' in kwargs.keys()), "Please specify the target index for COCO-Stuff"
+        target = kwargs['target']
 
         # The 20 most biased classes from Singh et al., 2020
         target_classes = ["cup", "wine glass", "handbag", "apple", "car",
@@ -77,18 +80,20 @@ def get_dataset(args, preprocess=None, shuffle=True):
                           "skis", "clock", "sports ball", "remote", "snowboard",
                           "toaster", "hair drier", "tennis racket", "skateboard", "baseball glove"]
         
-        label_path = os.path.join(COCO_STUFF_DIR, "labels.txt")
-        train_path = os.path.join(COCO_STUFF_DIR, "train2017")
-        test_path = os.path.join(COCO_STUFF_DIR, "val2017") # It is presumed that the validation set was used as the test one
-        train_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_train2017.json")
-        test_annot = os.path.join(COCO_STUFF_DIR, "annotations\instances_val2017.json")
+        label_path = "data/coco_target_indexes.txt"
+        train_annot = os.path.join(COCO_STUFF_DIR, "labels_train.json")
+        test_annot = os.path.join(COCO_STUFF_DIR, "labels_val.json")
 
-        train_loader = load_coco_data(train_path, train_annot) # Not implemented yet ...
-        test_loader  = load_coco_data(test_path, test_annot)
-        idx_to_class = cid_to_class(label_path, target_classes)
+        train_loader, test_loader = load_coco_data(train_annot, test_annot, transform=preprocess, target=target)
+        idx_to_class = cid_to_class(label_path, target_classes, target_idx=target)
+        classes      = target_classes
+        print(idx_to_class)
+
+        # For printing
+        print(f"Evaluating COCO-Stuff Binary Classification for Class '{idx_to_class[1]}'")
 
 
-    elif args.dataset == "siim_isic":
+    elif args.dataset.lower() == "siim_isic":
         from .siim_isic import load_siim_data
         from .constants import SIIM_DATA_DIR
         meta_dir = os.path.join(SIIM_DATA_DIR, "isic_metadata.csv")
@@ -100,6 +105,7 @@ def get_dataset(args, preprocess=None, shuffle=True):
         classes = pd.read_csv(meta_dir)['benign_malignant']
         classes = sorted(list(set(classes))) # adjust so that 0:benign and 1:malignant as in the main dataset
         idx_to_class = {i: classes[i] for i in range(len(classes))}
+
 
     elif 'task' in args.dataset:
         from datasets import load_dataset
@@ -136,6 +142,43 @@ def get_dataset(args, preprocess=None, shuffle=True):
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
         idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
         classes = dataset['train'].features['label'].names
+
+    # the following two if-statement branches are for the extensions
+    elif args.dataset.lower() == "esc50":
+        from .esc_50 import load_esc_data
+        from .constants import ESC_DIR
+        meta_dir = os.path.join(ESC_DIR, "esc50.csv")
+        train_loader, test_loader = load_esc_data(meta_dir, 
+                                                  batch_size=args.batch_size,
+                                                  testfold=args.escfold,
+                                                  num_workers=args.num_workers)
+        
+        # for the idx_to_class variable (need to read metadata table for this)
+        df = pd.read_csv(meta_dir)
+        indexes = list(df['target'])
+        classes = list(df['category'])
+
+        idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
+        idx_to_class = dict(sorted(idx_to_class.items()))
+        classes = list(idx_to_class.values())
+
+
+    elif args.dataset.lower() == "us8k":
+        from .us8k import load_us_data
+        from .constants import US_DIR
+        meta_dir = os.path.join(US_DIR, "UrbanSound8K.csv")
+        train_loader, test_loader = load_us_data(meta_dir, 
+                                                 batch_size=args.batch_size,
+                                                 testfolds=args.usfolds,
+                                                 num_workers=args.num_workers)
+        
+        # for the idx_to_class variable (need to read metadata table for this)
+        df = pd.read_csv(meta_dir)
+        indexes = list(df['classID'])
+        classes = list(df['class'])
+        idx_to_class = {indexes[i]: classes[i] for i in range(len(indexes))}
+        idx_to_class = dict(sorted(idx_to_class.items()))
+        classes = list(idx_to_class.values())
 
     else:
         raise ValueError(args.dataset)

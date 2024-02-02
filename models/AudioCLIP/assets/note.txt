@@ -1,0 +1,5 @@
+Ensure you have two files in here after following the download 
+instructions (either from the main README.md or the notebook):
+
+1. audioclip.pt
+2. bpe_simple_vocab_16e6.txt.gz
