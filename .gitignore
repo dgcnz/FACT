@@ -10,3 +10,4 @@ old_logs
 accuracies*.csv
 *.log
 *.out
+logs

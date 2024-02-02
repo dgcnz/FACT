@@ -1,2 +1,4 @@
 data:
   task_name: task_2_table_cat_dog
+model:
+  spurious_class: 4

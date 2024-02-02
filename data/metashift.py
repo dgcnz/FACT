@@ -5,10 +5,13 @@ import clip
 from PIL import Image
 from enum import Enum
 import torch
+from typing import Callable
 from torch.utils.data import DataLoader
 import datasets
 from pathlib import Path
 from concepts.concept_utils import ConceptBank
+from models.clip_encoder import CLIPImageEncoder
+from models.resnet import ResNet18FeatureExtractor
 
 
 class NNProjector(torch.nn.Module):
@@ -173,27 +176,123 @@ class MetaShiftDataModule(L.LightningDataModule):
         image = self.preprocessor(image)
         concept_weights = self.projector(image)
         assert isinstance(concept_weights, torch.Tensor), type(concept_weights)
-        return {"concept_weights": concept_weights, "label": label}
+        return {"input": concept_weights, "label": label}
 
 
-class MetaShiftDataModuleSK(MetaShiftDataModule):
-    TRAIN_SIZE: int = 500
-    TEST_SIZE: int = 500
+class BackboneEnum(Enum):
+    CLIP_RESNET50 = 1
+    RESNET18_IMAGENET_1K_V1 = 2
+
+
+BACKBONES: dict[BackboneEnum, Callable[..., tuple[Callable, Callable]]] = {
+    BackboneEnum.CLIP_RESNET50: lambda: (
+        CLIPImageEncoder("RN50"),
+        CLIPPreprocessor("RN50"),
+    ),
+    BackboneEnum.RESNET18_IMAGENET_1K_V1: lambda: (
+        ResNet18FeatureExtractor(),
+        ImageNetPreprocessor(),
+    ),
+}
+
+
+class MetaShiftDataModuleV2(L.LightningDataModule):
+    classes: list[str]
+    holdout_size: float | None
+    train_on_test: bool
 
     def __init__(
         self,
         task_name: str,
-        projector: NNProjector,
-        preprocessor_name: PreprocessorEnum,
+        backbone_name: BackboneEnum,
+        train_batch_size: int = 32,
+        test_batch_size: int = 32,
         train_on_test: bool = False,
         holdout_size: float | None = None,
     ):
-        super().__init__(
-            task_name,
-            projector,
-            preprocessor_name,
-            self.TRAIN_SIZE,
-            self.TEST_SIZE,
-            train_on_test,
-            holdout_size,
+        super().__init__()
+        self.task_name = task_name
+        self.train_batch_size = train_batch_size
+        self.test_batch_size = test_batch_size
+        self.backbone_name = backbone_name
+        self.backbone, self.preprocess = BACKBONES[self.backbone_name]()
+        self.dataset_name = "fact-40/pcbm_metashift"
+        self.cache_dir = Path(".cache")
+        self.logger = logging.getLogger()
+        self.train_on_test = train_on_test
+        self.holdout_size = holdout_size
+        if self.train_on_test:
+            assert holdout_size is not None, "Holdout split must be specified"
+            self.logger.warning(
+                f"Training on test set with holdout split of {holdout_size}"
+            )
+
+    def _load_dataset(self) -> datasets.DatasetDict:
+        return (
+            datasets.load_dataset(
+                self.dataset_name, name=self.task_name, trust_remote_code=True
+            )
+            .map(self.convert_to_features, batched=True, remove_columns="image", batch_size=32)
+            .with_format("torch")
         )
+
+    def _generate_holdout_size(self):
+        """Generate holdout split for training on test set.
+        Take 1 - `holdout_size` for each class of the test set for training
+        and `holdout_size` for each class of the test set for validation and testing.
+
+        Example:
+            For an original test set with 100 images per class and a holdout_size of 0.2,
+            the new training set will be 80 images per class
+            and the new test set will be 20 images per class.
+        """
+        return self.dataset["test"].train_test_split(
+            test_size=self.holdout_size,
+            shuffle=True,
+            seed=42,  # Should we let pytorch lightning handle the randomness?
+            stratify_by_column="label",
+        )
+
+    def setup(self, stage: str):
+        dataset_subset = f"{self.dataset_name}/{self.task_name}"
+        cached_dataset_name = self.cache_dir / dataset_subset / self.backbone_name.name
+        try:
+            self.logger.info(
+                f"Attempting to load {dataset_subset} from cache {cached_dataset_name}"
+            )
+            self.dataset = datasets.load_from_disk(cached_dataset_name)
+            self.logger.info(
+                f"Loaded {dataset_subset} from cache {cached_dataset_name}"
+            )
+        except FileNotFoundError:
+            self.logger.info(
+                f"Failed to load {dataset_subset} from cache {cached_dataset_name}"
+            )
+            self.dataset = self._load_dataset()
+            self.logger.info(f"Caching {dataset_subset} to {cached_dataset_name}")
+            self.dataset.save_to_disk(cached_dataset_name)
+            self.logger.info(
+                f"Cached {self.dataset_name}/{self.task_name} to {cached_dataset_name}"
+            )
+        self.classes = self.dataset["train"].info.features["label"].names
+        if self.train_on_test:
+            self.dataset = self._generate_holdout_size()
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.dataset["train"], batch_size=self.train_batch_size, shuffle=True
+        )
+
+    def val_dataloader(self):
+        return DataLoader(self.dataset["test"], batch_size=self.test_batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.dataset["test"], batch_size=self.test_batch_size)
+
+    def convert_to_features(self, example_batch, indices=None):
+        image = example_batch["image"]
+        label = example_batch["label"]
+        image = self.preprocess(image)
+        embedding = self.backbone(image)
+        return {"input": embedding, "label": label}
+

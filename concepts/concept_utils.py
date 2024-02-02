@@ -33,7 +33,8 @@ class EasyDict(dict):
 
 
 class ConceptBank:
-    def __init__(self, concept_dict, device):
+    def __init__(self, concept_dict, device=None):
+        print("CONCEPT BANK device", device)
         all_vectors, concept_names, all_intercepts = [], [], []
         all_margin_info = defaultdict(list)
         
@@ -47,33 +48,43 @@ class ConceptBank:
 
         for key, val_list in all_margin_info.items():
             margin_tensor = torch.tensor(np.concatenate(
-                val_list, axis=0), requires_grad=False).float().to(device)
+                val_list, axis=0), requires_grad=False).float()
+            if device is not None:
+                margin_tensor = margin_tensor.to(device)
             all_margin_info[key] = margin_tensor
 
         self.concept_info = EasyDict()
         self.concept_info.margin_info = EasyDict(dict(all_margin_info))
-        self.concept_info.vectors = torch.tensor(np.concatenate(all_vectors, axis=0), requires_grad=False).float().to(
-            device)
+        self.concept_info.vectors = torch.tensor(np.concatenate(all_vectors, axis=0), requires_grad=False).float()
+        if device is not None:
+            self.concept_info.vectors = self.concept_info.vectors.to(device)
         self.concept_info.norms = torch.norm(
             self.concept_info.vectors, p=2, dim=1, keepdim=True).detach()
         self.concept_info.intercepts = torch.tensor(np.concatenate(all_intercepts, axis=0),
-                                                    requires_grad=False).float().to(device)
+                                                    requires_grad=False).float()
+        if device is not None:
+            self.concept_info.intercepts = self.concept_info.intercepts.to(device)
         self.concept_info.concept_names = concept_names
         print("Concept Bank is initialized.")
 
     @classmethod
-    def from_pickle(cls, pickle_path: str, device: str, sort_by_keys: bool = True):
+    def from_pickle(cls, pickle_path: str, device: str | None = None, sort_by_keys: bool = True):
+        return cls(ConceptBank._load_pickle(pickle_path, sort_by_keys), device)
+    
+    @classmethod
+    def _load_pickle(self, pickle_path: str, sort_by_keys: bool = True):
         with open(pickle_path, "rb") as f:
             concept_dict: dict = pickle.load(f)
         if sort_by_keys:
             concept_dict = dict(sorted(concept_dict.items()))
-        return cls(concept_dict, device)
+        return concept_dict
 
     def __getattr__(self, item):
         return self.concept_info[item]
     
     def __setitem__(self, key, value):
         self.concept_info[key] = value
+
 
 
 @torch.no_grad()

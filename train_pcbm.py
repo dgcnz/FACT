@@ -25,6 +25,7 @@ def config():
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument("--sort-concepts", default=False, type=bool)
 
     return parser.parse_args()
 
@@ -113,10 +114,13 @@ def main(args, concept_bank, backbone, preprocess):
 
 if __name__ == "__main__":
     args = config()
-    all_concepts = pickle.load(open(args.concept_bank, 'rb'))
-    all_concept_names = list(all_concepts.keys())
-    print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
-    concept_bank = ConceptBank(all_concepts, args.device)
+    if args.sort_concepts:
+        concept_bank = ConceptBank.from_pickle(args.concept_bank, sort_by_keys=True,  device=args.device)
+    else:
+        all_concepts = pickle.load(open(args.concept_bank, 'rb'))
+        all_concept_names = list(all_concepts.keys())
+        print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
+        concept_bank = ConceptBank(all_concepts, args.device)
 
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)

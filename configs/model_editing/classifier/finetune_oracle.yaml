@@ -1,10 +1,6 @@
 seed_everything: 42
 model: # Assuming that the parameters stay the same for the finetuning
-  n_classes: 5
   lr: 0.05
-  lam: 0.05
-  alpha: 0.99 
-  n_concepts: 170  # Broden concepts
 data:
   train_batch_size: 16
   test_batch_size: 64
@@ -12,7 +8,7 @@ data:
   holdout_size: 0.2 # Not specified in the paper
 trainer:
   deterministic: True
-  max_epochs: 45 # Not specified in the paper. Setting it to half the epochs for original train 10 + 5
+  max_epochs: 20 # Not specified in the paper. Setting it to half the epochs for original train 10 + 5
   check_val_every_n_epoch: 1
   callbacks:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
