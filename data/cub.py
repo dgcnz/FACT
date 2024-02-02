@@ -191,7 +191,7 @@ def get_concept_dicts(metadata):
     concept_info = {c: {1: [], 0: []} for c in range(n_concepts)}
     for im_data in metadata:
         for c, label in enumerate(im_data["attribute_label"]):
-            print(c)
+            print(label)
             img_path = im_data["img_path"]            
             idx = img_path.split('/').index('CUB_200_2011')
             img_path = '/'.join([CUB_DATA_DIR] + img_path.split('/')[idx+1:])

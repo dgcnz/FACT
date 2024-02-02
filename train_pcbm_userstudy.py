@@ -15,7 +15,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", help="Hugging Face Token", required=True)
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--dataset", default="task_1_bed_dog", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
@@ -25,12 +25,11 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+    parser.add_argument('--print-out', action="store_true", default=True)
 
     return parser.parse_args()
 
-
-def run_linear_probe(args, train_data, test_data):
+def run_linear_probe(args, train_data, test_data, classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
@@ -50,6 +49,7 @@ def run_linear_probe(args, train_data, test_data):
     # Compute class-level accuracies. Can later be used to understand what classes are lacking some concepts.
     cls_acc = {"train": {}, "test": {}}
     for lbl in np.unique(train_labels):
+        cls = classes[lbl]
         test_lbl_mask = test_labels == lbl
         train_lbl_mask = train_labels == lbl
         cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == predictions[test_lbl_mask]).astype(float))
@@ -58,7 +58,7 @@ def run_linear_probe(args, train_data, test_data):
         
         # Print control via parser argument
         if args.print_out == True:
-            print(f"{lbl}: {cls_acc['test'][lbl]}")
+            print(f"{lbl, cls}: {cls_acc['test'][lbl]}")
 
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
@@ -75,7 +75,7 @@ def run_linear_probe(args, train_data, test_data):
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
-    
+    torch.manual_seed(args.seed)
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
@@ -90,7 +90,7 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
-    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
+    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), classes)
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)

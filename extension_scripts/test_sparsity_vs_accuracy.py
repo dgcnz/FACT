@@ -5,8 +5,6 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
-
-
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
@@ -16,7 +14,7 @@ from training_tools import load_or_compute_projections
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
@@ -26,6 +24,10 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--strengths", default=None, type=float, nargs='+', help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
+                                             43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
+                                             type=int, nargs='+', help="target indexes for cocostuff")
+
     return parser.parse_args()
 
 
@@ -164,12 +166,12 @@ if __name__ == "__main__":
         run_info = main(args, concept_bank, backbone, preprocess)
 
         if "test_auc" in run_info:
-            print("auc used")
+            print("AUC used")
             metric_name = "AUC"
             metric = run_info['test_auc']
 
         else:
-            print("acc used")
+            print("Accuracy used")
             metric_name = "Accuracy"
             metric = run_info['test_acc']
 

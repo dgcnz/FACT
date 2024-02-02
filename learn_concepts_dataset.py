@@ -3,6 +3,7 @@ import pickle
 import torch
 import argparse
 import numpy as np
+from re import sub
 from models import get_model
 from concepts import learn_concept_bank
 from data import get_concept_loaders
@@ -49,15 +50,19 @@ def main():
             concept_libs[C][concept_name] = cav_info[C]
             print(f"concept_name: {concept_name}, C: {C}, train_acc: {cav_info[C][1]}, val_acc: {cav_info[C][2]}")
 
+    # This part of the code ensures that there are no colons in the backbone name (as it causes exporting errors):
+    if ":" in args.backbone_name:
+        args.backbone_name = sub(":", "", args.backbone_name)
+
     # Save CAV results    
     for C in concept_libs.keys():
         lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{args.backbone_name}_{C}_{args.n_samples}.pkl")
         with open(lib_path, "wb") as f:
             pickle.dump(concept_libs[C], f)
-        print(f"Saved to: {lib_path}")        
+        print(f"Saved to {lib_path}!")        
     
         total_concepts = len(concept_libs[C].keys())
-        print(f"File: {lib_path}, Total: {total_concepts}")
+        print(f"File: {lib_path}, Total: {total_concepts} \n")
 
 if __name__ == "__main__":
     main()
