@@ -8,9 +8,9 @@ from AudioCLIP import AudioCLIP
 class CLIPImageEncoder(torch.nn.Module):
     clip_model: CLIP
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, device: str = "cpu"):
         super().__init__()
-        clip_model, _ = clip.load(model_name, jit=False)
+        clip_model, _ = clip.load(model_name, jit=False, device=device)
         self.model = clip_model
 
     def forward(self, x: list[torch.Tensor] | torch.Tensor) -> torch.Tensor:

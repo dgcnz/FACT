@@ -1,0 +1,19 @@
+seed_everything: 42
+model: # Assuming that the parameters stay the same for the finetuning
+  lr: 0.05
+data:
+  train_batch_size: 16
+  test_batch_size: 64
+  train_on_test: True
+  holdout_size: 0.2 # Not specified in the paper
+trainer:
+  deterministic: True
+  max_epochs: 20 # Not specified in the paper. Setting it to half the epochs for original train 10 + 5
+  check_val_every_n_epoch: 1
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        verbose: True
+
+
+

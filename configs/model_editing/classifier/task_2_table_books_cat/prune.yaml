@@ -1,0 +1,3 @@
+model:
+  pruned_concept_class_pairs:
+    - [30, 4]

@@ -27,6 +27,7 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--sort-concepts", default=False, type=bool)
     parser.add_argument('--print-out', action="store_true", default=True)
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
@@ -130,10 +131,13 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
 
 if __name__ == "__main__":
     args = config()
-    all_concepts = pickle.load(open(args.concept_bank, 'rb'))
-    all_concept_names = list(all_concepts.keys())
-    print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
-    concept_bank = ConceptBank(all_concepts, args.device)
+    if args.sort_concepts:
+        concept_bank = ConceptBank.from_pickle(args.concept_bank, sort_by_keys=True,  device=args.device)
+    else:
+        all_concepts = pickle.load(open(args.concept_bank, 'rb'))
+        all_concept_names = list(all_concepts.keys())
+        print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
+        concept_bank = ConceptBank(all_concepts, args.device)
 
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
