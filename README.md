@@ -236,7 +236,7 @@ With our current implementation, we can evaluate the performance of model editin
 ```
 %%capture 
 # Suppress output with capture magic
-!PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1 python -m experiments.model_editing.make_table \
+PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1 python -m experiments.model_editing.make_table \
     --seed 0 \
     --device cpu \
     --base_config configs/model_editing/classifier/base_clip_resnet50.yaml
