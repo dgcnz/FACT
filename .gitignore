@@ -10,3 +10,7 @@ old_logs
 accuracies*.csv
 *.log
 *.out
+logs
+models/AudioCLIP/assets/audioclip.pt
+models/AudioCLIP/assets/bpe_simple_vocab_16e6.txt.gz
+lightning_logs

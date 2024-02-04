@@ -1,34 +1,18 @@
-# This script has some functions that can be used to verify the results of PCBM with clip features
-# First run the comand below 
-# python learn_concepts_multimodal.py --backbone-name="clip:RN50" --classes=cifar10 --out-dir="artifacts/multimodal" --recurse=1
-# This script has only the "recurse" hyperparameter which we leave at its default value of 1.
-
-# The code will run a gridsearch over the hyperparameters of the method. In particular:
-# 1) lr
-# 2) lam
-# 3) alpha
-
 import argparse
-import os
 import pickle
 import numpy as np
 import torch
-
-from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score, accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
-from torch.utils.data import DataLoader, random_split
 from data import get_concept_loaders
 
 
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--concept-dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
@@ -50,13 +34,12 @@ def config():
     return args
 
 def main(args, concept_bank, backbone, preprocess):
-    train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
+    _ , test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     # which means a bank learned with 100 samples per concept with C=0.1 regularization parameter for the SVM. 
     # See `learn_concepts_dataset.py` for details.
-    conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     num_classes = len(classes)
     
     # Initialize the PCBM module.
@@ -71,13 +54,20 @@ def main(args, concept_bank, backbone, preprocess):
     negative_projection_magnitude_per_concept = {}
     
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    for concept_name in concept_bank.concept_names:
-        loaders = concept_loaders[concept_name]
+    for i, concept_name in enumerate(concept_bank.concept_names):
+        if args.concept_dataset == 'cub':
+            print(i, f'  {concept_name}')
+            if i in concept_loaders.keys():
+                loaders = concept_loaders[i]
+            else:
+              continue
+            
+        else:
+            loaders = concept_loaders[concept_name]
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
     
-        train_embs_pos, train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
-
-        train_embs_neg, train_projs_neg = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
+        _ , train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
+        _ , train_projs_neg = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
 
         # Select only the projection of our current concept of interest
         assert train_projs_pos.shape[1] == len(concept_bank.concept_names), "wrong dimension selected for concept of interest"
@@ -126,8 +116,11 @@ if __name__ == "__main__":
         concept_bank.margin_info = None
         print(concept_bank.vectors)
 
-        concept_bank.vectors = torch.randn(shape).to(args.device)
+        concept_bank.vectors = torch.randn((shape[0], shape[1])).to(args.device)
         print(concept_bank.vectors)
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        print(concept_bank.norms.shape)
+        concept_bank.vectors /= concept_bank.norms
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
@@ -142,7 +135,6 @@ if __name__ == "__main__":
 
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
-    
     print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
 
     # Get the backbone from the model zoo.
@@ -161,8 +153,6 @@ if __name__ == "__main__":
 
         pos.append(run_info['total_average_pos_activation'])
         neg.append(run_info['total_average_neg_activation'])
-
-
     
     # export results
     out_name = "verify_dataset_pcbm_h"

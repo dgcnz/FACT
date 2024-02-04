@@ -2,8 +2,8 @@ seed_everything: 42
 model:
   n_classes: 5
   lr: 0.05
-  lam: 0.05
-  alpha: 0.99 
+  lam: 42.5 # reg_strength = 0.05 
+  alpha: 0.99
   n_concepts: 170  # Broden concepts
 data:
   projector: 
@@ -13,7 +13,7 @@ data:
       backbone:
         class_path: models.resnet.ResNet18FeatureExtractor
   train_batch_size: 16
-  test_batch_size: 64
+  test_batch_size: 100
   preprocessor_name: RESNET18_IMAGENET_1K_V1
 trainer:
   deterministic: True

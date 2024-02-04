@@ -24,7 +24,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", help="Hugging Face Token", required=True)
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
     parser.add_argument("--dataset", default="task_1_bed_dog", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
@@ -34,12 +34,14 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--print-out", default=True, type=bool)
+
     parser.add_argument("--greedy-pruning", default=False, type=bool)
     parser.add_argument("--random-pruning", default=False,type=bool)
     parser.add_argument("--pruning-class",  default="", type=str)
     parser.add_argument("--prune", default="", type=str)   
     parser.add_argument("--number-of-concepts-to-prune", default="",type=str)
+    parser.add_argument('--print-out', action="store_true", default=True)
+
 
     args = parser.parse_args()
     if args.prune:

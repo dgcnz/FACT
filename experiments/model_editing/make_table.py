@@ -2,6 +2,7 @@ from experiments.model_editing.main import get_cli
 import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
+import time
 import itertools
 import logging
 from lightning.pytorch.cli import LightningCLI
@@ -9,16 +10,19 @@ import pandas as pd
 
 CONFIG_PATH = Path("configs/model_editing/classifier")
 
-logging.basicConfig(
-    # format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    handlers=[logging.FileHandler("debug.log", mode="w"), logging.StreamHandler()],
-)
+logger: logging.Logger
 
-logger = logging.getLogger()
-handler = logging.FileHandler("debug.log")
-logger.addHandler(handler)
-
+def setup_logging(verbose: bool):
+    global logger
+    logging.basicConfig(
+        # format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.ERROR if not verbose else logging.INFO,
+        handlers=[logging.FileHandler("debug.log", mode="w"), logging.StreamHandler()],
+    )
+    logger = logging.getLogger()
+    logger.setLevel(logging.ERROR if not verbose else logging.INFO)
+    handler = logging.FileHandler("debug.log")
+    logger.addHandler(handler)
 
 class LightningScript(object):
     def __init__(self, cli_fn: callable):
@@ -71,7 +75,12 @@ class LightningScript(object):
         return ans
 
     def fit(
-        self, task_name: str, config_paths: list[str], device: str, seed: int, ckpt_path: Path | None = None
+        self,
+        task_name: str,
+        config_paths: list[str],
+        device: str,
+        seed: int,
+        ckpt_path: Path | None = None,
     ) -> LightningCLI:
         config_args = self._get_config_args(config_paths=config_paths)
         extra_args = self._get_extra_args(task_name=task_name, device=device, seed=seed)
@@ -125,7 +134,7 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         seed=seed,
         ckpt_path=ckpt_path,
     )
-    base_test_accuracy = run.trainer.callback_metrics["test_accuracy"].item()
+    base_metrics = run.trainer.callback_metrics.copy()
     ## Test pruned
     logger.info(f"Testing {task_name} on pruned")
 
@@ -136,20 +145,20 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         seed=seed,
         ckpt_path=ckpt_path,
     )
-    pruned_test_accuracy = run.trainer.callback_metrics["test_accuracy"].item()
+    pruned_metrics = run.trainer.callback_metrics.copy()
     ## Test pruned + normalize
     logger.info(f"Testing {task_name} on pruned + normalize")
 
     run = script.test(
         task_name=task_name,
         config_paths=configs + [prune_config_path],
-        additional_args = ["--model.normalize", "True"],
+        additional_args=["--model.normalize", "True"],
         device=device,
         seed=seed,
         ckpt_path=ckpt_path,
     )
 
-    pruned_test_accuracy_normalize = run.trainer.callback_metrics["test_accuracy"].item()
+    pruned_normalize_metrics = run.trainer.callback_metrics.copy()
 
     logger.info(f"Finetuning {task_name}")
 
@@ -161,7 +170,7 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         ckpt_path=ckpt_path,
     )
     finetuned_ckpt_path = Path(run.trainer.checkpoint_callback.best_model_path)
-    
+
     logger.info(f"Test finetuning {task_name}")
 
     run = script.test(
@@ -171,25 +180,25 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         seed=seed,
         ckpt_path=finetuned_ckpt_path,
     )
-    finetuned_test_accuracy = run.trainer.callback_metrics["test_accuracy"].item()
+    finetuned_test_metrics = run.trainer.callback_metrics.copy()
 
-
-    logger.info(f"Base test accuracy: {base_test_accuracy}")
-    logger.info(f"Pruned test accuracy: {pruned_test_accuracy}")
-    logger.info(f"Pruned + normalize test accuracy: {pruned_test_accuracy_normalize}")
-    logger.info(f"Finetuned test accuracy: {finetuned_test_accuracy}")
-    logger.info(f"Pruned Accuracy improvement: {pruned_test_accuracy - base_test_accuracy}")
-    logger.info(f"Pruned + normalize Accuracy improvement: {pruned_test_accuracy_normalize - base_test_accuracy}")
-    logger.info(f"Finetuned Accuracy improvement: {finetuned_test_accuracy - base_test_accuracy}")
-    return {
-        "task_name": task_name,
-        "base_accuracy": base_test_accuracy,
-        "pruned_accuracy": pruned_test_accuracy,
-        "pruned_normalized_accuracy": pruned_test_accuracy_normalize,
-        "finetuned_accuracy": finetuned_test_accuracy
-    }
-
-
+    all_metrics = {"task_name": task_name}
+    all_metrics_gain = {"task_name": task_name}
+    for name, metrics in [
+        ("base", base_metrics),
+        ("pruned", pruned_metrics),
+        ("pruned_normalize", pruned_normalize_metrics),
+        ("finetuned", finetuned_test_metrics),
+    ]:
+        for k, v in metrics.items():
+            # strip prefix test_ from keys and add prefix name_
+            metric_name = name + "_" + k.removeprefix("test_")
+            all_metrics.update({metric_name: v.item()})
+            if name != "base":
+                all_metrics_gain.update(
+                    {f"{metric_name}_gain": v.item() - base_metrics[k].item()}
+                )
+    return all_metrics, all_metrics_gain
 
 
 def setup_parser():
@@ -197,8 +206,13 @@ def setup_parser():
     parser.add_argument(
         "--base_config", type=str, default=CONFIG_PATH / "base_clip_resnet50.yaml"
     )
-    parser.add_argument("--device", type=str, default="mps")
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--seed", type=int, nargs="+", default=[42])
+    parser.add_argument(
+        "--verbose",
+        type=int,
+        default=0,
+    )
     return parser
 
 
@@ -214,21 +228,39 @@ def get_all_configs():
 def main():
     parser = setup_parser()
     args = parser.parse_args()
+    setup_logging(verbose=args.verbose)
     configs = get_all_configs()
-    accuracies = []
-    for config_folder in configs:
-        metrics = train_and_test(
-            base_config=args.base_config,
-            config_folder=config_folder,
-            device=args.device,
-            seed=args.seed,
-        )
-        accuracies.append(metrics)
-    df = pd.DataFrame(accuracies)
-    df["accuracy_gain_pruned"] = df["pruned_accuracy"] - df["base_accuracy"]
-    df["accuracy_gain_pruned_normalized"] = df["pruned_normalized_accuracy"] - df["base_accuracy"]
-    df["accuracy_gain_finetuned"] = df["finetuned_accuracy"] - df["base_accuracy"]
-    df.to_csv("accuracies.csv", index=False)
+    all_metrics = []
+    all_metrics_gain = []
+    for seed in args.seed:
+        for config_folder in configs:
+            metrics, metrics_gain = train_and_test(
+                base_config=args.base_config,
+                config_folder=config_folder,
+                device=args.device,
+                seed=seed,
+            )
+            all_metrics.append(metrics | {"seed": seed})
+            all_metrics_gain.append(metrics_gain | {"seed": seed})
+
+    log_metrics(all_metrics, all_metrics_gain, base_config=args.base_config, seeds=args.seed)
+
+
+def log_metrics(all_metrics: list[dict], all_metrics_gain: list[dict], base_config: str, seeds: list[int]):
+    df = pd.DataFrame(all_metrics)
+    df_gain = pd.DataFrame(all_metrics_gain)
+    salt = int(time.time())
+    log_dir = Path("logs") / Path(base_config).stem / f"{'-'.join(str(s) for s in seeds)}" / str(salt)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Logging to {log_dir}")
+
+    df.to_csv(log_dir / "metrics.csv", index=False)
+    df_gain.to_csv(log_dir / "metrics_gain.csv", index=False)
+
+    df = df.groupby("task_name").mean().drop(columns=["seed"])
+    df_gain = df_gain.groupby("task_name").mean().drop(columns=["seed"])
+    df.to_csv(log_dir / "aggregated_metrics.csv", index=False)
+    df_gain.to_csv(log_dir / "aggregated_metrics_gain.csv", index=False)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ seed_everything: 42
 model:
   n_classes: 5
   lr: 0.05
-  lam: 0.05
+  lam: 42.5 # reg_strength = 0.05 
   alpha: 0.99
   n_concepts: 170  # Broden concepts
 data:

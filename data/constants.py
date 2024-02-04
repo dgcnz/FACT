@@ -9,6 +9,7 @@ CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
 
 # COCO-Stuff Constants
 # COCO-Stuff data is obtained from : https://github.com/nightrome/cocostuff
+# The dataset used in this project is from a Hugging Face repository (link can be found in the download script)
 COCO_STUFF_DIR = "artifacts/data/COCO_STUFF"
 
 # Derm data constants
@@ -22,9 +23,17 @@ DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
 # Ham10000 can be obtained from : https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
 HAM10K_DATA_DIR = "artifacts/data/HAM10K"
 
-# SIIM-ISIC can be obtained from : https://drive.google.com/file/d/1H7cTkuEF2vg7UsiLjnFKJ7kBPIN1Y3IL/view?usp=drive_link
+# The dataset used in this project is from a Hugging Face repository (link can be found in the download script)
 # The original full dataset can be found here : https://challenge2020.isic-archive.com/
 SIIM_DATA_DIR = "artifacts/data/SIIM_ISIC"
 
 # BRODEN concept bank
 BRODEN_CONCEPTS = "artifacts/data/broden_concepts"
+
+
+# CONSTANTS FOR EXTENSION EXPERIMENTS
+# ESC_50 can be obtained from : https://github.com/karolpiczak/ESC-50
+ESC_DIR = "artifacts/data/ESC_50"
+
+# UrbanSound8k can be obtained from : https://www.kaggle.com/datasets/chrisfilo/urbansound8k
+US_DIR = "artifacts/data/US8K"

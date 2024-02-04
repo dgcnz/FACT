@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# create output folders
+
+mkdir -p artifacts/data/US8K
+
+# download data
+
+destination_dir="artifacts/data"
+kaggle datasets download -d chrisfilo/urbansound8k --path "$destination_dir"
+
+# extract data
+
+unzip "artifacts/data/urbansound8k.zip" -d "artifacts/data/US8K"
