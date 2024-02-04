@@ -73,6 +73,8 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
     df = pd.read_csv(meta_dir)[['file_name', 'target']]
+    df['file_name'] = df['file_name'].apply(lambda x: os.path.basename(x))
+
     df['file_name'] = SIIM_DATA_DIR + "/" + df['file_name']
     train_data, test_data = prepare_data(df, seed)
 

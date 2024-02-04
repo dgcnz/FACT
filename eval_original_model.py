@@ -381,12 +381,14 @@ def eval_isic(args, seed):
     model, backbone, preprocess = get_model(args, backbone_name="ham10000_inception", full_model=True)
     train_loader , test_loader, _ , _ = get_dataset(args, preprocess)
 
-    train_features, train_labels = get_features(model, train_loader)
-    test_features, test_labels = get_features(model, test_loader)
+    train_features, train_labels = get_features(backbone, train_loader, backbone='ham10000_inception')
+    test_features, test_labels = get_features(backbone, test_loader, backbone='ham10000_inception')
 
     #split train set into train and validation in numpy arrays
     train_size = int(0.8 * len(train_features))
     train_features_sweep, val_features_sweep = np.split(train_features, [train_size])
+    print(len(train_features_sweep))
+    print(len(val_features_sweep))
     train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
 
     # do a hyperparameter sweep to find the best regularization strength lambda.
@@ -399,7 +401,7 @@ def eval_isic(args, seed):
                 """Calculate accuracy on all indexes and return the peak index"""
                 accuracy_list = []
                 for l2_lambda_idx in l2_lambda_idx_list:
-                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=1000, verbose=1)
                     classifier.fit(train_features_sweep, train_labels_sweep)
                     predictions = classifier.predict(val_features_sweep)
                     accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
@@ -410,7 +412,7 @@ def eval_isic(args, seed):
 
             l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
             peak_idx = find_peak(l2_lambda_init_idx)
-            step_span = 2
+            step_span = 8
             while step_span > 0:
                 print(step_span, 'next iteration of the step span')
                 left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
@@ -432,7 +434,7 @@ def eval_isic(args, seed):
 
     # Evaluate using the logistic regression classifier
     predictions = classifier.predict(test_features)
-    auc = roc_auc_score(test_labels, softmax(predictions, axis=1)[:, 1])
+    auc = roc_auc_score(test_labels, classifier.decision_function(test_features))
     print(f"AUC = {auc:.3f}")
     
     return auc 
