@@ -146,7 +146,9 @@ def main(args, concept_bank, backbone, preprocess):
     class_original_acc = run_info['cls_acc']['test'][index_of_class] *100.
     model_accuracy = run_info['test_acc']  
     current_model_state = copy.deepcopy(posthoc_layer.state_dict())
-
+   
+    best_greedy_model = PCBMUserStudy(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+    best_greedy_model = best_greedy_model.to(args.device)
     if args.greedy_pruning:
         concepts = []
         for tc in top_concepts:
@@ -170,6 +172,7 @@ def main(args, concept_bank, backbone, preprocess):
                     best_pruning_acc = total_accuracy
                     best_combination = combination
                     pruned_class_acc = class_acc[index_of_class].item()
+                    best_greedy_model.load_state_dict(posthoc_layer.state_dict())
 
                 posthoc_layer.load_state_dict(current_model_state)
             greedy_pruning_results.append({
@@ -183,6 +186,10 @@ def main(args, concept_bank, backbone, preprocess):
                 'class acc':pruned_class_acc,
                 'class delta':pruned_class_acc-class_original_acc
             })
+            model_id = f"concepts_pruned:{r}__{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+            model_path = os.path.join(args.out_dir, f"greedy_pcbm_{model_id}.ckpt")
+            torch.save(best_greedy_model, model_path)
+            run_info_file = os.path.join(args.out_dir, f"run_info-greedy_pcbm_{model_id}.pkl")
 
         end_time = time.time() 
         pruning_time = end_time - start_time
@@ -220,6 +227,10 @@ def main(args, concept_bank, backbone, preprocess):
                 'class acc':pruned_class_acc,
                 'class delta':pruned_class_acc-class_original_acc
                 })
+                model_id = f"concepts_pruned:{r}__{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+                model_path = os.path.join(args.out_dir, f"random_pcbm_{model_id}.ckpt")
+                torch.save(posthoc_layer, model_path)
+                run_info_file = os.path.join(args.out_dir, f"run_info-random_pcbm_{model_id}.pkl")
                 posthoc_layer.load_state_dict(current_model_state)
             random_pruning_results.append(random.choice(pruning_to_select))
 
@@ -239,6 +250,11 @@ def main(args, concept_bank, backbone, preprocess):
             print("Performance before pruning:", model_accuracy)
             print("Performance after pruning:", pruning_accuracy)
             print("Class performance after pruning:", pruned_class_acc)
+            model_id = f"concepts_pruned:{len(concepts)}__{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
+            model_path = os.path.join(args.out_dir, f"user_pcbm_{model_id}.ckpt")
+            torch.save(posthoc_layer, model_path)
+            run_info_file = os.path.join(args.out_dir, f"run_info-user_pcbm_{model_id}.pkl")
+            posthoc_layer.load_state_dict(current_model_state)
             posthoc_layer.load_state_dict(current_model_state)
 
             user_pruning_results.append({
