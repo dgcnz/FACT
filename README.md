@@ -247,8 +247,8 @@ The above will perform the model editing experiments for the 6 scenarios and one
 For replicating the results of the user study, [please see this notebook](/notebooks/user_study.ipynb). The instructions for these experiments aren't present here because it is much simpler to view them there and due to the dataset not being publishable due to GDPR.
 
 
-# Citation (REMOVE for secret repo)
-If you find this code useful, please consider citing our paper:
+# Citation
+If you find this code useful, please consider citing our paper (not out yet unfortunately):
 ```
 @inproceedings{
 midavaine2024posthoc,
