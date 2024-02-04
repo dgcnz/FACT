@@ -116,8 +116,11 @@ if __name__ == "__main__":
         concept_bank.margin_info = None
         print(concept_bank.vectors)
 
-        concept_bank.vectors = torch.randn(shape).to(args.device)
+        concept_bank.vectors = torch.randn((shape[0], shape[1])).to(args.device)
         print(concept_bank.vectors)
+        concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
+        print(concept_bank.norms.shape)
+        concept_bank.vectors /= concept_bank.norms
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
 
