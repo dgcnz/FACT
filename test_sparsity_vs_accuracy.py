@@ -116,10 +116,10 @@ def main(args, concept_bank, backbone, preprocess):
 def plot_sparsity(args, metrics, sparsities, metric_name):
     import matplotlib.pyplot as plt
     print(metrics)
-    plt.plot(sparsities, metrics)
+    plt.plot(args.strengths, sparsities)
     plt.grid()
-    plt.xlabel("N non-zero weights")
-    plt.ylabel(metric_name)
+    plt.ylabel("N non-zero weights")
+    plt.ylabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sparsity.png")
     plt.show()
     print(f'figure save in {args.out_dir}/sparisity.png')
@@ -127,10 +127,10 @@ def plot_sparsity(args, metrics, sparsities, metric_name):
 def plot_sum(args, metrics, sums, metric_name):
     import matplotlib.pyplot as plt
     print(metrics)
-    plt.plot(sums, metrics)
+    plt.plot(args.strengths, sums)
     plt.grid()
-    plt.xlabel("Sum of weights")
-    plt.ylabel(metric_name)
+    plt.ylabel("Sum of weights")
+    plt.xlabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sum.png")
     plt.show()
     print(f'figure save in {args.out_dir}/sum.png')
