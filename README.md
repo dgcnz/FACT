@@ -63,7 +63,7 @@ conda activate fact
 
 All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
 
-If desired, you can run the data downloader scripts in the [train_model](/notebook/mian.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
+If desired, you can run the data downloader scripts in the [main](/notebook/main.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
 
 ### Broden
 
@@ -93,17 +93,17 @@ If desired, you can run the data downloader scripts in the [train_model](/notebo
 
 ### Derm7pt
 
-Please refer to the [train_model](/notebook/mian.ipynb) file for instructions regarding the Derm7pt dataset.
+Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the Derm7pt dataset.
 
 ### HAM10000
 
-1. Please refer to the [train_model](/notebook/mian.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_ham
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/mian.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `HAM10K`.
 
@@ -138,13 +138,13 @@ The below downloads are not part of the original experiments and were done as an
 
 ### UrbanSound8K
 
-1. Please refer to the [train_model](/notebook/mian.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_us8k
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/mian.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `US8K`.
 
@@ -192,7 +192,7 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 
 ```
 
-Alternatively, you can run example experiments in the [train_model](/notebook/mian.ipynb) file.
+Alternatively, you can run example experiments in the [main](/notebook/main.ipynb) file.
 
 **Limitations**: 
 1. This approach relies on the existence of a concept dataset. These may be hard to get, depending on the application. 
