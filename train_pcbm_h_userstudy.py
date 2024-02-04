@@ -1,20 +1,17 @@
-import argparse
 import os
 import pickle
 import numpy as np
 import torch
-import sys
+import argparse
 import torch.nn as nn
-
 from tqdm import tqdm
 from pathlib import Path
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
-from concepts import ConceptBank
 from models import get_model
-from models.pcbm_utils_prune import PCBMUserStudy, UserPosthocHybridCBM
+from models.pcbm_utils_prune import UserPosthocHybridCBM
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer, export
 
 
@@ -186,5 +183,5 @@ if __name__ == "__main__":
 
     print('Spurious class metrics >>>')
     print(class_list)
-    print('Mean : {}'.format(np.mean(class_list)))
-    print('Std : {}'.format(np.std(class_list)))
+    print('Mean: {}'.format(np.mean(class_list)))
+    print('Std: {}'.format(np.std(class_list)))

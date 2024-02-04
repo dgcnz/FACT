@@ -22,7 +22,6 @@ from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections, export
-from torch.utils.data import DataLoader, random_split
 from sklearn.metrics import average_precision_score
 
 

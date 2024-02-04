@@ -63,7 +63,7 @@ conda activate fact
 
 All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
 
-If desired, you can run the data downloader scripts in the [train_model](/notebook/train_models.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
+If desired, you can run the data downloader scripts in the [main](/notebook/main.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
 
 ### Broden
 
@@ -93,17 +93,17 @@ If desired, you can run the data downloader scripts in the [train_model](/notebo
 
 ### Derm7pt
 
-Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the Derm7pt dataset.
+Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the Derm7pt dataset.
 
 ### HAM10000
 
-1. Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_ham
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/train_models.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `HAM10K`.
 
@@ -138,17 +138,19 @@ The below downloads are not part of the original experiments and were done as an
 
 ### UrbanSound8K
 
-1. Please refer to the [train_model](/notebook/train_models.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_us8k
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [train_model](/notebook/train_models.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `US8K`.
 
 ### AudioCLIP Dependencies
+
+This script will download the dependencies for AudioCLIP, as the original repository has been integrated here in its entirety already. Run this (either in the notebook or terminal) if you would like to run the AudioCLIP experiments.
 
 1. Run the download script below:
 ```sh
@@ -160,17 +162,18 @@ The below downloads are not part of the original experiments and were done as an
 ## Downloading the Backbones
 Please see `models/model_zoo.py` for the backbones used. Some of the original models rely on external dependencies (e.g. [pytorchcv](https://pypi.org/project/pytorchcv/) for the CUB backbone, [OpenAI repo](https://github.com/openai/CLIP) for the CLIP backbone.) or will be downloaded (e.g. HAM1000 model from the [DDI repo](https://drive.google.com/drive/folders/1oQ53WH_Tp6rcLZjRp_-UBOQcMl-b1kkP)). 
 
-Furthermore, ...
 
 Any additional models can be added by editing `models/model_zoo.py`.
 
 # Replicating the Original Results
 To replicate the original results, we have prepared a function where all the datasets can be evaluated using the parameters specified by the authors. This can be found [here](/notebook/main.ipynb).
 
+**Please Note:** For some scripts (outlined in the above notebook), you may need to add this code snippet before the `python` command itself: `PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1`. This is due to how the repository is setup. Alternatively, you could install the AudioCLIP dependencies (the instructions for which can be found above) if you don't want to include this for some scripts.
+
 # Learning Concepts
 In the original paper, two different ways to learn concepts activations vectors were proposed to build concepts banks which are used here. 
 
-## 1- Learning Concepts with a Concept Dataset
+## 1 - Learning Concepts with a Concept Dataset
 To learn concepts in this way, each concept dataset needs to have a set of positive and negative images per concept. For this, the original authors proposed the CAV methodology (Kim et al. 2018). <br>
 
 **Concept Dataset Implementations:** The code provided to extract concept data loaders in `data/concept_loaders.py` is the same as in the original implementation. In there, you could find the loaders for `Broden`, `CUB`, and `derm7pt` datasets to extract concept loaders. If you'd like to use custom concept datasets, you could implement your own loader and place there.
@@ -189,14 +192,14 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 
 ```
 
-Alternatively, you can run example experiments in the [train_model](/notebook/train_models.ipynb) file.
+Alternatively, you can run example experiments in the [main](/notebook/main.ipynb) file.
 
-**Limitation**: 
+**Limitations**: 
 1. This approach relies on the existence of a concept dataset. These may be hard to get, depending on the application. 
 2. Learning concepts with the CAV way could inherit the potential biases in the concept datasets. One should be careful about how the concept dataset is constructed, and what it means to learn that concept. 
 
 
-## 2- Learning concepts via prompting with multimodal models
+## 2 - Learning concepts via prompting with multimodal models
 What if we don't have a concept dataset? We could leverage multimodal models, such as [CLIP](https://arxiv.org/abs/2103.00020)! In other words, we can simply prompt the text encoder with the concept name, and obtain the concept vector in the shared embedding space. 
 
 The code to do this can be found in `learn_concepts_multimodal.py`. You can run the following script to learn the concept vectors:
@@ -206,7 +209,7 @@ python3 learn_concepts_multimodal.py --backbone-name="clip:RN50" --classes=cifar
 
 Currently, CIFAR10/CIFAR100 is supported for this approach. You can very easily add the set of class names in the script and obtain the concept bank for your own purpose. 
 
-**Limitation**: This approach is limited to the multimodal models that have a shared embedding space. Existing multimodal models that are not specialized may not do very well with domain-specific concepts (e.g. healthcare concepts).
+**Limitations**: This approach is limited to the multimodal models that have a shared embedding space. Existing multimodal models that are not specialized may not do very well with domain-specific concepts (e.g. healthcare concepts).
 
 # Training PCBMs
 Once you have a concept bank and a backbone, you are ready to train your PCBM! We provide the code to train PCBMs in `train_pcbm.py`. You can run the following script to train a PCBM on CUB:
@@ -226,8 +229,26 @@ pcbm_path="/path/to/pcbm_cub__resnet18_cub__cub_resnet18_cub_0__lam:0.0002__alph
 python3 train_pcbm_h.py --concept-bank="${OUTPUT_DIR}/cub_resnet18_cub_0.1_100.pkl" --pcbm-path=$pcbm_path --out-dir=$OUTPUT_DIR --dataset="cub"
 ```
 
-# Citation (REMOVE for secret repo)
-If you find this code useful, please consider citing our paper:
+## 3 - Model Editing
+
+With our current implementation, we can evaluate the performance of model editing using one script (also present in `main.ipynb`), which is the following:
+
+```
+%%capture 
+# Suppress output with capture magic
+PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1 python -m experiments.model_editing.make_table \
+    --seed 0 \
+    --device cpu \
+    --base_config configs/model_editing/classifier/base_clip_resnet50.yaml
+```
+
+The above will perform the model editing experiments for the 6 scenarios and one seed.
+
+For replicating the results of the user study, [please see this notebook](/notebooks/user_study.ipynb). The instructions for these experiments aren't present here because it is much simpler to view them there and due to the dataset not being publishable due to GDPR.
+
+
+# Citation
+If you find this code useful, please consider citing our paper (not out yet unfortunately):
 ```
 @inproceedings{
 midavaine2024posthoc,

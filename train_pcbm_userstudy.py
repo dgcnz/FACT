@@ -1,8 +1,13 @@
-import argparse
 import os
+import json
 import pickle
-import numpy as np
+import argparse
 import torch
+import copy
+import time
+import itertools
+import pandas as pd
+import numpy as np
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
@@ -10,11 +15,7 @@ from concepts import ConceptBank
 from models import get_model
 from models.pcbm_utils_prune import PCBMUserStudy
 from training_tools import load_or_compute_projections, export
-import copy
-import time
-import itertools
-import pandas as pd
-import json
+
 
 greedy_pruning_results = []
 user_pruning_results = []
@@ -309,11 +310,13 @@ if __name__ == "__main__":
         csv_path = os.path.join(args.out_dir, f"greedy_pruning_results_{args.dataset}.csv")
         results_df.to_csv(csv_path, index=False)
         print(f"Global greedy pruning results saved to {csv_path}")
+
     if random_pruning_results:
         results_df = pd.DataFrame(random_pruning_results)
         csv_path = os.path.join(args.out_dir, f"random_pruning_results_{args.dataset}.csv")
         results_df.to_csv(csv_path, index=False)
         print(f"Random pruning results saved to {csv_path}")
+        
     if user_pruning_results:
         results_df = pd.DataFrame(user_pruning_results)
         csv_path = os.path.join(args.out_dir, f"users_pruning_results_{args.dataset}.csv")

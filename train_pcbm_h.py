@@ -12,8 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
-from concepts import ConceptBank
-from models import PosthocLinearCBM, PosthocHybridCBM, get_model
+from models import PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
 
 
