@@ -30,7 +30,7 @@ def config():
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     parser.add_argument("--datasets", default=['cifar10'], nargs='+', type=str)
-    parser.add_argument("--eval_all", action="store_true", default=False)
+    parser.add_argument("--eval-all", action="store_true", default=False)
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=2e-3, type=float, help="learning rate")
@@ -128,6 +128,9 @@ def get_features(model, loader, backbone:str="clip"):
 
             elif backbone == "audio":
                 ((features, _, _), _), _ = model(audio=inputs.to(args.device))
+
+            elif backbone == "ham10000_inception":
+                features = model(inputs.to(args.device))
 
             all_features.append(features)
             all_labels.append(labels)
@@ -375,13 +378,64 @@ def eval_cub(args, seed):
 
 
 def eval_isic(args, seed):
-    model, _ , preprocess = get_model(args, backbone_name="ham10000_inception", full_model=True)
-    _ , test_loader, _ , _ = get_dataset(args, preprocess)
+    model, backbone, preprocess = get_model(args, backbone_name="ham10000_inception", full_model=True)
+    train_loader , test_loader, _ , _ = get_dataset(args, preprocess)
 
-    results = eval_model(args, model, test_loader, seed)
-    print('Current AUC: ' + str(results))
+    train_features, train_labels = get_features(model, train_loader)
+    test_features, test_labels = get_features(model, test_loader)
+
+    #split train set into train and validation in numpy arrays
+    train_size = int(0.8 * len(train_features))
+    train_features_sweep, val_features_sweep = np.split(train_features, [train_size])
+    train_labels_sweep, val_labels_sweep = np.split(train_labels, [train_size])
+
+    # do a hyperparameter sweep to find the best regularization strength lambda.
+    if args.C is None:     
+        def hyperparameter_sweep():
+            print("Performing hyperparameter sweep to find the best regularization strength lambda.")
+            l2_lambda_list = np.logspace(-6, 6, num=97).tolist()
+            
+            def find_peak(l2_lambda_idx_list):
+                """Calculate accuracy on all indexes and return the peak index"""
+                accuracy_list = []
+                for l2_lambda_idx in l2_lambda_idx_list:
+                    classifier = LogisticRegression(random_state=args.seed, C=1/l2_lambda_list[l2_lambda_idx], max_iter=100, verbose=1)
+                    classifier.fit(train_features_sweep, train_labels_sweep)
+                    predictions = classifier.predict(val_features_sweep)
+                    accuracy = np.mean((val_labels_sweep == predictions).astype(float)) * 100.
+                    accuracy_list.append(accuracy)
+                peak_idx = np.argmax(accuracy_list)
+                peak_idx = l2_lambda_idx_list[peak_idx]
+                return peak_idx
+
+            l2_lambda_init_idx = [i for i,val in enumerate(l2_lambda_list) if val in set(np.logspace(-6, 6, num=7))]
+            peak_idx = find_peak(l2_lambda_init_idx)
+            step_span = 2
+            while step_span > 0:
+                print(step_span, 'next iteration of the step span')
+                left, right = max(peak_idx - step_span, 0), min(peak_idx + step_span, len(l2_lambda_list)-1)
+                peak_idx = find_peak([left, peak_idx, right])
+                step_span //= 2
+                print('current best lambda', l2_lambda_list[peak_idx])
+            return l2_lambda_list[peak_idx]
+
+        lambda_best = hyperparameter_sweep()
+        C = 1 / lambda_best
+        print(C, 'best C')
+
+    else:
+        C = args.C
+
+    # Perform logistic regression
+    classifier = LogisticRegression(random_state=args.seed, C=C, max_iter=1000, verbose=1)
+    classifier.fit(train_features, train_labels)
+
+    # Evaluate using the logistic regression classifier
+    predictions = classifier.predict(test_features)
+    auc = roc_auc_score(test_labels, softmax(predictions, axis=1)[:, 1])
+    print(f"AUC = {auc:.3f}")
     
-    return results 
+    return auc 
 
 
 def eval_per_seed(metrics:dict, args, evaluator, seeds:list):
