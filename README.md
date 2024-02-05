@@ -2,6 +2,8 @@ Remove branch names when anonymizing
 
 # Reproducing Post-hoc Concept Bottleneck Models
 
+This is the main repo for the reproduction code of PCBMs. The data preprocessing pipeline and partitioned datasets for Metashift, Metashift Survey, COCO-Stuff and SIIM ISIC can be found in [HuggingFace](https://huggingface.co/fact-40).
+
 ## Running the example notebook in Google Colab
 
 The example notebook has everything you need to start testing the code, give it a try in Google Colab.
