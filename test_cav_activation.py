@@ -13,7 +13,7 @@ def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
     parser.add_argument("--out-dir", required=True, type=str, help="Folder containing model/checkpoints.")
-    parser.add_argument("--dataset", default="cub", type=str)
+    parser.add_argument("--dataset", default="cifar10", type=str)
     parser.add_argument("--concept-dataset", default="cub", type=str)
     parser.add_argument("--backbone-name", default="resnet18_cub", type=str)
     parser.add_argument("--device", default="cuda", type=str)
@@ -67,9 +67,26 @@ def main(args, concept_bank, backbone, preprocess):
         else:
             loaders = concept_loaders[concept_name]
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
+
+       
     
         _ , train_projs_pos = load_or_compute_projections(args, backbone, posthoc_layer, pos_loader, test_loader, compute = True, self_supervised=True)
         _ , train_projs_neg = load_or_compute_projections(args, backbone, posthoc_layer, neg_loader, test_loader, compute = True, self_supervised=True)
+
+        if args.softmax_concepts:
+            temperature = args.temperature
+            train_projs_pos = train_projs_pos / temperature
+            train_projs_neg = train_projs_neg / temperature
+
+            # Max trick to prevent overflow
+            max_train_projs_pos = np.max(train_projs_pos, axis=1, keepdims=True)
+            max_train_projs_neg = np.max(train_projs_neg, axis=1, keepdims=True)
+
+            train_projs_pos_exp = np.exp(train_projs_pos - max_train_projs_pos) 
+            train_projs_pos = train_projs_pos_exp / np.sum(train_projs_pos_exp, axis=1, keepdims=True)
+
+            train_projs_neg_exp = np.exp(train_projs_neg - max_train_projs_neg)
+            train_projs_neg = train_projs_neg_exp / np.sum(train_projs_neg_exp, axis=1, keepdims=True)
 
         # Select only the projection of our current concept of interest
         assert train_projs_pos.shape[1] == len(concept_bank.concept_names), "wrong dimension selected for concept of interest"
@@ -84,15 +101,19 @@ def main(args, concept_bank, backbone, preprocess):
     print(negative_projection_magnitude_per_concept)
 
     #We get the total average activation for pos and neg 
-    total_average_pos_activation = np.mean(list(positive_projection_magnitude_per_concept.values()))
-    total_average_neg_activation = np.mean(list(negative_projection_magnitude_per_concept.values()))
+    total_average_gap_activation = np.mean(np.array(list(positive_projection_magnitude_per_concept.values())) - np.array(list(negative_projection_magnitude_per_concept.values())))
+    
 
-    print(f"total average pos activation: {total_average_pos_activation}")
+    total_average_neg_activation = np.mean(list(negative_projection_magnitude_per_concept.values()))
+    total_average_pos_activation = np.mean(list(positive_projection_magnitude_per_concept.values()))
+
+    print(f"total average gap activation: {total_average_gap_activation}")
     print(f"total average neg activation: {total_average_neg_activation}")
+    print(f"total average pos activation: {total_average_pos_activation}")
 
     run_info = {}
     run_info['total_average_pos_activation'] = total_average_pos_activation
-    run_info['total_average_neg_activation'] = total_average_neg_activation
+    run_info['total_average_neg_activation'] = None
 
     return run_info
 
@@ -136,9 +157,6 @@ if __name__ == "__main__":
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
-
-    if args.softmax_concepts:
-        concept_bank.vectors = torch.nn.functional.softmax(concept_bank.vectors/args.temperature, dim=1)
 
     print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
 

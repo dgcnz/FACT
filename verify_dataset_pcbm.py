@@ -48,7 +48,9 @@ def config():
     parser.add_argument("--identity_proj", action="store_true", default=False, help="Whether to use identity projection matrix")
     
                     
-
+    parser.add_argument("--softmax-concepts", action="store_true", default=False, help="Wheter to softmax the concept matrix")
+    parser.add_argument("--temperature", default=1, type=float, help="Temperature for softmaxing the concept matrix")
+    
     #if one of the tree parameters below is set to None a grid search will be performed 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
@@ -185,6 +187,21 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+
+    if args.softmax_concepts:
+            temperature = args.temperature
+            train_projs = train_projs / temperature
+            test_projs = test_projs / temperature
+
+            # Max trick to prevent overflow
+            max_train_projs = np.max(train_projs, axis=1, keepdims=True)
+            max_test_projs = np.max(test_projs, axis=1, keepdims=True)
+
+            train_projs_exp = np.exp(train_projs - max_train_projs) 
+            train_projs = train_projs_exp / np.sum(train_projs_exp, axis=1, keepdims=True)
+
+            test_projs_exp = np.exp(test_projs - max_test_projs) 
+            test_projs = test_projs_exp / np.sum(test_projs_exp, axis=1, keepdims=True)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     
@@ -205,7 +222,7 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
     if num_classes > 1:
         # Prints the Top-5 Concept Weigths for each class.
         print(posthoc_layer.analyze_classifier(k=5))
-        print(posthoc_layer.analyze_classifier(k=5, print_lows=True))
+        #print(posthoc_layer.analyze_classifier(k=5, print_lows=True))
 
     print(f"Model saved to : {model_path}")
     print(run_info)

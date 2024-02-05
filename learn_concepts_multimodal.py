@@ -12,6 +12,7 @@ import pandas as pd
 from models.AudioCLIP import AudioCLIP
 from re import sub
 from tqdm import tqdm
+import re
 
 
 def config():
