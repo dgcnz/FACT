@@ -24,7 +24,9 @@ def config():
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
     parser.add_argument("--n-samples", default=50, type=int, 
                         help="Number of positive/negative samples used to learn concepts.")
-
+    
+    parser.add_argument("--softmax-concepts", action="store_true", default=False, help="Wheter to softmax the concept matrix")
+    parser.add_argument("--temperature", default=1, type=float, help="Temperature for softmaxing the concept matrix")
     ## arguments for the different projection matrix weights
     parser.add_argument("--random_proj", action="store_true", default=False, help="Whether to use random projection matrix")
 
@@ -134,6 +136,9 @@ if __name__ == "__main__":
         concept_bank.norms = torch.norm(concept_bank.vectors, p=2, dim=1, keepdim=True).detach()
 
         concept_bank.intercepts = torch.zeros(shape[0],1).to(args.device)
+
+    if args.softmax_concepts:
+        concept_bank.vectors = torch.nn.functional.softmax(concept_bank.vectors/args.temperature, dim=1)
 
     print(f'concept vectors matrix rank is {torch.linalg.matrix_rank(concept_bank.vectors)}')
 
