@@ -1,6 +1,7 @@
-from tensorboardX import SummaryWriter
 import time
 from pathlib import Path
+
+from tensorboardX import SummaryWriter
 
 
 class SKLLogger(object):

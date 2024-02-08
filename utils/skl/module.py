@@ -1,5 +1,7 @@
-from utils.skl.logging import SKLLogger
 import numpy as np
+
+from utils.skl.logging import SKLLogger
+
 
 class SKLModule(object):
     SAVE_FORMAT_EXT: str = ".skops"

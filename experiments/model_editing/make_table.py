@@ -1,12 +1,14 @@
-from experiments.model_editing.main import get_cli
-import matplotlib.pyplot as plt
 import argparse
-from pathlib import Path
-import time
 import itertools
 import logging
-from lightning.pytorch.cli import LightningCLI
+import time
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import pandas as pd
+from lightning.pytorch.cli import LightningCLI
+
+from experiments.model_editing.main import get_cli
 
 CONFIG_PATH = Path("configs/model_editing/classifier")
 

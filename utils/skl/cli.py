@@ -1,9 +1,12 @@
-from models.pcbm_sk import SKLModule
-from jsonargparse import ArgumentParser, ActionConfigFile
 from typing import Type
+
+from jsonargparse import ActionConfigFile, ArgumentParser
 from lightning import seed_everything
+
+from models.pcbm_sk import SKLModule
 from utils.skl.datamodule import SKLDataModule
 from utils.skl.trainer import SKLTrainer
+
 
 class SKLCLI(object):
     model: SKLModule

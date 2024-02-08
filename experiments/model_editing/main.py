@@ -1,7 +1,9 @@
-from lightning.pytorch.cli import LightningCLI
-from models.pcbm_pl import PCBMClassifierTrainer
-from data.metashift import MetaShiftDataModule
 import logging
+
+from lightning.pytorch.cli import LightningCLI
+
+from data.metashift import MetaShiftDataModule
+from models.pcbm_pl import PCBMClassifierTrainer
 
 
 class MyLightningCLI(LightningCLI):

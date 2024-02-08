@@ -1,11 +1,13 @@
-from experiments.model_editing.main_sk import get_cli
-from utils.skl.cli import SKLCLI
 import argparse
-from pathlib import Path
-import time
 import itertools
 import logging
+import time
+from pathlib import Path
+
 import pandas as pd
+
+from experiments.model_editing.main_sk import get_cli
+from utils.skl.cli import SKLCLI
 
 CONFIG_PATH = Path("configs/model_editing/classifier")
 

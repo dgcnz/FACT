@@ -1,7 +1,6 @@
-from models.pcbm_sk import PCBMClassifierSKL
 from data.metashift_sk import MetaShiftSKLDataModule
+from models.pcbm_sk import PCBMClassifierSKL
 from utils.skl.cli import SKLCLI
-
 
 
 def get_cli():

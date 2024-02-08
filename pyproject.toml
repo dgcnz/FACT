@@ -34,6 +34,7 @@ jupyter = "^1.0.0"
 renumics-spotlight = "^1.6.0"
 nbdime = "^4.0.1"
 debugpy = "^1.8.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]
