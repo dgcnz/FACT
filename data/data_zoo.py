@@ -17,6 +17,13 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
                                                    shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
+        
+        if single_image == True:
+            processed_img = trainset[0]
+            img = datasets.CIFAR10(root=args.out_dir, train=True,
+                                    download=False, transform=None)
+            
+            return processed_img, img
     
     
     elif args.dataset.lower() == "cifar100":

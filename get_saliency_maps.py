@@ -88,9 +88,11 @@ if __name__ == "__main__":
     #initialize the saliency model
     saliency_model = SaliencyModel(concept_bank = concept_bank, backbone=backbone, backbone_name=args.backbone_name)
 
+    input, input_img = get_dataset(args, preprocess, single_image = True)
+
     #get a single preprocessed and non-preprossed image from the dataloader
-    img = Image.open(args.img_path).convert('RGB')
-    input_img = preprocess(img)
+    #img = Image.open(args.img_path).convert('RGB')
+    #input_img = preprocess(img)
 
     saliency(input_img, input, saliency_model, args.out_dir)
 
