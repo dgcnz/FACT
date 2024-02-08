@@ -1,4 +1,5 @@
 import argparse
+from ast import Str
 import os
 import pickle
 import numpy as np
@@ -28,6 +29,8 @@ def config():
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
     parser.add_argument("--img-path", default=None, help="img to compute saliency map for")
+    parser.add_argument("--concept-names", nargs='+', type=str, default=None)
+    parser.add_argument("--targetclass", default = 'bicycle', type = str)
 
     return parser.parse_args()
 
@@ -58,11 +61,12 @@ def saliency(input_img, input, model, out_dir):
     #plot image and its saliency map
     plt.figure(figsize=(10, 10))
     plt.subplot(1, 2, 1)
-    plt.imshow(np.transpose(input_img.detach().numpy(), (1, 2, 0)))
+    #plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
+    plt.imshow(input_img)
     plt.xticks([])
     plt.yticks([])
     plt.subplot(1, 2, 2)
-    plt.imshow(slc.numpy(), cmap=plt.cm.hot)
+    plt.imshow(slc.cpu().numpy(), cmap=plt.cm.hot)
     plt.xticks([])
     plt.yticks([])
     
@@ -86,10 +90,17 @@ if __name__ == "__main__":
     backbone = backbone.to(args.device)
     
     #initialize the saliency model
-    saliency_model = SaliencyModel(concept_bank = concept_bank, backbone=backbone, backbone_name=args.backbone_name)
+    saliency_model = SaliencyModel(concept_bank = concept_bank, backbone=backbone, backbone_name=args.backbone_name, concept_names=args.concept_names)
 
-    input, input_img = get_dataset(args, preprocess, single_image = True)
+    (input, label), (input_img, input_label), class_name = get_dataset(args, preprocess, single_image = True)
 
+    input = input.to(args.device)
+    saliency_model = saliency_model.to(args.device)
+
+    print(input)
+    print(input_img)
+    print('saliency map for image with label', label, input_label)
+    print('which is class_name', class_name)
     #get a single preprocessed and non-preprossed image from the dataloader
     #img = Image.open(args.img_path).convert('RGB')
     #input_img = preprocess(img)
