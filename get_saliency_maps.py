@@ -27,7 +27,7 @@ def config():
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
-    parser.add_argument("--img_path", default=None, help="img to compute saliency map for")
+    parser.add_argument("--img-path", default=None, help="img to compute saliency map for")
 
     return parser.parse_args()
 
