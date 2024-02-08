@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections, export
+from training_tools import load_or_compute_projections, export, compute_aggregate_projections
 from sklearn.metrics import average_precision_score
 
 
@@ -54,6 +54,7 @@ def config():
     #if one of the tree parameters below is set to None a grid search will be performed 
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=None, type=float, help="Regularization strength.")
+    parser.add_argument("--threshold", default=0.3, type=float, help="threshold for aggregate projections")
 
     args = parser.parse_args()
     args.seeds = [int(seed) for seed in args.seeds.split(',')]
@@ -187,6 +188,10 @@ def main(args, concept_bank, backbone, preprocess, **kwargs):
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+
+    train_projs_aggregate = compute_aggregate_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+
+    train_projs = (1/2) * (train_projs + train_projs_aggregate)
 
     if args.softmax_concepts:
             temperature = args.temperature
