@@ -115,7 +115,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
 
         transform = transforms.Compose([
             # transforms.Grayscale(num_output_channels=3),
-            transforms.Resize(299),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
         ])
 

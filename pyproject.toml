@@ -25,6 +25,7 @@ torch-tb-profiler = "^0.4.3"
 numpy = ">=1.21,<1.25"
 pytorch-ignite = "^0.4.13"
 visdom = "^0.2.4"
+skops = "^0.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -32,6 +33,7 @@ gdown = "^4.7.1"
 jupyter = "^1.0.0"
 renumics-spotlight = "^1.6.0"
 nbdime = "^4.0.1"
+debugpy = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core"]

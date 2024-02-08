@@ -1,11 +1,10 @@
-from experiments.model_editing.main import get_cli
-import matplotlib.pyplot as plt
+from experiments.model_editing.main_sk import get_cli
+from utils.skl.cli import SKLCLI
 import argparse
 from pathlib import Path
 import time
 import itertools
 import logging
-from lightning.pytorch.cli import LightningCLI
 import pandas as pd
 
 CONFIG_PATH = Path("configs/model_editing/classifier")
@@ -29,7 +28,7 @@ def setup_logging(logdir: Path, verbose: bool):
     logger.addHandler(handler)
 
 
-class LightningScript(object):
+class SKLScript(object):
     def __init__(self, cli_fn: callable):
         self.cli_fn = cli_fn
 
@@ -50,23 +49,23 @@ class LightningScript(object):
         [Reference]
         trainer:
             logger:
-                class_path: lightning.pytorch.loggers.TensorBoardLogger
+                class_path: utils.logging.SKLTensorBoardLogger
                 init_args:
-                save_dir: lightning_logs/
+                save_dir: skl_logs/
                 name: task_1_bed_cat_dog
         """
         return [
             "--trainer.logger.class_path",
-            "lightning.pytorch.loggers.TensorBoardLogger",
+            "utils.skl.logging.SKLTensorBoardLogger",
             "--trainer.logger.init_args.save_dir",
-            "lightning_logs/",
+            "skl_logs/",
             "--trainer.logger.init_args.name",
             f"{task_name}/seed_{seed}",
         ]
 
-    def _get_extra_args(self, task_name: str, device: str, seed: int) -> list[str]:
-        """Get device, sed, logger args."""
-        basic_args = ["--trainer.accelerator", device, "--seed_everything", str(seed)]
+    def _get_extra_args(self, task_name: str,  seed: int) -> list[str]:
+        """Get seed, logger args."""
+        basic_args = ["--seed_everything", str(seed)]
         logger_args = self._get_logger_args(task_name=task_name, seed=seed)
         return basic_args + logger_args
 
@@ -83,15 +82,15 @@ class LightningScript(object):
         self,
         task_name: str,
         config_paths: list[str],
-        device: str,
         seed: int,
         ckpt_path: Path | None = None,
-    ) -> LightningCLI:
+    ) -> SKLCLI:
         config_args = self._get_config_args(config_paths=config_paths)
-        extra_args = self._get_extra_args(task_name=task_name, device=device, seed=seed)
-        args = ["fit"] + config_args + extra_args
+        extra_args = self._get_extra_args(task_name=task_name,  seed=seed)
+        args =  config_args + extra_args
         if ckpt_path is not None:
             args += ["--ckpt_path", str(ckpt_path)]
+        args += ["fit"]
         logger.info(f"RUNNING: {args}")
         return self._execute(args)
 
@@ -99,24 +98,25 @@ class LightningScript(object):
         self,
         task_name: str,
         config_paths: list[str],
-        device: str,
         seed: int,
         ckpt_path: Path,
         additional_args: list[str] = [],
-    ) -> LightningCLI:
+    ) -> SKLCLI:
         config_args = self._get_config_args(config_paths=config_paths)
-        extra_args = self._get_extra_args(task_name=task_name, device=device, seed=seed)
+        extra_args = self._get_extra_args(task_name=task_name, seed=seed)
         ckpt_args = ["--ckpt_path", str(ckpt_path)]
-        args = ["test"] + config_args + extra_args + ckpt_args + additional_args
+        args =  config_args + extra_args + ckpt_args + additional_args
+        args += ["test"]
         logger.info(f"RUNNING: {args}")
         return self._execute(args)
 
 
-def train_and_test(base_config: Path, config_folder: Path, device: str, seed: int):
-    script = LightningScript(cli_fn=get_cli)
+def train_and_test(base_config: Path, config_folder: Path, seed: int):
+    script = SKLScript(cli_fn=get_cli)
     base_config_path = config_folder / "base.yaml"
     prune_config_path = config_folder / "prune.yaml"
-    finetune_config_path = config_folder.parent / "finetune_oracle.yaml"
+    # TODO: Finetune
+    # finetune_config_path = config_folder.parent / "finetune_oracle.yaml"
     task_name = config_folder.stem
 
     configs = [base_config, base_config_path]
@@ -125,32 +125,29 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
     run = script.fit(
         task_name=task_name,
         config_paths=configs,
-        device=device,
         seed=seed,
     )
-    ckpt_path = Path(run.trainer.checkpoint_callback.best_model_path)
+    ckpt_path = Path(run.trainer.best_model_path)
     # Test
     ## Test base
     logger.info(f"Testing {task_name} on base")
     run = script.test(
         task_name=task_name,
         config_paths=configs,
-        device=device,
         seed=seed,
         ckpt_path=ckpt_path,
     )
-    base_metrics = run.trainer.callback_metrics.copy()
+    base_metrics = run.trainer.logger.metrics.copy()
     ## Test pruned
     logger.info(f"Testing {task_name} on pruned")
 
     run = script.test(
         task_name=task_name,
         config_paths=configs + [prune_config_path],
-        device=device,
         seed=seed,
         ckpt_path=ckpt_path,
     )
-    pruned_metrics = run.trainer.callback_metrics.copy()
+    pruned_metrics = run.trainer.logger.metrics.copy()
     ## Test pruned + normalize
     logger.info(f"Testing {task_name} on pruned + normalize")
 
@@ -158,34 +155,31 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         task_name=task_name,
         config_paths=configs + [prune_config_path],
         additional_args=["--model.normalize", "True"],
-        device=device,
         seed=seed,
         ckpt_path=ckpt_path,
     )
 
-    pruned_normalize_metrics = run.trainer.callback_metrics.copy()
+    pruned_normalize_metrics = run.trainer.logger.metrics.copy()
 
-    logger.info(f"Finetuning {task_name}")
+    # logger.info(f"Finetuning {task_name}")
 
-    run = script.fit(
-        task_name=task_name,
-        config_paths=configs + [finetune_config_path],
-        device=device,
-        seed=seed,
-        ckpt_path=ckpt_path,
-    )
-    finetuned_ckpt_path = Path(run.trainer.checkpoint_callback.best_model_path)
+    # run = script.fit(
+    #     task_name=task_name,
+    #     config_paths=configs + [finetune_config_path],
+    #     seed=seed,
+    #     ckpt_path=ckpt_path,
+    # )
+    # finetuned_ckpt_path = Path(run.trainer.best_model_path) # TODO
 
-    logger.info(f"Test finetuning {task_name}")
+    # logger.info(f"Test finetuning {task_name}")
 
-    run = script.test(
-        task_name=task_name,
-        config_paths=configs,
-        device=device,
-        seed=seed,
-        ckpt_path=finetuned_ckpt_path,
-    )
-    finetuned_test_metrics = run.trainer.callback_metrics.copy()
+    # run = script.test(
+    #     task_name=task_name,
+    #     config_paths=configs,
+    #     seed=seed,
+    #     ckpt_path=finetuned_ckpt_path,
+    # )
+    # finetuned_test_metrics = run.trainer.logger.metrics.copy()
 
     all_metrics = {"task_name": task_name}
     all_metrics_gain = {"task_name": task_name}
@@ -193,15 +187,15 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
         ("base", base_metrics),
         ("pruned", pruned_metrics),
         ("pruned_normalize", pruned_normalize_metrics),
-        ("finetuned", finetuned_test_metrics),
+        # ("finetuned", finetuned_test_metrics),
     ]:
         for k, v in metrics.items():
             # strip prefix test_ from keys and add prefix name_
             metric_name = name + "_" + k.removeprefix("test_")
-            all_metrics.update({metric_name: v.item()})
+            all_metrics.update({metric_name: v})
             if name != "base":
                 all_metrics_gain.update(
-                    {f"{metric_name}_gain": v.item() - base_metrics[k].item()}
+                    {f"{metric_name}_gain": v - base_metrics[k]}
                 )
     return all_metrics, all_metrics_gain
 
@@ -209,9 +203,8 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
 def setup_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--base_config", type=str, default=CONFIG_PATH / "base_clip_resnet50.yaml"
+        "--base_config", type=str, default=CONFIG_PATH / "sk_base_clip_resnet50.yaml"
     )
-    parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
     parser.add_argument(
         "--verbose",
@@ -232,12 +225,14 @@ def get_all_configs():
 
 def get_logdir(base_config: str, seeds: list[int]):
     salt = int(time.time())
-    return (
+    log_dir =  (
         Path("logs")
         / Path(base_config).stem
         / f"{'-'.join(str(s) for s in seeds)}"
         / str(salt)
     )
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
 
 
 def main():
@@ -253,7 +248,6 @@ def main():
             metrics, metrics_gain = train_and_test(
                 base_config=args.base_config,
                 config_folder=config_folder,
-                device=args.device,
                 seed=seed,
             )
             all_metrics.append(metrics | {"seed": seed})
@@ -273,7 +267,6 @@ def log_metrics(
 ):
     df = pd.DataFrame(all_metrics)
     df_gain = pd.DataFrame(all_metrics_gain)
-    log_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Logging to {log_dir}")
 
     df.to_csv(log_dir / "metrics.csv", index=False)
