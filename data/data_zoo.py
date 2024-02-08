@@ -3,8 +3,7 @@ import torch
 import os
 import pandas as pd
 
-
-def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
+def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwargs):
     # note: target is only needed for COCO-Stuff due to the 20 datasets involved
     if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,

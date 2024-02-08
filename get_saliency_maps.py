@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torchvision
+from PIL import Image
 
 from data import get_dataset
 from concepts import ConceptBank
@@ -26,6 +27,7 @@ def config():
     parser.add_argument("--targets", default=[3, 6, 31, 35, 36, 37, 40, 41, \
                                              43, 46, 47, 50, 53, 64, 75, 76, 78, 80, 85, 89], \
                                              type=int, nargs='+', help="target indexes for cocostuff")
+    parser.add_argument("--img_path", default=None, help="img to compute saliency map for")
 
     return parser.parse_args()
 
@@ -87,8 +89,8 @@ if __name__ == "__main__":
     saliency_model = SaliencyModel(concept_bank = concept_bank, backbone=backbone, backbone_name=args.backbone_name)
 
     #get a single preprocessed and non-preprossed image from the dataloader
-    tar = {'target': 3}
-    input_img, img = get_dataset(args, preprocess, **tar, single_image = True)
+    img = Image.open(args.img_path).convert('RGB')
+    input_img = preprocess(img)
 
     saliency(input_img, input, saliency_model, args.out_dir)
 
