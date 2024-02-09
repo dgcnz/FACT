@@ -75,8 +75,10 @@ def saliencyv2(
             magnitude=True,
         )
         smooth_saliency = smooth_grad(input, index=concept_ix)
-        save_as_gray_image(smooth_saliency, os.path.join(out_dir, "smooth_grad.jpg"))
+        img = save_as_gray_image(smooth_saliency, os.path.join(out_dir, "smooth_grad.jpg"))
+        
         print("Saved smooth gradient image")
+        return img
     else:
         raise NotImplementedError(f"Method {method} not implemented")
 
@@ -122,6 +124,25 @@ def saliency(input_img, input, model, out_dir):
     plt.show()
     print(f"figure save in {args.out_dir}/saliency.png")
 
+def plot_maps(img, maps, concept_names):
+    plt.figure(figsize=(10, 10))
+    plt.subplot(1, 2, 1)
+    # plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
+    plt.imshow(input_img)
+    plt.xticks([])
+    plt.yticks([])
+
+    for i in range(len(concept_names)):
+        plt.subplot(1, 2, i + 1)
+        plt.imshow(maps[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
+        plt.xticks([])
+        plt.yticks([])
+
+    plt.savefig(f"{args.out_dir}/saliency.png")
+    plt.show()
+    print(f"figure save in {args.out_dir}/saliency.png")
+
+
 
 if __name__ == "__main__":
     args = config()
@@ -142,19 +163,14 @@ if __name__ == "__main__":
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     # initialize the saliency model
-    saliency_model = SaliencyModel(
-        concept_bank=concept_bank,
-        backbone=backbone,
-        backbone_name=args.backbone_name,
-        concept_names=args.concept_names,
-    )
+    
 
     (input, label), (input_img, input_label), class_name = get_dataset(
         args, preprocess, single_image=True
     )
 
     input = input.to(args.device)
-    saliency_model = saliency_model.to(args.device)
+    
 
     print(input)
     print(input_img)
@@ -165,11 +181,28 @@ if __name__ == "__main__":
     # input_img = preprocess(img)
 
     # saliency(input_img, input, saliency_model, args.out_dir)
-    saliencyv2(
-        input_img,
-        input,
-        saliency_model,
-        args.out_dir,
-        concept_ix=args.concept_ix,
-        method=args.method,
-    )
+    maps = []
+
+    for concept_name in args.concept_names:
+
+        saliency_model = SaliencyModel(
+                concept_bank=concept_bank,
+                backbone=backbone,
+                backbone_name=args.backbone_name,
+                concept_names=concept_name,
+            )
+        
+        saliency_model = saliency_model.to(args.device)
+
+        map = saliencyv2(
+                input_img,
+                input,
+                saliency_model,
+                args.out_dir,
+                concept_ix=args.concept_ix,
+                method=args.method,
+            )
+        
+        maps.append(map)
+    
+    plot_maps(image = input_img, maps = maps, concept_names=args.concept_names)

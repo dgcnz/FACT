@@ -31,9 +31,9 @@ def save_as_gray_image(img, filename, percentile=99):
     vmin = -span
     vmax = span
     img_2d = np.clip((img_2d - vmin) / (vmax - vmin), -1, 1)
-    cv2.imwrite(filename, img_2d * 255)
+    #cv2.imwrite(filename, img_2d * 255)
 
-    return
+    return img_2d
 
 
 def save_cam_image(img, mask, filename):
@@ -41,4 +41,5 @@ def save_cam_image(img, mask, filename):
     heatmap = np.float32(heatmap) / 255
     cam = heatmap + np.float32(img)
     cam = cam / np.max(cam)
-    cv2.imwrite(filename, np.uint8(255 * cam))
+    #cv2.imwrite(filename, np.uint8(255 * cam))
+    return cam
