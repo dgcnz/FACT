@@ -67,7 +67,6 @@ def run_linear_probe(args, train_data, test_data):
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
     
-    
     return run_info, classifier.coef_, classifier.intercept_
 
 
@@ -111,7 +110,9 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+
     return run_info
+
 
 def plot_sparsity(args, metrics, sparsities, metric_name):
     import matplotlib.pyplot as plt
@@ -122,7 +123,9 @@ def plot_sparsity(args, metrics, sparsities, metric_name):
     plt.ylabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sparsity.png")
     plt.show()
-    print(f'figure save in {args.out_dir}/sparisity.png')
+
+    print(f'Figure save to : {args.out_dir}/sparsity.png')
+
 
 def plot_sum(args, metrics, sums, metric_name):
     import matplotlib.pyplot as plt
@@ -133,7 +136,8 @@ def plot_sum(args, metrics, sums, metric_name):
     plt.xlabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sum.png")
     plt.show()
-    print(f'figure save in {args.out_dir}/sum.png')
+
+    print(f'Figure save to : {args.out_dir}/sum.png')
     
 
 if __name__ == "__main__":
@@ -182,7 +186,3 @@ if __name__ == "__main__":
     plot_sparsity(args, metrics, sparsities, metric_name)
     plot_sum(args, metrics, sums, metric_name)
 
-        
-
-
-        
