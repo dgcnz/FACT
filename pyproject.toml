@@ -25,6 +25,7 @@ torch-tb-profiler = "^0.4.3"
 numpy = ">=1.21,<1.25"
 pytorch-ignite = "^0.4.13"
 visdom = "^0.2.4"
+opencv-python = "^4.9.0.80"
 
 
 [tool.poetry.group.dev.dependencies]

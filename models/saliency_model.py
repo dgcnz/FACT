@@ -31,6 +31,10 @@ class SaliencyModel(nn.Module):
         #set backbone
         self.backbone = backbone
         self.backbone_name = backbone_name
+        if "clip" in self.backbone_name.lower():
+            self.features = self.backbone.visual
+        else:
+            raise NotImplementedError(f"Backbone {self.backbone_name} features name is not specified.")
                 
 
     def forward(self, x):
