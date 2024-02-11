@@ -14,6 +14,7 @@ from data import get_dataset
 from models import SaliencyModel, get_model
 from utils.saliency.gradients import SmoothGrad, VanillaGrad
 from utils.saliency.image_utils import save_as_gray_image
+from matplotlib.colors import PowerNorm
 
 
 def config():
@@ -143,7 +144,7 @@ def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
         if i == 0:
             plt.ylabel('CLIP concepts')
         plt.title(concept_names1[i])
-        plt.imshow(maps1[i], cmap=plt.cm.gray) #maybe I should make this greyscale instead idk 
+        plt.imshow(maps1[i], cmap=plt.cm.hot, norm = PowerNorm(gamma=0.6, vmin=0.5)) #maybe I should make this greyscale instead idk 
         plt.xticks([])
         plt.yticks([])
 
@@ -152,7 +153,7 @@ def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
         if i == 0:
             plt.ylabel('CAV concepts')
         plt.title(concept_names2[i])
-        plt.imshow(maps2[i], cmap=plt.cm.gray) #maybe I should make this greyscale instead idk 
+        plt.imshow(maps2[i], cmap=plt.cm.hot, norm = PowerNorm(gamma=0.6, vmin=0.5)) #maybe I should make this greyscale instead idk 
         plt.xticks([])
         plt.yticks([])
 
@@ -200,8 +201,10 @@ if __name__ == "__main__":
     print("saliency map for image with label", label, input_label)
     print("which is class_name", class_name)
     # get a single preprocessed and non-preprossed image from the dataloader
-    # img = Image.open(args.img_path).convert('RGB')
-    # input_img = preprocess(img)
+    if args.img_path is not None:
+      input_img = Image.open(args.img_path).convert('RGB')
+      input = preprocess(input_img)
+      input.to(args.device)
 
     '''
     saliency_model = SaliencyModel(
