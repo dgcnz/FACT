@@ -2,6 +2,7 @@ import argparse
 import os
 import pickle
 from typing import Literal
+import copy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -129,7 +130,7 @@ def saliency(input_img, input, model, out_dir):
     return slc.cpu().numpy()
 
 def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(15, 5))
     plt.subplot(2, len(concept_names1)+1, 1)
     # plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
     plt.imshow(img)
@@ -142,16 +143,16 @@ def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
         if i == 0:
             plt.ylabel('CLIP concepts')
         plt.title(concept_names1[i])
-        plt.imshow(maps1[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
+        plt.imshow(maps1[i], cmap=plt.cm.gray) #maybe I should make this greyscale instead idk 
         plt.xticks([])
         plt.yticks([])
 
     for i in range(len(concept_names1)):
-        plt.subplot(2, len(concept_names1)+1, i + 2)
+        plt.subplot(2, len(concept_names1)+1, len(concept_names1) + i + 3)
         if i == 0:
             plt.ylabel('CAV concepts')
         plt.title(concept_names2[i])
-        plt.imshow(maps2[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
+        plt.imshow(maps2[i], cmap=plt.cm.gray) #maybe I should make this greyscale instead idk 
         plt.xticks([])
         plt.yticks([])
 
@@ -257,8 +258,8 @@ if __name__ == "__main__":
                     method=args.method,
                 )
         else:
-            map1 = saliency(input_img, input, saliency_model1, args.out_dir)
-            map2 = saliency(input_img, input, saliency_model2, args.out_dir)
+            map1 = saliency(input_img, copy.copy(input), saliency_model1, args.out_dir)
+            map2 = saliency(input_img, copy.copy(input), saliency_model2, args.out_dir)
 
         
         maps1.append(map1)

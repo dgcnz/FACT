@@ -25,13 +25,16 @@ def preprocess_image(img, cuda=False):
     return preprocessed_img
 
 
-def save_as_gray_image(img, filename, percentile=99):
+def save_as_gray_image(img, filename, percentile=99.9):
     img_2d = np.sum(img, axis=0)
     span = abs(np.percentile(img_2d, percentile))
     vmin = -span
     vmax = span
     img_2d = np.clip((img_2d - vmin) / (vmax - vmin), -1, 1)
     #cv2.imwrite(filename, img_2d * 255)
+    print('here the min and max of img_2d-------')
+    print('max', img_2d.max())
+    print('min', img_2d.min())
 
     return img_2d
 

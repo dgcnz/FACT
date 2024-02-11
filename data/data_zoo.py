@@ -42,7 +42,7 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
             target_class_name = args.targetclass
 
             # Specify which occurrence you want to retrieve (e.g., 3rd or 4th)
-            target_occurrence = 8  # Change this to the occurrence you desire
+            target_occurrence = 4  # Change this to the occurrence you desire
 
             # Create an iterator to iterate over the dataset
             iterator = ((idx, (img, label_idx)) for idx, (img, label_idx) in enumerate(trainset) if classes[label_idx] == target_class_name)
