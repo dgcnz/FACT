@@ -18,7 +18,10 @@ from utils.saliency.image_utils import save_as_gray_image
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--concept-bank", required=True, type=str, help="Path to the concept bank"
+        "--concept-bank1", required=True, type=str, help="Path to the concept bank"
+    )
+    parser.add_argument(
+        "--concept-bank2", required=True, type=str, help="Path to the concept bank"
     )
     parser.add_argument(
         "--out-dir",
@@ -35,11 +38,12 @@ def config():
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
-    parser.add_argument("--sort-concepts", default=False, type=bool)
     parser.add_argument(
         "--img-path", default=None, help="img to compute saliency map for"
     )
-    parser.add_argument("--concept-names", nargs="+", type=str, default=None)
+    parser.add_argument("--concept-names1", nargs="+", type=str, default=None)
+    parser.add_argument("--concept-names2", nargs="+", type=str, default=None)
+
     parser.add_argument("--targetclass", default="bicycle", type=str)
     parser.add_argument("--concept-ix", type=int)
     parser.add_argument("--method", default="smoothgrad", type=str)
@@ -60,17 +64,31 @@ def saliencyv2(
     input: preprocessed image
     model: torch.nn.Module
     """
+    
+
+
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # set model in eval mode
+    model.eval()
+
     input = input.unsqueeze(0)
 
+    input.requires_grad = True
+
+    
+
     if method == "vanilla":
-        vanilla_grad = VanillaGrad(pretrained_model=model, cuda=False)
+        vanilla_grad = VanillaGrad(pretrained_model=model, cuda=True)
         vanilla_saliency = vanilla_grad(input, index=concept_ix)
-        save_as_gray_image(vanilla_saliency, os.path.join(out_dir, "vanilla_grad.jpg"))
+        img = save_as_gray_image(vanilla_saliency, os.path.join(out_dir, "vanilla_grad.jpg"))
+        return img
     elif method == "smoothgrad":
-        N_SAMPLES_SMOOTHGRAD: int = 25
+        N_SAMPLES_SMOOTHGRAD: int = 25#25
         smooth_grad = SmoothGrad(
             pretrained_model=model,
-            cuda=False,
+            cuda=True,
             n_samples=N_SAMPLES_SMOOTHGRAD,
             magnitude=True,
         )
@@ -108,33 +126,32 @@ def saliency(input_img, input, model, out_dir):
     # normalize to [0..1]
     slc = (slc - slc.min()) / (slc.max() - slc.min())
 
-    # plot image and its saliency map
+    return slc.cpu().numpy()
+
+def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
     plt.figure(figsize=(10, 10))
-    plt.subplot(1, 2, 1)
+    plt.subplot(2, len(concept_names1)+1, 1)
     # plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
-    plt.imshow(input_img)
-    plt.xticks([])
-    plt.yticks([])
-    plt.subplot(1, 2, 2)
-    plt.imshow(slc.cpu().numpy(), cmap=plt.cm.hot)
+    plt.imshow(img)
+    plt.title('Input image')
     plt.xticks([])
     plt.yticks([])
 
-    plt.savefig(f"{args.out_dir}/saliency.png")
-    plt.show()
-    print(f"figure save in {args.out_dir}/saliency.png")
+    for i in range(len(concept_names1)):
+        plt.subplot(2, len(concept_names1)+1, i + 2)
+        if i == 0:
+            plt.ylabel('CLIP concepts')
+        plt.title(concept_names1[i])
+        plt.imshow(maps1[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
+        plt.xticks([])
+        plt.yticks([])
 
-def plot_maps(img, maps, concept_names):
-    plt.figure(figsize=(10, 10))
-    plt.subplot(1, 2, 1)
-    # plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
-    plt.imshow(input_img)
-    plt.xticks([])
-    plt.yticks([])
-
-    for i in range(len(concept_names)):
-        plt.subplot(1, 2, i + 1)
-        plt.imshow(maps[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
+    for i in range(len(concept_names1)):
+        plt.subplot(2, len(concept_names1)+1, i + 2)
+        if i == 0:
+            plt.ylabel('CAV concepts')
+        plt.title(concept_names2[i])
+        plt.imshow(maps2[i], cmap=plt.cm.hot) #maybe I should make this greyscale instead idk 
         plt.xticks([])
         plt.yticks([])
 
@@ -147,17 +164,22 @@ def plot_maps(img, maps, concept_names):
 if __name__ == "__main__":
     args = config()
 
-    if args.sort_concepts:
-        concept_bank = ConceptBank.from_pickle(
-            args.concept_bank, sort_by_keys=True, device=args.device
-        )
-    else:
-        all_concepts = pickle.load(open(args.concept_bank, "rb"))
-        all_concept_names = list(all_concepts.keys())
-        print(
-            f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used."
-        )
-        concept_bank = ConceptBank(all_concepts, args.device)
+    #get concepts for the first concept bank
+    all_concepts1 = pickle.load(open(args.concept_bank1, "rb"))
+    all_concept_names1 = list(all_concepts1.keys())
+    print(
+        f"Bank path: {args.concept_bank1}. {len(all_concept_names1)} concepts will be used."
+    )
+    concept_bank1 = ConceptBank(all_concepts1, args.device)
+
+    #get concepts for the second concept bank
+    all_concepts2 = pickle.load(open(args.concept_bank2, "rb"))
+    all_concept_names2 = list(all_concepts2.keys())
+    print(
+        f"Bank path: {args.concept_bank2}. {len(all_concept_names2)} concepts will be used."
+    )
+    concept_bank2 = ConceptBank(all_concepts2, args.device)
+
 
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
@@ -180,29 +202,67 @@ if __name__ == "__main__":
     # img = Image.open(args.img_path).convert('RGB')
     # input_img = preprocess(img)
 
-    # saliency(input_img, input, saliency_model, args.out_dir)
-    maps = []
-
-    for concept_name in args.concept_names:
-
-        saliency_model = SaliencyModel(
+    '''
+    saliency_model = SaliencyModel(
                 concept_bank=concept_bank,
                 backbone=backbone,
                 backbone_name=args.backbone_name,
-                concept_names=concept_name,
+                concept_names=args.concept_names,
             )
-        
-        saliency_model = saliency_model.to(args.device)
 
-        map = saliencyv2(
-                input_img,
-                input,
-                saliency_model,
-                args.out_dir,
-                concept_ix=args.concept_ix,
-                method=args.method,
+    saliency(input_img, input, saliency_model, args.out_dir)
+    
+    '''
+    maps1 = []
+    maps2 = []
+
+    for concept_name1, concept_name2 in zip(args.concept_names1, args.concept_names2):
+        # get the map for both the first concept bank 
+        saliency_model1 = SaliencyModel(
+                concept_bank=concept_bank1,
+                backbone=backbone,
+                backbone_name=args.backbone_name,
+                concept_names=[concept_name1],
             )
         
-        maps.append(map)
+        saliency_model1 = saliency_model1.to(args.device)
+
+        #second bank 
+        saliency_model2 = SaliencyModel(
+                concept_bank=concept_bank2,
+                backbone=backbone,
+                backbone_name=args.backbone_name,
+                concept_names=[concept_name2],
+            )
+        
+        saliency_model2 = saliency_model2.to(args.device)
+
+        if args.method in ['smoothgrad', 'vanilla']:
+
+            map1 = saliencyv2(
+                    input_img,
+                    input,
+                    saliency_model1,
+                    args.out_dir,
+                    concept_ix=args.concept_ix,
+                    method=args.method,
+                )
+            
+            map2 = saliencyv2(
+                    input_img,
+                    input,
+                    saliency_model2,
+                    args.out_dir,
+                    concept_ix=args.concept_ix,
+                    method=args.method,
+                )
+        else:
+            map1 = saliency(input_img, input, saliency_model1, args.out_dir)
+            map2 = saliency(input_img, input, saliency_model2, args.out_dir)
+
+        
+        maps1.append(map1)
+        maps2.append(map2)
     
-    plot_maps(image = input_img, maps = maps, concept_names=args.concept_names)
+    plot_maps(img = input_img, maps1 = maps1, maps2 = maps2, concept_names1=args.concept_names1, concept_names2 = args.concept_names2)
+    
