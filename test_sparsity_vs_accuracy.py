@@ -1,8 +1,9 @@
-import argparse
 import os
 import pickle
 import numpy as np
 import torch
+import argparse
+from re import sub
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from data import get_dataset
@@ -67,7 +68,6 @@ def run_linear_probe(args, train_data, test_data):
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
     
-    
     return run_info, classifier.coef_, classifier.intercept_
 
 
@@ -86,7 +86,7 @@ def main(args, concept_bank, backbone, preprocess):
     posthoc_layer = posthoc_layer.to(args.device)
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
-    train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
+    _ , train_projs, train_lbls, _ , test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     
@@ -95,6 +95,7 @@ def main(args, concept_bank, backbone, preprocess):
 
     model_id = f"{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}"
     model_path = os.path.join(args.out_dir, f"pcbm_{model_id}.ckpt")
+    model_path = sub(":", "", model_path)
     torch.save(posthoc_layer, model_path)
 
     run_info_file = os.path.join(args.out_dir, f"run_info-pcbm_{model_id}.pkl")
@@ -111,10 +112,13 @@ def main(args, concept_bank, backbone, preprocess):
 
     print(f"Model saved to : {model_path}")
     print(run_info)
+
     return run_info
+
 
 def plot_sparsity(args, metrics, sparsities, metric_name):
     import matplotlib.pyplot as plt
+    print("metric used:", metric_name)
     print(metrics)
     plt.plot(args.strengths, sparsities)
     plt.grid()
@@ -122,10 +126,13 @@ def plot_sparsity(args, metrics, sparsities, metric_name):
     plt.ylabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sparsity.png")
     plt.show()
-    print(f'figure save in {args.out_dir}/sparisity.png')
+
+    print(f'Figure save to : {args.out_dir}/sparsity.png')
+
 
 def plot_sum(args, metrics, sums, metric_name):
     import matplotlib.pyplot as plt
+    print("metric used:", metric_name)
     print(metrics)
     plt.plot(args.strengths, sums)
     plt.grid()
@@ -133,7 +140,8 @@ def plot_sum(args, metrics, sums, metric_name):
     plt.xlabel('Regularization strength')
     plt.savefig(f"{args.out_dir}/sum.png")
     plt.show()
-    print(f'figure save in {args.out_dir}/sum.png')
+
+    print(f'Figure save to : {args.out_dir}/sum.png')
     
 
 if __name__ == "__main__":
@@ -182,7 +190,3 @@ if __name__ == "__main__":
     plot_sparsity(args, metrics, sparsities, metric_name)
     plot_sum(args, metrics, sums, metric_name)
 
-        
-
-
-        
