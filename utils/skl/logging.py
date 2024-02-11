@@ -5,14 +5,14 @@ from tensorboardX import SummaryWriter
 
 
 class SKLLogger(object):
-    DEFAULT_LOGDIR: Path = Path("skl_logs")
+    DEFAULT_SAVEDIR: str = "skl_logs"
     logdir: Path
     metrics: dict[str, float]
 
 
     def __init__(self, save_dir: str | None, name: str | None):
         timestamp = str(int(time.time()))
-        self.save_dir = Path(save_dir) or self.DEFAULT_LOGDIR
+        self.save_dir = Path(save_dir or self.DEFAULT_SAVEDIR)
         self.name = name + "/" + timestamp if name else timestamp
         self.logdir = self.save_dir / self.name
 

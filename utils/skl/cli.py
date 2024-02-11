@@ -1,5 +1,6 @@
 from typing import Type
 
+import logging
 from jsonargparse import ActionConfigFile, ArgumentParser
 from lightning import seed_everything
 
@@ -22,6 +23,7 @@ class SKLCLI(object):
         self.parser.add_class_arguments(SKLTrainer, "trainer")
         self.parser.add_argument("--seed_everything", default=42, type=int)
         self.parser.add_argument("--ckpt_path", type=str)  
+        self.parser.add_argument("--verbose", default=False, type=bool)
         self.parser.add_argument("-c", "--config", action=ActionConfigFile)
 
         subcommands = self.parser.add_subcommands()
@@ -39,6 +41,7 @@ class SKLCLI(object):
 
         self.parser.link_arguments("seed_everything", "model.seed", apply_on="parse")
         args = self.parser.parse_args()
+        logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
         seed_everything(args.seed_everything)
         args = self.parser.instantiate_classes(args)
         self.model: SKLModule = args.model

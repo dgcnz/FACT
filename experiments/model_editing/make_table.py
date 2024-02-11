@@ -211,7 +211,7 @@ def train_and_test(base_config: Path, config_folder: Path, device: str, seed: in
 def setup_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--base_config", type=str, default=CONFIG_PATH / "base_clip_resnet50.yaml"
+        "--base_config", type=str, default=CONFIG_PATH / "base_resnet18_imagenet1k_v1.yaml"
     )
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
@@ -220,6 +220,7 @@ def setup_parser():
         type=int,
         default=0,
     )
+    parser.add_argument("--task_name", nargs="+",type=str, default=None)
     return parser
 
 
@@ -234,13 +235,14 @@ def get_all_configs():
 
 def get_logdir(base_config: str, seeds: list[int]):
     salt = int(time.time())
-    return (
+    log_dir =  (
         Path("logs")
         / Path(base_config).stem
         / f"{'-'.join(str(s) for s in seeds)}"
         / str(salt)
     )
-
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
 
 def main():
     parser = setup_parser()
@@ -252,6 +254,9 @@ def main():
     all_metrics_gain = []
     for seed in args.seed:
         for config_folder in configs:
+            task_name = config_folder.stem
+            if args.task_name is not None and task_name not in args.task_name:
+                continue
             metrics, metrics_gain = train_and_test(
                 base_config=args.base_config,
                 config_folder=config_folder,

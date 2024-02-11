@@ -205,7 +205,7 @@ def train_and_test(base_config: Path, config_folder: Path, seed: int):
 def setup_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--base_config", type=str, default=CONFIG_PATH / "sk_base_clip_resnet50.yaml"
+        "--base_config", type=str, default=CONFIG_PATH / "sk_base_resnet18_imagenet1k_v1.yaml"
     )
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
     parser.add_argument(

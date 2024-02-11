@@ -11,6 +11,8 @@ from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections
+from copy import deepcopy
+
 
 
 def config():
@@ -36,6 +38,9 @@ def config():
                     "you can determine the fold to use for testing.")
     parser.add_argument("--usfolds", default=[9, 10], type=int, nargs='+', help="If using US8K as the dataset," \
                     "you can determine the folds to use for testing.")
+    
+    parser.add_argument("--pruned-concept", type=int, default=None)
+    parser.add_argument("--pruned-class", type=int, default=None)
 
     return parser.parse_args()
 
@@ -56,6 +61,10 @@ def run_linear_probe(args, train_data, test_data):
     train_accuracy = np.mean((train_labels == train_predictions).astype(float)) * 100.
     predictions = classifier.predict(test_features)
     test_accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    if pruning := (args.pruned_concept is not None and args.pruned_class is not None):
+        pruned_classifier = deepcopy(classifier)
+        pruned_classifier.coef_[args.pruned_class, args.pruned_concept] = 0.0
+        pruned_test_accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
 
     # Compute class-level accuracies. Can later be used to understand what classes are lacking some concepts.
     cls_acc = {"train": {}, "test": {}}
@@ -73,6 +82,8 @@ def run_linear_probe(args, train_data, test_data):
     run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
                 "cls_acc": cls_acc,
                 }
+    if pruning is not None:
+        run_info["pruned_test_acc"] = pruned_test_accuracy
 
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:

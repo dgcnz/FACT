@@ -2,7 +2,7 @@ seed_everything: 42
 model:
   n_concepts: 170
   n_classes: 5
-  lam: 42.5
+  lam: 1.7 # 0.05
   alpha: 0.99
   max_iter: 10000
 data:

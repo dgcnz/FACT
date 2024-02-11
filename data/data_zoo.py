@@ -113,11 +113,11 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
         task_name = args.dataset[len("metashift_"):]
         dataset = load_dataset("fact-40/pcbm_metashift", name=task_name)#, use_auth_token=args.token)
 
-        transform = transforms.Compose([
-            # transforms.Grayscale(num_output_channels=3),
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-        ])
+        # transform = transforms.Compose([
+        #     # transforms.Grayscale(num_output_channels=3),
+        #     transforms.Resize((224, 224)),
+        #     transforms.ToTensor(),
+        # ])
 
         class PCBMMetashiftDataset(Dataset):
             def __init__(self, dataset):
@@ -130,7 +130,7 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
                 item = self.dataset[idx]
                 image = item['image']
                 label = item['label']
-                return transform(image), label
+                return preprocess(image), label
         
         train_dataset = PCBMMetashiftDataset(dataset['train'])
         test_dataset = PCBMMetashiftDataset(dataset['test'])

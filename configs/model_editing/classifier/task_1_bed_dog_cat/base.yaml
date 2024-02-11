@@ -1,4 +1,4 @@
 data:
-  task_name: task_1_bed_dog_cat
+  task_name: cherrypicked_task_1_bed_dog_cat
 model:
   spurious_class: 1

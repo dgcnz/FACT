@@ -1,4 +1,5 @@
 import logging
+import os
 
 from lightning.pytorch.cli import LightningCLI
 
@@ -9,7 +10,7 @@ from models.pcbm_pl import PCBMClassifierTrainer
 class MyLightningCLI(LightningCLI):
 
     def after_fit(self):
-        logger = logging.getLogger()
+        logger = logging.getLogger("lightning.pytorch.core")
         logger.info(f"MODELPATH={self.trainer.checkpoint_callback.best_model_path}")
 
 

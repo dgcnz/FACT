@@ -30,6 +30,7 @@ class SKLTrainer(object):
         self.best_model_path = self._get_model_path(model)
         model.dump(self.best_model_path)
         self.text_logger.info(self.logger.metrics)
+        self.text_logger.info(f"BEST MODEL: {self.best_model_path}")
 
 
     def test(self, model: SKLModule, datamodule: SKLDataModule, ckpt_path: str | None = None):
