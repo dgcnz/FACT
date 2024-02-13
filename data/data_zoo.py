@@ -17,13 +17,6 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
                                                    shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
-        
-        if single_image == True:
-            processed_img = trainset[0]
-            img = datasets.CIFAR10(root=args.out_dir, train=True,
-                                    download=False, transform=None)[0]
-            
-            return processed_img, img
     
     
     elif args.dataset.lower() == "cifar100":
@@ -40,24 +33,25 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
                                                    shuffle=False, num_workers=args.num_workers)
         if single_image == True:
             target_class_name = args.targetclass
+    
+            #first select a specific occurence of an image from the wanted class
+            target_occurrence = 4  # Change this to change which image from the class is shown
 
-            # Specify which occurrence you want to retrieve (e.g., 3rd or 4th)
-            target_occurrence = 4  # Change this to the occurrence you desire
 
-            # Create an iterator to iterate over the dataset
             iterator = ((idx, (img, label_idx)) for idx, (img, label_idx) in enumerate(trainset) if classes[label_idx] == target_class_name)
 
-            # Get the index of the desired occurrence
+
             for _ in range(target_occurrence):
                 index, _ = next(iterator)
 
-            # Retrieve the processed image and its label index
+            
+            # the get the label and processed + non processed images from the datasets.
             processed_img, label_idx = trainset[index]
 
-            # Retrieve the raw image and its label
+
             img, label = datasets.CIFAR100(root=args.out_dir, train=True, download=False, transform=None)[index]
 
-            # Get the class name
+
             class_name = classes[label_idx]
 
             return (processed_img, label_idx), (img, label), class_name
