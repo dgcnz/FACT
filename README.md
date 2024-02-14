@@ -253,9 +253,9 @@ For replicating the results of the user study, [please see this notebook](/noteb
 If you find this code useful, please consider citing our paper (not out yet unfortunately):
 ```
 @inproceedings{
-midavaine2024posthoc,
+xxx2024posthoc,
 title={On the Reproductibility of Post-hoc Concept Bottleneck Models},
-author={Nesta Midavaine and Gregory Go and Diego Cánez Ildefonso and Ioana Simion},
+author={xxx},
 booktitle={None},
 year={2024}
 }
