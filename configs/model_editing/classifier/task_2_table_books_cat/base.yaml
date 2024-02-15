@@ -1,4 +1,4 @@
 data:
-  task_name: task_2_table_books_cat
+  task_name: cherrypicked_task_2_table_books_cat
 model:
   spurious_class: 4

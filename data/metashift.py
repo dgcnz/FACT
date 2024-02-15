@@ -21,13 +21,14 @@ class NNProjector(torch.nn.Module):
         super().__init__()
         self.name = Path(concept_bank_path).stem
         concept_bank = ConceptBank.from_pickle(
-            pickle_path=concept_bank_path, device="cpu"
+            pickle_path=concept_bank_path, device="cpu", sort_by_keys=True
         )
         self.cb_vectors = concept_bank.concept_info.vectors
         self.cb_intercepts = concept_bank.concept_info.intercepts
         self.cb_norms = concept_bank.concept_info.norms
         self.concept_names = concept_bank.concept_names
         self.backbone = backbone
+        self.backbone.eval()
 
     def __call__(self, imgs: torch.Tensor):
         x = self.backbone(imgs)
@@ -40,7 +41,7 @@ class NNProjector(torch.nn.Module):
 class CLIPPreprocessor(torch.nn.Module):
     def __init__(self, clip_model_name: str, device: str = "cpu"):
         super().__init__()
-        _, self.preprocess = clip.load(clip_model_name, jit=True, device=device)
+        _, self.preprocess = clip.load(clip_model_name, device=device)
 
     def __call__(self, x: list[Image.Image]) -> torch.Tensor:
         with torch.no_grad():
@@ -232,7 +233,12 @@ class MetaShiftDataModuleV2(L.LightningDataModule):
             datasets.load_dataset(
                 self.dataset_name, name=self.task_name, trust_remote_code=True
             )
-            .map(self.convert_to_features, batched=True, remove_columns="image", batch_size=32)
+            .map(
+                self.convert_to_features,
+                batched=True,
+                remove_columns="image",
+                batch_size=32,
+            )
             .with_format("torch")
         )
 
@@ -295,4 +301,3 @@ class MetaShiftDataModuleV2(L.LightningDataModule):
         image = self.preprocess(image)
         embedding = self.backbone(image)
         return {"input": embedding, "label": label}
-

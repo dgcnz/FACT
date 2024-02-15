@@ -1,10 +1,10 @@
 seed_everything: 42
 model:
+  n_concepts: 170
   n_classes: 5
-  lr: 0.05
-  lam: 85
+  lam: 5
   alpha: 0.99
-  n_concepts: 170  # Broden concepts
+  max_iter: 10000
 data:
   projector: 
     class_path: data.metashift.NNProjector
@@ -14,17 +14,4 @@ data:
         class_path: models.clip_encoder.CLIPImageEncoder
         init_args:
           model_name: RN50
-  train_batch_size: 16
-  test_batch_size: 64
   preprocessor_name: CLIP_RESNET50
-trainer:
-  deterministic: True
-  max_epochs: 10
-  check_val_every_n_epoch: 1
-  callbacks:
-    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-      init_args:
-        verbose: True
-
-
-

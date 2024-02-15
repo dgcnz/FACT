@@ -82,7 +82,7 @@ class EmbDataset(Dataset):
         return len(self.data)
 
 
-def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False, self_supervised = False, n_batches = np.inf):
+def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader, compute = False, self_supervised = False, n_batches = np.inf, use_cache: bool = True):
     # Get a clean conceptbank string
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
@@ -101,8 +101,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     test_proj_file = os.path.join(args.out_dir, test_proj_file)
     train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
     test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
-
-    if os.path.exists(train_proj_file) and not compute and not self_supervised:
+    if use_cache and os.path.exists(train_proj_file) and not compute and not self_supervised:
         train_embs = np.load(train_file)
         test_embs = np.load(test_file)
         train_projs = np.load(train_proj_file)
@@ -113,6 +112,7 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         return train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls
 
     elif not self_supervised:
+        print("Not using cache")
         train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader, n_batches = n_batches)
         test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader, n_batches = n_batches)
 

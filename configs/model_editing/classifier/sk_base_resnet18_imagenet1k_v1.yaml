@@ -1,0 +1,15 @@
+seed_everything: 42
+model:
+  n_concepts: 170  # Broden concepts
+  n_classes: 5
+  lam: 0.425 
+  alpha: 0.99
+  max_iter: 10000
+data:
+  projector: 
+    class_path: data.metashift.NNProjector
+    init_args: 
+      concept_bank_path: artifacts/outdir/broden_resnet18_imagenet1k_v1_0.01_50.pkl
+      backbone:
+        class_path: models.resnet.ResNet18FeatureExtractor
+  preprocessor_name: RESNET18_IMAGENET_1K_V1

@@ -135,13 +135,6 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
         from torchvision import transforms
         task_name = args.dataset[len("metashift_"):]
         dataset = load_dataset("anonymous347928/pcbm_metashift", name=task_name)#, use_auth_token=args.token)
-
-        transform = transforms.Compose([
-            # transforms.Grayscale(num_output_channels=3),
-            transforms.Resize(299),
-            transforms.ToTensor(),
-        ])
-
         class PCBMMetashiftDataset(Dataset):
             def __init__(self, dataset):
                 self.dataset = dataset
@@ -153,15 +146,15 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
                 item = self.dataset[idx]
                 image = item['image']
                 label = item['label']
-                return transform(image), label
+                return preprocess(image), label
         
         train_dataset = PCBMMetashiftDataset(dataset['train'])
         test_dataset = PCBMMetashiftDataset(dataset['test'])
 
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
-        idx_to_class = {i: label for i, label in enumerate(dataset['train'].features['label'].names)}
         classes = dataset['train'].features['label'].names
+        idx_to_class = {i: label for i, label in enumerate(classes)}
 
 
     elif 'task' in args.dataset:
