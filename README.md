@@ -58,7 +58,7 @@ conda env create -f environment.yaml
 ```
 2. Activate environment
 ```sh
-conda activate fact
+conda activate PCBM
 ```
 
 ## Downloading datasets
