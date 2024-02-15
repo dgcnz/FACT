@@ -13,8 +13,6 @@ The example notebook has everything you need to start testing the code, give it 
 3. Select the repository 
 4. Select the notebook `notebooks/example.ipynb`
 
-![Open Github Notebook in Colab](docs/figures/colab_github.png)
-
 If you choose to test on your local computer, then follow the instructions below.
 
 ## Installing local dependencies
