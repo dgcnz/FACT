@@ -125,8 +125,11 @@ def clean_concepts(scenario_concepts):
 
 
 @torch.no_grad()
-def learn_conceptbank(args, concept_list, scenario, model):
+def learn_conceptbank(args, concept_list, scenario, model = None):
     assert args.device is not None, "Please specify a device."
+    if model is None:
+      model, _ = clip.load(args.backbone_name.split(":")[1], device=args.device, download_root=args.out_dir)
+
     concept_dict = {}
     for concept in tqdm(concept_list):
         # Note: You can try other forms of prompting, e.g. "photo of {concept}" etc. here.
@@ -343,7 +346,7 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
 
-        learn_conceptbank(args, all_concepts, args.classes)
+        learn_conceptbank(args, all_concepts, args.classes, model)
 
     elif args.classes.lower() == "broden":
         from data.constants import BRODEN_CONCEPTS
