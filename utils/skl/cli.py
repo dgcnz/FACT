@@ -67,7 +67,9 @@ class SKLCLI(object):
         self.trainer.test(self.model, self.datamodule, ckpt_path=self.ckpt_path)
 
     def fit_prune_test(self, pruned_concept_class_pairs: list[tuple[int, int]]):
+        print(self.datamodule._datamodule.projector.concept_names[pruned_concept_class_pairs[0][0]])
         self.trainer.fit(self.model, self.datamodule, ckpt_path=self.ckpt_path)
+        self.trainer.test(self.model, self.datamodule, ckpt_path=self.ckpt_path)
         self.model.prune(concept_class_pairs=pruned_concept_class_pairs)
         self.trainer.test(self.model, self.datamodule, ckpt_path=self.ckpt_path)
 

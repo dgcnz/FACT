@@ -1,4 +1,5 @@
 import argparse
+import yaml
 import itertools
 import logging
 import time
@@ -244,11 +245,20 @@ def get_logdir(base_config: str, seeds: list[int]):
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
 
+
+def log_config(args: argparse.Namespace, logdir: Path):
+    with open(logdir / "args.yaml", "w") as f:
+        yaml.dump(args.__dict__, f)
+
+    with open(logdir / "base_config.yaml", "w") as f:
+        yaml.dump(yaml.safe_load(Path(args.base_config).read_text()), f)
+
 def main():
     parser = setup_parser()
     args = parser.parse_args()
     logdir = get_logdir(base_config=args.base_config, seeds=args.seed)
     setup_logging(logdir=logdir, verbose=args.verbose)
+    log_config(args, logdir)
     configs = get_all_configs()
     all_metrics = []
     all_metrics_gain = []
@@ -271,6 +281,7 @@ def main():
         all_metrics,
         all_metrics_gain,
     )
+    logger.info(f"Logged to {logdir}")
 
 
 def log_metrics(

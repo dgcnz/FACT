@@ -4,6 +4,7 @@ import logging
 import time
 from pathlib import Path
 
+import yaml
 import pandas as pd
 
 from experiments.model_editing.main_sk import get_cli
@@ -65,7 +66,7 @@ class SKLScript(object):
             f"{task_name}/seed_{seed}",
         ]
 
-    def _get_extra_args(self, task_name: str,  seed: int) -> list[str]:
+    def _get_extra_args(self, task_name: str, seed: int) -> list[str]:
         """Get seed, logger args."""
         basic_args = ["--seed_everything", str(seed)]
         logger_args = self._get_logger_args(task_name=task_name, seed=seed)
@@ -88,8 +89,8 @@ class SKLScript(object):
         ckpt_path: Path | None = None,
     ) -> SKLCLI:
         config_args = self._get_config_args(config_paths=config_paths)
-        extra_args = self._get_extra_args(task_name=task_name,  seed=seed)
-        args =  config_args + extra_args
+        extra_args = self._get_extra_args(task_name=task_name, seed=seed)
+        args = config_args + extra_args
         if ckpt_path is not None:
             args += ["--ckpt_path", str(ckpt_path)]
         args += ["fit"]
@@ -107,7 +108,7 @@ class SKLScript(object):
         config_args = self._get_config_args(config_paths=config_paths)
         extra_args = self._get_extra_args(task_name=task_name, seed=seed)
         ckpt_args = ["--ckpt_path", str(ckpt_path)]
-        args =  config_args + extra_args + ckpt_args + additional_args
+        args = config_args + extra_args + ckpt_args + additional_args
         args += ["test"]
         logger.info(f"RUNNING: {args}")
         return self._execute(args)
@@ -196,16 +197,16 @@ def train_and_test(base_config: Path, config_folder: Path, seed: int):
             metric_name = name + "_" + k.removeprefix("test_")
             all_metrics.update({metric_name: v})
             if name != "base":
-                all_metrics_gain.update(
-                    {f"{metric_name}_gain": v - base_metrics[k]}
-                )
+                all_metrics_gain.update({f"{metric_name}_gain": v - base_metrics[k]})
     return all_metrics, all_metrics_gain
 
 
 def setup_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--base_config", type=str, default=CONFIG_PATH / "sk_base_resnet18_imagenet1k_v1.yaml"
+        "--base_config",
+        type=str,
+        default=CONFIG_PATH / "sk_base_resnet18_imagenet1k_v1.yaml",
     )
     parser.add_argument("--seed", type=int, nargs="+", default=[42])
     parser.add_argument(
@@ -227,7 +228,7 @@ def get_all_configs():
 
 def get_logdir(base_config: str, seeds: list[int]):
     salt = int(time.time())
-    log_dir =  (
+    log_dir = (
         Path("logs")
         / Path(base_config).stem
         / f"{'-'.join(str(s) for s in seeds)}"
@@ -237,11 +238,20 @@ def get_logdir(base_config: str, seeds: list[int]):
     return log_dir
 
 
+def log_config(args: argparse.Namespace, logdir: Path):
+    with open(logdir / "args.yaml", "w") as f:
+        yaml.dump(args.__dict__, f)
+
+    with open(logdir / "base_config.yaml", "w") as f:
+        yaml.dump(yaml.safe_load(Path(args.base_config).read_text()), f)
+
+
 def main():
     parser = setup_parser()
     args = parser.parse_args()
     logdir = get_logdir(base_config=args.base_config, seeds=args.seed)
     setup_logging(logdir=logdir, verbose=args.verbose)
+    log_config(args, logdir)
     configs = get_all_configs()
     all_metrics = []
     all_metrics_gain = []

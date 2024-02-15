@@ -11,7 +11,8 @@ class SKLTrainer(object):
 
     def __init__(self, logger: SKLLogger | None = None):
         self.logger = logger or SKLTensorBoardLogger()
-        self.text_logger = logging.getLogger()
+        self.text_logger = logging.getLogger("skl")
+        self.text_logger.setLevel(logging.INFO)
 
     def _setup(self, model: SKLModule, datamodule: SKLDataModule, ckpt_path: str | None = None):
         model.setup(logger=self.logger.open())

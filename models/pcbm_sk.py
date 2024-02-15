@@ -31,7 +31,7 @@ class PCBMClassifierSKL(SKLModule):
             max_iter=max_iter,
         )
         self.n_classes = n_classes
-        self.n_concepts = (n_concepts,)
+        self.n_concepts = n_concepts
         self.spurious_class = spurious_class
         self.pruned_concept_class_pairs = pruned_concept_class_pairs
         self.normalize = normalize
@@ -89,7 +89,7 @@ def normalized_prune_np(a: np.ndarray, zeroed_indices: list[int]):
     l1_norm_a = np.sum(np.abs(a))
     l1_norm_b = np.sum(np.abs(b))
 
-    if l1_norm_a != 0:
+    if l1_norm_b != 0:
         scaling_factor = l1_norm_a / l1_norm_b
         b *= scaling_factor
     return b

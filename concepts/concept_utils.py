@@ -69,10 +69,11 @@ class ConceptBank:
 
     @classmethod
     def from_pickle(cls, pickle_path: str, device: str | None = None, sort_by_keys: bool = True):
+        print(f"Loading concept bank from {pickle_path} sorting {sort_by_keys}")
         return cls(ConceptBank._load_pickle(pickle_path, sort_by_keys), device)
     
     @classmethod
-    def _load_pickle(self, pickle_path: str, sort_by_keys: bool = True):
+    def _load_pickle(cls, pickle_path: str, sort_by_keys: bool = True):
         with open(pickle_path, "rb") as f:
             concept_dict: dict = pickle.load(f)
         if sort_by_keys:
