@@ -63,7 +63,7 @@ conda activate PCBM
 
 All datasets will reside on `artifacts/data`. When commiting changes to the repository, please make sure it doesn't get pushed, otherwise it will clog the repo.
 
-If desired, you can run the data downloader scripts in the [main](/notebook/main.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
+If desired, you can run the data downloader scripts in the [main](/notebooks/main.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
 
 ### Broden
 
@@ -93,17 +93,17 @@ If desired, you can run the data downloader scripts in the [main](/notebook/main
 
 ### Derm7pt
 
-Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the Derm7pt dataset.
+Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the Derm7pt dataset.
 
 ### HAM10000
 
-1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the HAM10000 dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_ham
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebooks/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `HAM10K`.
 
@@ -138,13 +138,13 @@ The below downloads are not part of the original experiments and were done as an
 
 ### UrbanSound8K
 
-1. Please refer to the [main](/notebook/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
 2. Run the download script below:
 ```sh
 ./scripts/download_us8k
 ```
 
-(_Note:_ If on Google Colab, you can run the cell in the [main](/notebook/main.ipynb) file after following the instructions there.)
+(_Note:_ If on Google Colab, you can run the cell in the [main](/notebooks/main.ipynb) file after following the instructions there.)
 
 3. You will find the downloaded data in `US8K`.
 
@@ -166,9 +166,9 @@ Please see `models/model_zoo.py` for the backbones used. Some of the original mo
 Any additional models can be added by editing `models/model_zoo.py`.
 
 # Replicating the Original Results
-To replicate the original results, we have prepared a function where all the datasets can be evaluated using the parameters specified by the authors. This can be found [here](/notebook/main.ipynb).
+To replicate the original results, we have prepared a function where all the datasets can be evaluated using the parameters specified by the authors. This can be found [here](/notebooks/main.ipynb).
 
-**Please Note:** For some scripts (outlined in the above notebook), you may need to add this code snippet before the `python` command itself: `PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1`. This is due to how the repository is setup. Alternatively, you could install the AudioCLIP dependencies (the instructions for which can be found above) if you don't want to include this for some scripts.
+**Please Note:** For some scripts (outlined in the above notebooks), you may need to add this code snippet before the `python` command itself: `PYTHONPATH=models:.:$PYTHONPATH NO_AUDIOCLIP=1`. This is due to how the repository is setup. Alternatively, you could install the AudioCLIP dependencies (the instructions for which can be found above) if you don't want to include this for some scripts.
 
 # Learning Concepts
 In the original paper, two different ways to learn concepts activations vectors were proposed to build concepts banks which are used here. 
@@ -192,7 +192,7 @@ python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:
 
 ```
 
-Alternatively, you can run example experiments in the [main](/notebook/main.ipynb) file.
+Alternatively, you can run example experiments in the [main](/notebooks/main.ipynb) file.
 
 **Limitations**: 
 1. This approach relies on the existence of a concept dataset. These may be hard to get, depending on the application. 
