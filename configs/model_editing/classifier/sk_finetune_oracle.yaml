@@ -1,0 +1,5 @@
+data:
+  train_on_test: True
+  holdout_size: 0.2
+model:
+  max_iter: 1000

@@ -119,7 +119,7 @@ def train_and_test(base_config: Path, config_folder: Path, seed: int):
     base_config_path = config_folder / "base.yaml"
     prune_config_path = config_folder / "prune.yaml"
     # TODO: Finetune
-    # finetune_config_path = config_folder.parent / "finetune_oracle.yaml"
+    finetune_config_path = config_folder.parent / "sk_finetune_oracle.yaml"
     task_name = config_folder.stem
 
     configs = [base_config, base_config_path]
@@ -164,25 +164,25 @@ def train_and_test(base_config: Path, config_folder: Path, seed: int):
 
     pruned_normalize_metrics = run.trainer.logger.metrics.copy()
 
-    # logger.info(f"Finetuning {task_name}")
+    logger.info(f"Finetuning {task_name}")
 
-    # run = script.fit(
-    #     task_name=task_name,
-    #     config_paths=configs + [finetune_config_path],
-    #     seed=seed,
-    #     ckpt_path=ckpt_path,
-    # )
-    # finetuned_ckpt_path = Path(run.trainer.best_model_path) # TODO
+    run = script.fit(
+        task_name=task_name,
+        config_paths=configs + [finetune_config_path],
+        seed=seed,
+        ckpt_path=ckpt_path,
+    )
+    finetuned_ckpt_path = Path(run.trainer.best_model_path) # TODO
 
-    # logger.info(f"Test finetuning {task_name}")
+    logger.info(f"Test finetuning {task_name}")
 
-    # run = script.test(
-    #     task_name=task_name,
-    #     config_paths=configs,
-    #     seed=seed,
-    #     ckpt_path=finetuned_ckpt_path,
-    # )
-    # finetuned_test_metrics = run.trainer.logger.metrics.copy()
+    run = script.test(
+        task_name=task_name,
+        config_paths=configs,
+        seed=seed,
+        ckpt_path=finetuned_ckpt_path,
+    )
+    finetuned_test_metrics = run.trainer.logger.metrics.copy()
 
     all_metrics = {"task_name": task_name}
     all_metrics_gain = {"task_name": task_name}
@@ -190,7 +190,7 @@ def train_and_test(base_config: Path, config_folder: Path, seed: int):
         ("base", base_metrics),
         ("pruned", pruned_metrics),
         ("pruned_normalize", pruned_normalize_metrics),
-        # ("finetuned", finetuned_test_metrics),
+        ("finetuned", finetuned_test_metrics),
     ]:
         for k, v in metrics.items():
             # strip prefix test_ from keys and add prefix name_
