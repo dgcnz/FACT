@@ -3,8 +3,7 @@ import torch
 import os
 import pandas as pd
 
-
-def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
+def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwargs):
     # note: target is only needed for COCO-Stuff due to the 20 datasets involved
     if args.dataset.lower() == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
@@ -32,6 +31,30 @@ def get_dataset(args, preprocess=None, shuffle=True, **kwargs):
                                                    shuffle=shuffle, num_workers=args.num_workers)
         test_loader  = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                                    shuffle=False, num_workers=args.num_workers)
+        if single_image == True:
+            target_class_name = args.targetclass
+    
+            #first select a specific occurence of an image from the wanted class
+            target_occurrence = 4  # Change this to change which image from the class is shown
+
+
+            iterator = ((idx, (img, label_idx)) for idx, (img, label_idx) in enumerate(trainset) if classes[label_idx] == target_class_name)
+
+
+            for _ in range(target_occurrence):
+                index, _ = next(iterator)
+
+            
+            # the get the label and processed + non processed images from the datasets.
+            processed_img, label_idx = trainset[index]
+
+
+            img, label = datasets.CIFAR100(root=args.out_dir, train=True, download=False, transform=None)[index]
+
+
+            class_name = classes[label_idx]
+
+            return (processed_img, label_idx), (img, label), class_name
 
 
     elif args.dataset.lower() == "cub":

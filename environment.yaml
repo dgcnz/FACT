@@ -1,4 +1,4 @@
-name: fact
+name: PCBM
 channels:
   - defaults
   - pytorch

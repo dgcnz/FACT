@@ -10,10 +10,8 @@ The example notebook has everything you need to start testing the code, give it 
 
 1. Go to Google Colab
 2. In the `Open Notebook` tab, select GitHub
-3. Select the repository `dgcnz/FACT` (remove when anonymizing)
+3. Select the repository 
 4. Select the notebook `notebooks/example.ipynb`
-
-![Open Github Notebook in Colab](docs/figures/colab_github.png)
 
 If you choose to test on your local computer, then follow the instructions below.
 
@@ -58,7 +56,7 @@ conda env create -f environment.yaml
 ```
 2. Activate environment
 ```sh
-conda activate fact
+conda activate PCBM
 ```
 
 ## Downloading datasets
@@ -253,9 +251,9 @@ For replicating the results of the user study, [please see this notebook](/noteb
 If you find this code useful, please consider citing our paper (not out yet unfortunately):
 ```
 @inproceedings{
-midavaine2024posthoc,
+xxx2024posthoc,
 title={On the Reproductibility of Post-hoc Concept Bottleneck Models},
-author={Nesta Midavaine and Gregory Go and Diego Cánez Ildefonso and Ioana Simion},
+author={xxx},
 booktitle={None},
 year={2024}
 }
