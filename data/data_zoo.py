@@ -134,7 +134,7 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
         from torch.utils.data import Dataset, DataLoader
         from torchvision import transforms
         task_name = args.dataset[len("metashift_"):]
-        dataset = load_dataset("fact-40/pcbm_metashift", name=task_name)#, use_auth_token=args.token)
+        dataset = load_dataset("anonymous347928/pcbm_metashift", name=task_name)#, use_auth_token=args.token)
 
         transform = transforms.Compose([
             # transforms.Grayscale(num_output_channels=3),
@@ -169,7 +169,7 @@ def get_dataset(args, preprocess=None, shuffle=True, single_image = False, **kwa
         from torch.utils.data import Dataset, DataLoader
         from torchvision import transforms
 
-        dataset = load_dataset("fact-40/pcbm_survey", name= args.dataset, use_auth_token=args.token)
+        dataset = load_dataset("anonymous347928/pcbm_survey", name= args.dataset, use_auth_token=args.token)
 
         transform = transforms.Compose([
           #we have some grayscale images, convert them to RGB

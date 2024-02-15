@@ -2,7 +2,7 @@ Remove branch names when anonymizing
 
 # Reproducing Post-hoc Concept Bottleneck Models
 
-This is the main repo for the reproduction code of PCBMs. The data preprocessing pipeline and partitioned datasets for Metashift, Metashift Survey, COCO-Stuff and SIIM ISIC can be found in [HuggingFace](https://huggingface.co/fact-40).
+This is the main repo for the reproduction code of PCBMs. The data preprocessing pipeline and partitioned datasets for Metashift, Metashift Survey, COCO-Stuff and SIIM ISIC can be found in [HuggingFace](https://huggingface.co/anonymous347928).
 
 ## Running the example notebook in Google Colab
 
@@ -158,7 +158,7 @@ This script will download the dependencies for AudioCLIP, as the original reposi
 ```sh
 ./scripts/download_audioclip
 ```
-2. Instead of in `artifacts/data`, You will find the downloaded data in `FACT/models/AudioCLIP/assets`.
+2. Instead of in `artifacts/data`, You will find the downloaded data in `Anonymous/models/AudioCLIP/assets`.
 
 
 ## Downloading the Backbones

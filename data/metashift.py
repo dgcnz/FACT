@@ -97,7 +97,7 @@ class MetaShiftDataModule(L.LightningDataModule):
         self.test_batch_size = test_batch_size
         self.projector = projector
         self.preprocessor = PREPROCESSORS[preprocessor_name]
-        self.dataset_name = "fact-40/pcbm_metashift"
+        self.dataset_name = "anonymous347928/pcbm_metashift"
         self.cache_dir = Path(".cache")
         self.logger = logging.getLogger()
         self.train_on_test = train_on_test
@@ -216,7 +216,7 @@ class MetaShiftDataModuleV2(L.LightningDataModule):
         self.test_batch_size = test_batch_size
         self.backbone_name = backbone_name
         self.backbone, self.preprocess = BACKBONES[self.backbone_name]()
-        self.dataset_name = "fact-40/pcbm_metashift"
+        self.dataset_name = "anonymous347928/pcbm_metashift"
         self.cache_dir = Path(".cache")
         self.logger = logging.getLogger()
         self.train_on_test = train_on_test
