@@ -3,7 +3,7 @@
 # download data
 
 curl -X GET \
-"https://huggingface.co/datasets/fact-40/pcbm-coco-stuff/resolve/main/data.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/COCO_STUFF.zip
+"https://huggingface.co/datasets/anonymous347928/pcbm-coco-stuff/resolve/main/data.zip?download=true" |  grep -Eo "(http|https)://.*" | xargs curl --output artifacts/data/COCO_STUFF.zip
 
 # extract data
 
