@@ -11,7 +11,7 @@ The example notebook has everything you need to start testing the code, give it 
 1. Go to Google Colab
 2. In the `Open Notebook` tab, select GitHub
 3. Select the repository 
-4. Select the notebook `notebooks/example.ipynb`
+4. Select the notebook `notebooks/main.ipynb`
 
 If you choose to test on your local computer, then follow the instructions below.
 
