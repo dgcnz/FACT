@@ -1,5 +1,5 @@
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score
 import numpy as np
 from utils.skl.module import SKLModule
 from skops.io import dump, load
@@ -51,6 +51,13 @@ class PCBMClassifierSKL(SKLModule):
     def setup_metrics(self):
         self.train_accuracy = accuracy_score
         self.test_accuracy = accuracy_score
+        if self.spurious_class is not None:
+            self.spurious_precision = lambda ys, yps: precision_score(
+                ys, yps, average=None
+            )[self.spurious_class]
+            self.spurious_recall = lambda ys, yps: recall_score(ys, yps, average=None)[
+                self.spurious_class
+            ]
 
     def fit(self, xs: np.ndarray, ys: np.ndarray):
         self.classifier.fit(xs, ys)
@@ -60,6 +67,9 @@ class PCBMClassifierSKL(SKLModule):
     def test(self, xs: np.ndarray, ys: np.ndarray):
         yps = self.classifier.predict(xs)
         self.log("test_accuracy", self.test_accuracy(ys, yps))
+        if self.spurious_class is not None:
+            self.log("test_spurious_class_precision", self.spurious_precision(ys, yps))
+            self.log("test_spurious_class_recall", self.spurious_recall(ys, yps))
 
     def prune(self, concept_class_pairs: list[tuple[int, int]]):
         for concept_ix, class_ix in concept_class_pairs:
