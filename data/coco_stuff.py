@@ -18,41 +18,50 @@ class COCODataset(Dataset):
         """
         self.data = datalist
         self.transform = transform
-        self.num_classes = 2 # By default these datasets are always for binary classification
+        self.num_classes = (
+            2  # By default these datasets are always for binary classification
+        )
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         img_data = self.data[idx]
-        #print(img_data[0])
-        fixed_path = re.sub(r'\\', '/', img_data[0])
+        fixed_path = re.sub(r"\\", "/", img_data[0])
         img_path = os.path.join(COCO_STUFF_DIR, fixed_path)
-        #print("Generated image path:", img_path)
-        img = Image.open(img_path).convert('RGB')
+        img = Image.open(img_path).convert("RGB")
         class_label = img_data[1]
         if self.transform:
             img = self.transform(img)
 
         return img, class_label
 
+
 # function for converting 'coco_target_indexes.txt" to a dict for binary classification
-def cid_to_class(pathtxt, target_labs, target_idx): # "cid = COCO ID"
+def cid_to_class(pathtxt, target_labs, target_idx):  # "cid = COCO ID"
     labeldict = {}
     with open(pathtxt) as f:
         for line in f.readlines():
             label, idx = line.strip("\n").split(": ")
             if (label in target_labs) or (target_labs is None):
                 if int(idx) == target_idx:
-                   labeldict[1] = label
+                    labeldict[1] = label
                 else:
-                   labeldict[0] = 'other'
+                    labeldict[0] = "other"
 
     return labeldict
 
 
-def load_coco_data(train_dir, test_dir, target:int, n_train:int=500, n_test:int=250,
-                   transform=None, batch_size:int=1, seed:int=42):
+def load_coco_data(
+    train_dir,
+    test_dir,
+    target: int,
+    n_train: int = 500,
+    n_test: int = 250,
+    transform=None,
+    batch_size: int = 1,
+    seed: int = 42,
+):
     """
     Arguments:
     train_dir: directory of the corresponding training annotation file
@@ -77,11 +86,13 @@ def load_coco_data(train_dir, test_dir, target:int, n_train:int=500, n_test:int=
     data_ts = json.load(f_ts)
 
     # even split between training and test data
-    assert (n_train % 2 == 0), "Amount of training samples is odd. Please use an even number!"
-    assert (n_test % 2 == 0), "Amount of test samples is odd. Please use an even number!"
+    assert (
+        n_train % 2 == 0
+    ), "Amount of training samples is odd. Please use an even number!"
+    assert n_test % 2 == 0, "Amount of test samples is odd. Please use an even number!"
     n_htr = n_train // 2
     n_hts = n_test // 2
-        
+
     # select images based on whether not the image has a segmentation of the target object
     pos_train_data = []
     neg_train_data = []
@@ -110,8 +121,12 @@ def load_coco_data(train_dir, test_dir, target:int, n_train:int=500, n_test:int=
     pos_sample_ts = np.random.choice(pos_test_data, size=n_hts, replace=replace_pos)
     neg_sample_ts = np.random.choice(neg_test_data, size=n_hts, replace=replace_neg)
 
-    train_data = [[pos_sample_tr[idx], 1] for idx in range(n_htr)] + [[neg_sample_tr[idx], 0] for idx in range(n_htr)]
-    test_data  = [[pos_sample_ts[idx], 1] for idx in range(n_hts)] + [[neg_sample_ts[idx], 0] for idx in range(n_hts)]
+    train_data = [[pos_sample_tr[idx], 1] for idx in range(n_htr)] + [
+        [neg_sample_tr[idx], 0] for idx in range(n_htr)
+    ]
+    test_data = [[pos_sample_ts[idx], 1] for idx in range(n_hts)] + [
+        [neg_sample_ts[idx], 0] for idx in range(n_hts)
+    ]
 
     train = COCODataset(train_data, transform)
     test = COCODataset(test_data, transform)
@@ -133,6 +148,6 @@ if __name__ == "__main__":
     train_coco, test_coco = load_coco_data(ltr_path, lts_path, target=41)
 
     # first_x, first_y = next(iter(test_coco))
-    
+
     # print(first_x)
     # print(first_y)

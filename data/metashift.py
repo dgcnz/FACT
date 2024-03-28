@@ -1,13 +1,13 @@
-import lightning as L
-from torchvision import transforms
-import logging
 import clip
+import torch
+import datasets
+import lightning as L
+import logging
+from torchvision import transforms
 from PIL import Image
 from enum import Enum
-import torch
 from typing import Callable
 from torch.utils.data import DataLoader
-import datasets
 from pathlib import Path
 from concepts.concept_utils import ConceptBank
 from models.clip_encoder import CLIPImageEncoder

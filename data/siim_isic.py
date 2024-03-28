@@ -7,6 +7,7 @@ from PIL import Image
 from torchvision import transforms
 from .constants import SIIM_DATA_DIR
 
+
 class ISICDataset(Dataset):
 
     def __init__(self, datalist, transform=None, cropsize=(480, 640)):
@@ -29,7 +30,7 @@ class ISICDataset(Dataset):
 
         img_data = self.data[idx]
         img_path = img_data[0]
-        img = Image.open(img_path).convert('RGB')
+        img = Image.open(img_path).convert("RGB")
         img = transforms.CenterCrop(self.cropsize)(img)
         img = transforms.ToTensor()(img)
 
@@ -39,8 +40,9 @@ class ISICDataset(Dataset):
 
         return img, class_label
 
+
 # Function for preparing the data from the data (2500 in total which have been pre-selected: 80% benign, 20% malignant)
-def prepare_data(df, ratio:float=0.2, seed:int=42):
+def prepare_data(df, ratio: float = 0.2, seed: int = 42):
     """
     Arguments:
     df: Pandas dataframe object
@@ -50,18 +52,25 @@ def prepare_data(df, ratio:float=0.2, seed:int=42):
     Outputs:
     train_data, test_data: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    datalist = [list(df['file_name']), list(df['target'])] # PyTorch data list in the format of '[[img_paths], [img_labels]]'
-    X_train, X_test, y_train, y_test = train_test_split(datalist[0], datalist[1], 
-                                                        stratify=datalist[1], test_size=ratio, 
-                                                        random_state=seed)
-    
+    datalist = [
+        list(df["file_name"]),
+        list(df["target"]),
+    ]  # PyTorch data list in the format of '[[img_paths], [img_labels]]'
+    X_train, X_test, y_train, y_test = train_test_split(
+        datalist[0],
+        datalist[1],
+        stratify=datalist[1],
+        test_size=ratio,
+        random_state=seed,
+    )
+
     train_data = [[X_train[idx], y_train[idx]] for idx in range(len(X_train))]
     test_data = [[X_test[idx], y_test[idx]] for idx in range(len(X_test))]
 
     return train_data, test_data
 
 
-def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
+def load_siim_data(meta_dir, transform=None, batch_size: int = 1, seed: int = 42):
     """
     Arguments:
     meta_dir: path to CSV file containing all metadata
@@ -72,10 +81,10 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[img_path1, img_label1], [img_path2, img_label2], ...]'
     """
-    df = pd.read_csv(meta_dir)[['file_name', 'target']]
-    df['file_name'] = df['file_name'].apply(lambda x: os.path.basename(x))
+    df = pd.read_csv(meta_dir)[["file_name", "target"]]
+    df["file_name"] = df["file_name"].apply(lambda x: os.path.basename(x))
 
-    df['file_name'] = SIIM_DATA_DIR + "/" + df['file_name']
+    df["file_name"] = SIIM_DATA_DIR + "/" + df["file_name"]
     train_data, test_data = prepare_data(df, seed)
 
     train_data = ISICDataset(train_data, transform)
@@ -86,6 +95,7 @@ def load_siim_data(meta_dir, transform=None, batch_size:int=1, seed:int=42):
 
     return train_loader, test_loader
 
+
 # For testing:
 if __name__ == "__main__":
 
@@ -93,7 +103,6 @@ if __name__ == "__main__":
     train_siim, test_siim = load_siim_data(meta_path)
 
     first_x, first_y = next(iter(train_siim))
-    
+
     print(first_x)
     print(first_y)
-    
