@@ -200,7 +200,7 @@ def get_data(df, data: str = "train", n_data_points: int = 50):
 
     data_path = os.path.join(AS_DIR, f"{data}_data_{n_data_points}.csv")
     if os.path.exists(data_path):
-        datalist = pd.read_csv(data_path).tolist()
+        datalist = pd.read_csv(data_path).values.tolist()
 
     else:
         datalist = download_data(df, data, n_data_points)
