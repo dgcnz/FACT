@@ -17,7 +17,7 @@ class AudioSetDataset(Dataset):
     def __init__(self, datalist, transform=None, sample_rate: int = 44100):
         """
         Arguments:
-        datalist: a list object instance returned by 'load_esc_data' function below
+        datalist: a list object instance returned by 'load_aud_data' function below
         transform: whether to apply any special transformation. Default = None
         sample_rate: the sampling rate of the audio data loaded (default is general standard)
         """
