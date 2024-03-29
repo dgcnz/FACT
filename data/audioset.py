@@ -9,7 +9,7 @@ from re import sub
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-from constants import AS_DIR, AS_TRAIN_IDX, AS_EVAL_IDX
+from .constants import AS_DIR, AS_TRAIN_IDX, AS_EVAL_IDX
 
 
 class AudioSetDataset(Dataset):
