@@ -126,7 +126,29 @@ Please refer to the [main](/notebooks/main.ipynb) file for instructions regardin
 
 ## Extension Experiment Downloads
 
-The below downloads are not part of the original experiments and were done as an extension to the original paper. They amount to around 8 GB in total.
+The below downloads are not part of the original experiments and were done as an extension to the original paper. They amount to around 33 GB in total (with around 26 GB stemming from the AudioSet data).
+
+1. Go [here](https://github.com/yt-dlp/FFmpeg-Builds?tab=readme-ov-file#patches-applied) and download the file corresponding to your device (link is present in the `README`).
+2. Follow the instructions listed [here](https://www.hostinger.com/tutorials/how-to-install-ffmpeg). You can ignore/adjust all the steps related to downloading the file.
+3. Restart your device.
+
+
+### ESC-50
+
+1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the AudioSet dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+2. Run the download script below:
+```sh
+./scripts/download_esc
+```
+3. You will find the downloaded data in `ESC_50`.
+
+### UrbanSound8K
+
+1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+2. Run the download script below:
+```sh
+./scripts/download_us8k
+```
 
 ### AudioSet
 
@@ -136,28 +158,8 @@ The below downloads are not part of the original experiments and were done as an
 ```
 2. You will find the downloaded data in `audioset`.
 
-**Important Note:** This will only download the `.csv` files. For the actual audio files, you would also need to have `ffmpeg` installed on your device in order to run the YouTube downloader script. This is how you can do so:
+**Important Note:** This will only download the `.csv` files and the audio files for validation. For the other audio files, you would also need to have `ffmpeg` installed on your device in order to run the YouTube downloader script. This is how you can do so:
 
-1. Go [here](https://github.com/yt-dlp/FFmpeg-Builds?tab=readme-ov-file#patches-applied) and download the file corresponding to your device (link is present in the `README`).
-2. Follow the instructions listed [here](https://www.hostinger.com/tutorials/how-to-install-ffmpeg). You can ignore/adjust all the steps related to downloading the file.
-3. Restart your device.
-
-
-### ESC-50
-
-1. Run the download script below:
-```sh
-./scripts/download_esc
-```
-2. You will find the downloaded data in `ESC_50`.
-
-### UrbanSound8K
-
-1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the UrbanSound8K dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
-2. Run the download script below:
-```sh
-./scripts/download_us8k
-```
 
 (_Note:_ If on Google Colab, you can run the cell in the [main](/notebooks/main.ipynb) file after following the instructions there.)
 
