@@ -29,7 +29,7 @@ class CLIPAudioEncoder(torch.nn.Module):
         if pretrained == True:
             filedir = os.path.abspath(__file__)
             filedir = os.path.dirname(filedir)
-            pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
+            pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt") #FLAG #TODO 
             model = AudioCLIP(pretrained=pt_path)
         
         else:

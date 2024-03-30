@@ -85,7 +85,7 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
         pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
         
         # loading the model and transforms (only audio is used)
-        backbone = AudioCLIP(pretrained=pt_path)
+        backbone = AudioCLIP(pretrained=pt_path, multilabel=False)
         backbone.eval()
         preprocess = transforms.Compose([
                         ToTensor1D()
