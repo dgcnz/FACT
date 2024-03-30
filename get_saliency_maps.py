@@ -1,14 +1,12 @@
 import argparse
 import os
 import pickle
-from typing import Literal
 import copy
-
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 from PIL import Image
-
+from typing import Literal
 from concepts import ConceptBank
 from data import get_dataset
 from models import SaliencyModel, get_model
@@ -66,8 +64,6 @@ def saliencyv2(
     input: preprocessed image
     model: torch.nn.Module
     """
-    
-
 
     for param in model.parameters():
         param.requires_grad = False
@@ -79,15 +75,15 @@ def saliencyv2(
 
     input.requires_grad = True
 
-    
-
     if method == "vanilla":
         vanilla_grad = VanillaGrad(pretrained_model=model, cuda=True)
         vanilla_saliency = vanilla_grad(input, index=concept_ix)
-        img = save_as_gray_image(vanilla_saliency, os.path.join(out_dir, "vanilla_grad.jpg"))
+        img = save_as_gray_image(
+            vanilla_saliency, os.path.join(out_dir, "vanilla_grad.jpg")
+        )
         return img
     elif method == "smoothgrad":
-        N_SAMPLES_SMOOTHGRAD: int = 25#25
+        N_SAMPLES_SMOOTHGRAD: int = 25  # 25
         smooth_grad = SmoothGrad(
             pretrained_model=model,
             cuda=True,
@@ -95,8 +91,10 @@ def saliencyv2(
             magnitude=True,
         )
         smooth_saliency = smooth_grad(input, index=concept_ix)
-        img = save_as_gray_image(smooth_saliency, os.path.join(out_dir, "smooth_grad.jpg"))
-        
+        img = save_as_gray_image(
+            smooth_saliency, os.path.join(out_dir, "smooth_grad.jpg")
+        )
+
         print("Saved smooth gradient image")
         return img
     else:
@@ -130,30 +128,35 @@ def saliency(input_img, input, model, out_dir):
 
     return slc.cpu().numpy()
 
+
 def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
     plt.figure(figsize=(15, 5))
-    plt.subplot(2, len(concept_names1)+1, 1)
+    plt.subplot(2, len(concept_names1) + 1, 1)
     # plt.imshow(np.transpose(input_img.numpy(), (1, 2, 0)))\
     plt.imshow(img)
-    plt.title('Input image')
+    plt.title("Input image")
     plt.xticks([])
     plt.yticks([])
 
     for i in range(len(concept_names1)):
-        plt.subplot(2, len(concept_names1)+1, i + 2)
+        plt.subplot(2, len(concept_names1) + 1, i + 2)
         if i == 0:
-            plt.ylabel('CLIP concepts')
+            plt.ylabel("CLIP concepts")
         plt.title(concept_names1[i])
-        plt.imshow(maps1[i], cmap=plt.cm.hot, norm = PowerNorm(gamma=0.6, vmin=0.5)) #maybe I should make this greyscale instead idk 
+        plt.imshow(
+            maps1[i], cmap=plt.cm.hot, norm=PowerNorm(gamma=0.6, vmin=0.5)
+        )  # maybe I should make this greyscale instead idk
         plt.xticks([])
         plt.yticks([])
 
     for i in range(len(concept_names1)):
-        plt.subplot(2, len(concept_names1)+1, len(concept_names1) + i + 3)
+        plt.subplot(2, len(concept_names1) + 1, len(concept_names1) + i + 3)
         if i == 0:
-            plt.ylabel('CAV concepts')
+            plt.ylabel("CAV concepts")
         plt.title(concept_names2[i])
-        plt.imshow(maps2[i], cmap=plt.cm.hot, norm = PowerNorm(gamma=0.6, vmin=0.5)) #maybe I should make this greyscale instead idk 
+        plt.imshow(
+            maps2[i], cmap=plt.cm.hot, norm=PowerNorm(gamma=0.6, vmin=0.5)
+        )  # maybe I should make this greyscale instead idk
         plt.xticks([])
         plt.yticks([])
 
@@ -162,11 +165,10 @@ def plot_maps(img, maps1, maps2, concept_names1, concept_names2):
     print(f"figure save in {args.out_dir}/saliency.png")
 
 
-
 if __name__ == "__main__":
     args = config()
 
-    #get concepts for the first concept bank
+    # get concepts for the first concept bank
     all_concepts1 = pickle.load(open(args.concept_bank1, "rb"))
     all_concept_names1 = list(all_concepts1.keys())
     print(
@@ -174,7 +176,7 @@ if __name__ == "__main__":
     )
     concept_bank1 = ConceptBank(all_concepts1, args.device)
 
-    #get concepts for the second concept bank
+    # get concepts for the second concept bank
     all_concepts2 = pickle.load(open(args.concept_bank2, "rb"))
     all_concept_names2 = list(all_concepts2.keys())
     print(
@@ -182,19 +184,16 @@ if __name__ == "__main__":
     )
     concept_bank2 = ConceptBank(all_concepts2, args.device)
 
-
     # Get the backbone from the model zoo.
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
     backbone = backbone.to(args.device)
     # initialize the saliency model
-    
 
     (input, label), (input_img, input_label), class_name = get_dataset(
         args, preprocess, single_image=True
     )
 
     input = input.to(args.device)
-    
 
     print(input)
     print(input_img)
@@ -202,11 +201,11 @@ if __name__ == "__main__":
     print("which is class_name", class_name)
     # get a single preprocessed and non-preprossed image from the dataloader
     if args.img_path is not None:
-      input_img = Image.open(args.img_path).convert('RGB')
-      input = preprocess(input_img)
-      input.to(args.device)
+        input_img = Image.open(args.img_path).convert("RGB")
+        input = preprocess(input_img)
+        input.to(args.device)
 
-    '''
+    """
     saliency_model = SaliencyModel(
                 concept_bank=concept_bank,
                 backbone=backbone,
@@ -216,57 +215,61 @@ if __name__ == "__main__":
 
     saliency(input_img, input, saliency_model, args.out_dir)
     
-    '''
+    """
     maps1 = []
     maps2 = []
 
     for concept_name1, concept_name2 in zip(args.concept_names1, args.concept_names2):
-        # get the map for both the first concept bank 
+        # get the map for both the first concept bank
         saliency_model1 = SaliencyModel(
-                concept_bank=concept_bank1,
-                backbone=backbone,
-                backbone_name=args.backbone_name,
-                concept_names=[concept_name1],
-            )
-        
+            concept_bank=concept_bank1,
+            backbone=backbone,
+            backbone_name=args.backbone_name,
+            concept_names=[concept_name1],
+        )
+
         saliency_model1 = saliency_model1.to(args.device)
 
-        #second bank 
+        # second bank
         saliency_model2 = SaliencyModel(
-                concept_bank=concept_bank2,
-                backbone=backbone,
-                backbone_name=args.backbone_name,
-                concept_names=[concept_name2],
-            )
-        
+            concept_bank=concept_bank2,
+            backbone=backbone,
+            backbone_name=args.backbone_name,
+            concept_names=[concept_name2],
+        )
+
         saliency_model2 = saliency_model2.to(args.device)
 
-        if args.method in ['smoothgrad', 'vanilla']:
+        if args.method in ["smoothgrad", "vanilla"]:
 
             map1 = saliencyv2(
-                    input_img,
-                    input,
-                    saliency_model1,
-                    args.out_dir,
-                    concept_ix=args.concept_ix,
-                    method=args.method,
-                )
-            
+                input_img,
+                input,
+                saliency_model1,
+                args.out_dir,
+                concept_ix=args.concept_ix,
+                method=args.method,
+            )
+
             map2 = saliencyv2(
-                    input_img,
-                    input,
-                    saliency_model2,
-                    args.out_dir,
-                    concept_ix=args.concept_ix,
-                    method=args.method,
-                )
+                input_img,
+                input,
+                saliency_model2,
+                args.out_dir,
+                concept_ix=args.concept_ix,
+                method=args.method,
+            )
         else:
             map1 = saliency(input_img, copy.copy(input), saliency_model1, args.out_dir)
             map2 = saliency(input_img, copy.copy(input), saliency_model2, args.out_dir)
 
-        
         maps1.append(map1)
         maps2.append(map2)
-    
-    plot_maps(img = input_img, maps1 = maps1, maps2 = maps2, concept_names1=args.concept_names1, concept_names2 = args.concept_names2)
-    
+
+    plot_maps(
+        img=input_img,
+        maps1=maps1,
+        maps2=maps2,
+        concept_names1=args.concept_names1,
+        concept_names2=args.concept_names2,
+    )

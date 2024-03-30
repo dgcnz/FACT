@@ -10,7 +10,9 @@ from .constants import US_DIR
 
 class US8KDataset(Dataset):
 
-    def __init__(self, datalist, transform=None, sample_rate:int=44100, max_len:int=176400):
+    def __init__(
+        self, datalist, transform=None, sample_rate: int = 44100, max_len: int = 176400
+    ):
         """
         Arguments:
         datalist: a list object instance returned by 'load_esc_data' function below
@@ -41,15 +43,16 @@ class US8KDataset(Dataset):
         class_label = audio_data[1]
         if self.transform:
             audio = self.transform(audio)
-        
+
         delta = [0, self.max_len - audio.size(dim=-1)]
         audio = pad(audio, delta)
 
         return audio, class_label
 
+
 # Function for preparing the data from the data (2000 files split following the author's recommendations for one split)
 # Here, folds 1-4 are used for training while fold 5 is used for test by default
-def prepare_data(df, testfolds:list=[9, 10]):
+def prepare_data(df, testfolds: list = [9, 10]):
     """
     Arguments:
     df: Pandas dataframe object
@@ -61,8 +64,8 @@ def prepare_data(df, testfolds:list=[9, 10]):
     train_df = df[-df["fold"].isin(testfolds)]
     test_df = df[df["fold"].isin(testfolds)]
 
-    X_train, y_train = list(train_df['filename']), list(train_df['classID'])
-    X_test, y_test = list(test_df['filename']), list(test_df['classID'])
+    X_train, y_train = list(train_df["filename"]), list(train_df["classID"])
+    X_test, y_test = list(test_df["filename"]), list(test_df["classID"])
 
     train_data = [[X_train[idx], y_train[idx]] for idx in range(len(X_train))]
     test_data = [[X_test[idx], y_test[idx]] for idx in range(len(X_test))]
@@ -70,7 +73,13 @@ def prepare_data(df, testfolds:list=[9, 10]):
     return train_data, test_data
 
 
-def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 10], num_workers:int=4):
+def load_us_data(
+    meta_dir,
+    transform=None,
+    batch_size: int = 1,
+    testfolds: list = [9, 10],
+    num_workers: int = 4,
+):
     """
     Arguments:
     meta_dir: path to CSV file containing all metadata
@@ -82,18 +91,21 @@ def load_us_data(meta_dir, transform=None, batch_size:int=1, testfolds:list=[9, 
     Outputs:
     train_loader, test_loader: Lists in the form of a PyTorch datalist; '[[audio_path1, audio_label1], [audio_path2, audio_label2], ...]'
     """
-    df = pd.read_csv(meta_dir).drop(['fsID', 'start', 'end', 'salience'], axis=1)
+    df = pd.read_csv(meta_dir).drop(["fsID", "start", "end", "salience"], axis=1)
     train_dir = os.path.join(US_DIR, "fold")
-    df['filename'] = train_dir + df['fold'].astype(str) + "/" + df['slice_file_name']
+    df["filename"] = train_dir + df["fold"].astype(str) + "/" + df["slice_file_name"]
     train_data, test_data = prepare_data(df, testfolds)
 
     train_data = US8KDataset(train_data, transform)
     test_data = US8KDataset(test_data, transform)
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
+    train_loader = DataLoader(
+        train_data, batch_size=batch_size, num_workers=num_workers
+    )
     test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)
 
     return train_loader, test_loader
+
 
 # For testing:
 if __name__ == "__main__":
@@ -102,7 +114,6 @@ if __name__ == "__main__":
     train_esc, test_esc = load_us_data(meta_path)
 
     first_x, first_y = next(iter(train_esc))
-    
+
     print(first_x.size())
     print(first_y)
-    

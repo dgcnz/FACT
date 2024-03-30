@@ -1,0 +1,21 @@
+#! /bin/bash
+
+# create output folders
+mkdir -p artifacts/data/audioset
+destination_dir="artifacts/data"
+
+# download data
+
+curl http://storage.googleapis.com/us_audioset/youtube_corpus/v1/csv/class_labels_indices.csv --output artifacts/data/audioset/class_labels_indices.csv
+curl http://storage.googleapis.com/us_audioset/youtube_corpus/v1/csv/balanced_train_segments.csv --output artifacts/data/audioset/balanced_train_segments.csv
+
+kaggle datasets download -d zfturbo/audioset-valid --path "artifacts/data"
+
+# extract data
+
+unzip "artifacts/data/archive.zip" -d "artifacts/data/audioset"
+
+# renaming the folder/filenames for consistency
+
+mv "artifacts/data/audioset/valid_wav" "artifacts/data/audioset/valid"
+mv "artifacts/data/audioset/valid.csv" "artifacts/data/audioset/eval_segments.csv"

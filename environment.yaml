@@ -21,7 +21,8 @@ dependencies:
   - matplotlib=3.8.2
   - pytorch-lightning=2.1.3
 
-  # extra AudioCLIP dependencies
+  # extra Audio dependencies
+  - yt-dlp=2024.3.22.232703.dev0 # Only for if you want to download extra AudioSet data
   - librosa=0.10.1
   - termcolor=2.4.0
   - visdom=0.2.4

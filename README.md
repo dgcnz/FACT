@@ -65,7 +65,7 @@ All datasets will reside on `artifacts/data`. When commiting changes to the repo
 
 If desired, you can run the data downloader scripts in the [main](/notebooks/main.ipynb) notebook. Otherwise if you prefer running the files via terminal then follow the instructions below:
 
-### Broden
+### BRODEN
 
 1. Activate your environment (conda or venv).
 2. Run the download script below:
@@ -126,15 +126,21 @@ Please refer to the [main](/notebooks/main.ipynb) file for instructions regardin
 
 ## Extension Experiment Downloads
 
-The below downloads are not part of the original experiments and were done as an extension to the original paper. They amount to around 7 GB in total.
+The below downloads are not part of the original experiments and were done as an extension to the original paper. They amount to around 33 GB in total (with around 26 GB stemming from the AudioSet data).
+
+1. Go [here](https://github.com/yt-dlp/FFmpeg-Builds?tab=readme-ov-file#patches-applied) and download the file corresponding to your device (link is present in the `README`).
+2. Follow the instructions listed [here](https://www.hostinger.com/tutorials/how-to-install-ffmpeg). You can ignore/adjust all the steps related to downloading the file.
+3. Restart your device.
+
 
 ### ESC-50
 
-1. Run the download script below:
+1. Please refer to the [main](/notebooks/main.ipynb) file for instructions regarding the AudioSet dataset due to the necessity of having a Kaggle API token (if you already have one setup in your \.kaggle, folder, you can ignore this step).
+2. Run the download script below:
 ```sh
 ./scripts/download_esc
 ```
-2. You will find the downloaded data in `ESC_50`.
+3. You will find the downloaded data in `ESC_50`.
 
 ### UrbanSound8K
 
@@ -143,6 +149,17 @@ The below downloads are not part of the original experiments and were done as an
 ```sh
 ./scripts/download_us8k
 ```
+
+### AudioSet
+
+1. Run the download script below:
+```sh
+./scripts/download_audioset
+```
+2. You will find the downloaded data in `audioset`.
+
+**Important Note:** This will only download the `.csv` files and the audio files for validation. For the other audio files, you would also need to have `ffmpeg` installed on your device in order to run the YouTube downloader script. This is how you can do so:
+
 
 (_Note:_ If on Google Colab, you can run the cell in the [main](/notebooks/main.ipynb) file after following the instructions there.)
 
@@ -176,7 +193,7 @@ In the original paper, two different ways to learn concepts activations vectors 
 ## 1 - Learning Concepts with a Concept Dataset
 To learn concepts in this way, each concept dataset needs to have a set of positive and negative images per concept. For this, the original authors proposed the CAV methodology (Kim et al. 2018). <br>
 
-**Concept Dataset Implementations:** The code provided to extract concept data loaders in `data/concept_loaders.py` is the same as in the original implementation. In there, you could find the loaders for `Broden`, `CUB`, and `derm7pt` datasets to extract concept loaders. If you'd like to use custom concept datasets, you could implement your own loader and place there.
+**Concept Dataset Implementations:** The code provided to extract concept data loaders in `data/concept_loaders.py` is the same as in the original implementation. In there, you could find the loaders for `BRODEN`, `CUB`, and `derm7pt` datasets to extract concept loaders. If you'd like to use custom concept datasets, you could implement your own loader and place there.
 
 **Obtaining concept vectors**: Once you have the concept data loaders, you could use the `learn_concepts_dataset.py` script to learn the concept vectors (which is also from the original implementation). As examples, you can run the following scripts (once you obtain the corresponding datasets):
 ```
@@ -187,7 +204,7 @@ python3 learn_concepts_dataset.py --dataset-name="cub" --backbone-name="resnet18
 # Learning Derm7pt Concepts
 python3 learn_concepts_dataset.py --dataset-name="derm7pt" --backbone-name="ham10000_inception" --C 0.001 0.01 0.1 1.0 10.0 --n-samples=50 --out-dir=$OUTPUT_DIR
 
-# Learning Broden Concepts
+# Learning BRODEN Concepts
 python3 learn_concepts_dataset.py --dataset-name="broden" --backbone-name="clip:RN50" --C 0.001 0.01 0.1 1.0 10.0 --n-samples=50 --out-dir=$OUTPUT_DIR
 
 ```

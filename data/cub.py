@@ -1,8 +1,8 @@
-
 """
 Obtained from https://github.com/yewsiang/ConceptBottleneck and modified.
 General utils for training, evaluation and data loading
 """
+
 import os
 import torch
 import pickle
@@ -13,15 +13,27 @@ from PIL import Image
 from torch.utils.data import BatchSampler
 from torch.utils.data import Dataset, DataLoader
 
-N_ATTRIBUTES=312
+N_ATTRIBUTES = 312
 from .constants import CUB_DATA_DIR
+
 
 class CUBDataset(Dataset):
     """
     Returns a compatible Torch Dataset object customized for the CUB dataset
     """
 
-    def __init__(self, pkl_file_paths, use_attr, no_img, uncertain_label, image_dir, n_class_attr, num_classes, transform=None, pkl_itself=None):
+    def __init__(
+        self,
+        pkl_file_paths,
+        use_attr,
+        no_img,
+        uncertain_label,
+        image_dir,
+        n_class_attr,
+        num_classes,
+        transform=None,
+        pkl_itself=None,
+    ):
         """
         Arguments:
         pkl_file_paths: list of full path to all the pkl data
@@ -35,13 +47,14 @@ class CUBDataset(Dataset):
         self.data = []
         self.is_train = any(["train" in path for path in pkl_file_paths])
         if not self.is_train:
-            assert any([("test" in path) or ("val" in path) for path in pkl_file_paths])        
+            assert any([("test" in path) or ("val" in path) for path in pkl_file_paths])
         if pkl_itself is None:
 
             for file_path in pkl_file_paths:
-                self.data.extend(pickle.load(open(file_path, 'rb')))
+                self.data.extend(pickle.load(open(file_path, "rb")))
         else:
             self.data = pkl_itself
+
         self.transform = transform
         self.use_attr = use_attr
         self.no_img = no_img
@@ -55,22 +68,22 @@ class CUBDataset(Dataset):
 
     def __getitem__(self, idx):
         img_data = self.data[idx]
-        img_path = img_data['img_path']
-        
-        # Trim unnecessary paths
-        idx = img_path.split('/').index('CUB_200_2011')
-        img_path = '/'.join([self.image_dir] + img_path.split('/')[idx+1:])
-        img = Image.open(img_path).convert('RGB')
+        img_path = img_data["img_path"]
 
-        class_label = img_data['class_label']
+        # Trim unnecessary paths
+        idx = img_path.split("/").index("CUB_200_2011")
+        img_path = "/".join([self.image_dir] + img_path.split("/")[idx + 1 :])
+        img = Image.open(img_path).convert("RGB")
+
+        class_label = img_data["class_label"]
         if self.transform:
             img = self.transform(img)
 
         if self.use_attr:
             if self.uncertain_label:
-                attr_label = img_data['uncertain_attribute_label']
+                attr_label = img_data["uncertain_attribute_label"]
             else:
-                attr_label = img_data['attribute_label']
+                attr_label = img_data["attribute_label"]
             if self.no_img:
                 if self.n_class_attr == 3:
                     one_hot_attr_label = np.zeros((N_ATTRIBUTES, self.n_class_attr))
@@ -82,7 +95,7 @@ class CUBDataset(Dataset):
                 return img, class_label, attr_label
         else:
             return img, class_label
-        
+
 
 class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
     """Samples elements randomly from a given list of indices for imbalanced dataset
@@ -94,8 +107,7 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
     def __init__(self, dataset, indices=None):
         # if indices is not provided,
         # all elements in the dataset will be considered
-        self.indices = list(range(len(dataset))) \
-            if indices is None else indices
+        self.indices = list(range(len(dataset))) if indices is None else indices
 
         # if num_samples is not provided,
         # draw `len(indices)` samples in each iteration
@@ -111,47 +123,69 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
                 label_to_count[label] = 1
 
         # weight for each sample
-        weights = [1.0 / label_to_count[self._get_label(dataset, idx)]
-                   for idx in self.indices]
+        weights = [
+            1.0 / label_to_count[self._get_label(dataset, idx)] for idx in self.indices
+        ]
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):  # Note: for single attribute dataset
-        return dataset.data[idx]['class_label']#[0]
+        return dataset.data[idx]["class_label"]  # [0]
 
     def __iter__(self):
-        idx = (self.indices[i] for i in torch.multinomial(
-            self.weights, self.num_samples, replacement=True))
+        idx = (
+            self.indices[i]
+            for i in torch.multinomial(self.weights, self.num_samples, replacement=True)
+        )
         return idx
 
     def __len__(self):
         return self.num_samples
 
 
-def load_cub_data(pkl_paths, use_attr, no_img, batch_size, uncertain_label=False, n_class_attr=2, image_dir='images', resampling=False, resol=299,
-             normalizer=transforms.Normalize(mean = [0.5, 0.5, 0.5], std = [2, 2, 2]),
-             n_classes=200):
+def load_cub_data(
+    pkl_paths,
+    use_attr,
+    no_img,
+    batch_size,
+    uncertain_label=False,
+    n_class_attr=2,
+    image_dir="images",
+    resampling=False,
+    resol=299,
+    normalizer=transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[2, 2, 2]),
+    n_classes=200,
+):
     """
     Note: Inception needs (299,299,3) images with inputs scaled between -1 and 1
     Loads data with transformations applied, and upsample the minority class if there is class imbalance and weighted loss is not used
     NOTE: resampling is customized for first attribute only, so change sampler.py if necessary
     """
-    is_training = any(['train.pkl' in f for f in pkl_paths])
+    is_training = any(["train.pkl" in f for f in pkl_paths])
     if is_training:
-        transform = transforms.Compose([
-            transforms.ColorJitter(brightness=32/255, saturation=(0.5, 1.5)),
-            transforms.RandomResizedCrop(resol),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(), 
-            normalizer
-            ])
+        transform = transforms.Compose(
+            [
+                transforms.ColorJitter(brightness=32 / 255, saturation=(0.5, 1.5)),
+                transforms.RandomResizedCrop(resol),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalizer,
+            ]
+        )
     else:
-        transform = transforms.Compose([
-            transforms.CenterCrop(resol),
-            transforms.ToTensor(), 
-            normalizer
-            ])
+        transform = transforms.Compose(
+            [transforms.CenterCrop(resol), transforms.ToTensor(), normalizer]
+        )
 
-    dataset = CUBDataset(pkl_paths, use_attr, no_img, uncertain_label, image_dir, n_class_attr, n_classes, transform)
+    dataset = CUBDataset(
+        pkl_paths,
+        use_attr,
+        no_img,
+        uncertain_label,
+        image_dir,
+        n_class_attr,
+        n_classes,
+        transform,
+    )
 
     if is_training:
         drop_last = True
@@ -160,10 +194,16 @@ def load_cub_data(pkl_paths, use_attr, no_img, batch_size, uncertain_label=False
         drop_last = False
         shuffle = False
     if resampling:
-        sampler = BatchSampler(ImbalancedDatasetSampler(dataset), batch_size=batch_size, drop_last=drop_last)
+        sampler = BatchSampler(
+            ImbalancedDatasetSampler(dataset),
+            batch_size=batch_size,
+            drop_last=drop_last,
+        )
         loader = DataLoader(dataset, batch_sampler=sampler)
     else:
-        loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
+        loader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last
+        )
     return loader
 
 
@@ -175,12 +215,12 @@ class CUBConceptDataset:
     def __len__(self):
         # Return the length of the dataset
         return len(self.images)
-    
+
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         img_path = self.images[idx]
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert("RGB")
         if self.transform:
             image = self.transform(image)
         return image
@@ -192,8 +232,8 @@ def get_concept_dicts(metadata):
     for im_data in metadata:
         for c, label in enumerate(im_data["attribute_label"]):
             print(label)
-            img_path = im_data["img_path"]            
-            idx = img_path.split('/').index('CUB_200_2011')
-            img_path = '/'.join([CUB_DATA_DIR] + img_path.split('/')[idx+1:])
+            img_path = im_data["img_path"]
+            idx = img_path.split("/").index("CUB_200_2011")
+            img_path = "/".join([CUB_DATA_DIR] + img_path.split("/")[idx + 1 :])
             concept_info[c][label].append(img_path)
     return concept_info

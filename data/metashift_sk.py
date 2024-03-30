@@ -1,4 +1,3 @@
-
 from data.metashift import (
     MetaShiftDataModule,
     NNProjector,

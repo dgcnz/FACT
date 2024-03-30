@@ -2,7 +2,7 @@ import os
 
 # CUB Constants
 # CUB data is downloaded from the CBM release.
-# Dataset: https://worksheets.codalab.org/rest/bundles/0xd013a7ba2e88481bbc07e787f73109f5/ 
+# Dataset: https://worksheets.codalab.org/rest/bundles/0xd013a7ba2e88481bbc07e787f73109f5/
 # Metadata and splits: https://worksheets.codalab.org/bundles/0x5b9d528d2101418b87212db92fea6683
 CUB_DATA_DIR = "artifacts/data/CUB_200_2011"
 CUB_PROCESSED_DIR = "artifacts/data/class_attr_data_10"
@@ -37,3 +37,8 @@ ESC_DIR = "artifacts/data/ESC_50"
 
 # UrbanSound8k can be obtained from : https://www.kaggle.com/datasets/chrisfilo/urbansound8k
 US_DIR = "artifacts/data/US8K"
+
+# AudioSet can be obtained from : https://research.google.com/audioset/download.html
+AS_DIR = "artifacts/data/audioset"
+AS_TRAIN_IDX = os.path.join(AS_DIR, "balanced_train_segments.csv")
+AS_EVAL_IDX = os.path.join(AS_DIR, "eval_segments.csv")
