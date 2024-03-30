@@ -247,7 +247,7 @@ if __name__ == "__main__":
         # Load the PCBM
         conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0]
         args.pcbm_path = (
-            "artifacts/coco-stuff/" if (args.dataset == "coco-stuff") else "artifacts/"
+            "artifacts/coco-stuff/" if (args.dataset == "coco-stuff") else "artifacts/outdir"
         )
         args.pcbm_path += f"pcbm_{args.dataset}_{args.backbone_name}{conceptbank_source}lam{args.lam}_alpha{args.alpha}_seed{args.seed}.ckpt"
         if ":" in args.pcbm_path:
