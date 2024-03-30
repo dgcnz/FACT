@@ -10,7 +10,10 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from .constants import AS_DIR, AS_TRAIN_IDX, AS_EVAL_IDX
+from pprint import PrettyPrinter
+import tqdm
 
+pprint = PrettyPrinter(indent=4)
 
 class AudioSetDataset(Dataset):
 
@@ -181,6 +184,10 @@ def download_data(df, data: str = "train", n_data_points: int = 50):
     return datalist
 
 
+def download_loop(df, data: str = "train", n_data_points: int = 50):
+    pass
+
+
 # Function for processing the data if already present (i.e., from validation)
 def process_data(
     df, data: str = "valid", extension: str = "wav", n_data_points: int = 50
@@ -342,7 +349,7 @@ def load_aud_data(
 # For testing:
 if __name__ == "__main__":
 
-    train_as, test_as = load_aud_data(num_workers=2)
+    train_as, test_as = load_aud_data(num_workers=8)
 
     first_x, first_y = next(iter(train_as))
 

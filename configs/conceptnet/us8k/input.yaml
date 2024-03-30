@@ -1,0 +1,22 @@
+labels:
+  - name: air_conditioner
+  - name: car_horn 
+  - name: children_playing
+    related:
+      - children
+      - playing
+  - name: dog_bark
+    related: 
+      - bark
+  - name: drilling
+  - name: engine_idling
+    related:
+      - engine
+  - name: gun_shot
+  - name: jackhammer
+  - name: siren
+  - name: street_music
+    related:
+      - music
+      - street
+output: configs/conceptnet/us8k/output_raw.yaml

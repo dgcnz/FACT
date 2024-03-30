@@ -102,6 +102,8 @@ def get_embeddings(loader, model, device="cuda"):
     """
     activations = None
     for image in tqdm(loader):
+        if isinstance(image, list):
+            image = image[0]
         image = image.to(device)
         try:
             batch_act = model(image).squeeze().detach().cpu().numpy()
