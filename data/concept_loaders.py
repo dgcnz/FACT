@@ -243,15 +243,20 @@ def get_concept_loaders_conceptnet(
     return concept_loaders
 
 
-def us8k_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
+def us8k_concept_loaders(dataset_name: str, n_samples, batch_size, num_workers, seed):
     """
     Returns:
         concept_loaders: dict[str, dict[str, DataLoader]]
     """
-    from .constants import US_DIR
+    from .constants import US_DIR, US_CONCEPTS
     from data.us8k import US8KDataset, prepare_data
-
-    concept_path = Path("configs") / "conceptnet" / "us8k" / "output.yaml"
+    if dataset_name != "us8k":
+        # we have a versioned concept file
+        version = dataset_name.split("_")[-1] # v0, v1, etc.
+        concept_path = US_CONCEPTS.with_name(f"output_{version}.yaml")
+    else:
+        concept_path = US_CONCEPTS
+    print(f"Using concept file {concept_path}")
     meta_path = Path(US_DIR) / "UrbanSound8K.csv"
     TESTFOLDS = [9, 10]
     with open(concept_path, "r") as f:
@@ -292,9 +297,9 @@ def get_concept_loaders(
         return broden_concept_loaders(
             preprocess, n_samples, batch_size, num_workers, seed
         )
-    elif dataset_name == "us8k":
+    elif dataset_name.startswith("us8k"):
         return us8k_concept_loaders(
-            preprocess, n_samples, batch_size, num_workers, seed
+            dataset_name, n_samples, batch_size, num_workers, seed
         )
 
     else:
