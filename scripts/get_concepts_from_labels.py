@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import yaml
 import re
+from tqdm.asyncio import tqdm as tqdm_asyncio
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 @final
@@ -98,7 +102,17 @@ async def get_concept_data(
         tasks = (
             get_concepts(label, concept_net, with_cache=with_cache) for label in labels
         )
-        return dict(zip(label_names, await asyncio.gather(*tasks)))
+        concept_data =  dict(zip(label_names, await tqdm_asyncio.gather(*tasks)))
+        empty = False
+        # if any concept is empty, print it and raise exception
+        for label, concepts in concept_data.items():
+            if not concepts:
+                logging.error(f"No concepts found for {label}")
+                empty = True
+        if empty:
+            raise ValueError("No concepts found for some labels") 
+        return concept_data
+
 
 
 def main(labels: list[Label], output: Path, with_cache: bool = True):

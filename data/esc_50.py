@@ -8,6 +8,58 @@ from .constants import ESC_DIR
 
 
 class ESCDataset(Dataset):
+    IDX_TO_CLASS = {
+        0: "dog",
+        1: "rooster",
+        2: "pig",
+        3: "cow",
+        4: "frog",
+        5: "cat",
+        6: "hen",
+        7: "insects",
+        8: "sheep",
+        9: "crow",
+        10: "rain",
+        11: "sea_waves",
+        12: "crackling_fire",
+        13: "crickets",
+        14: "chirping_birds",
+        15: "water_drops",
+        16: "wind",
+        17: "pouring_water",
+        18: "toilet_flush",
+        19: "thunderstorm",
+        20: "crying_baby",
+        21: "sneezing",
+        22: "clapping",
+        23: "breathing",
+        24: "coughing",
+        25: "footsteps",
+        26: "laughing",
+        27: "brushing_teeth",
+        28: "snoring",
+        29: "drinking_sipping",
+        30: "door_wood_knock",
+        31: "mouse_click",
+        32: "keyboard_typing",
+        33: "door_wood_creaks",
+        34: "can_opening",
+        35: "washing_machine",
+        36: "vacuum_cleaner",
+        37: "clock_alarm",
+        38: "clock_tick",
+        39: "glass_breaking",
+        40: "helicopter",
+        41: "chainsaw",
+        42: "siren",
+        43: "car_horn",
+        44: "engine",
+        45: "train",
+        46: "church_bells",
+        47: "airplane",
+        48: "fireworks",
+        49: "hand_saw",
+    }
 
     def __init__(self, datalist, transform=None, sample_rate: int = 44100):
         """
@@ -99,7 +151,7 @@ def load_esc_data(
 # For testing:
 if __name__ == "__main__":
 
-    meta_path = os.path.join(ESC_DIR, "esc50.csv")
+    meta_path = os.path.join(ESC_DIR, "meta/esc50.csv")
     train_esc, test_esc = load_esc_data(meta_path, num_workers=2)
 
     first_x, first_y = next(iter(train_esc))
