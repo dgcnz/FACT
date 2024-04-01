@@ -1,0 +1,86 @@
+labels:
+  - name: dog
+  - name: rooster
+  - name: pig
+  - name: cow
+  - name: frog
+  - name: cat
+  - name: hen
+  - name: insects
+  - name: sheep
+  - name: crow
+  - name: rain
+  - name: sea_waves
+    related:
+      - waves
+  - name: crackling_fire
+    related:
+      - fire
+  - name: crickets
+  - name: chirping_birds
+    related:
+      - birds
+  - name: water_drops
+  - name: wind
+  - name: pouring_water
+    related:
+      - water
+  - name: toilet_flush
+    related:
+      - toilet
+  - name: thunderstorm
+  - name: crying_baby
+    related:
+      - baby
+      - crying
+  - name: sneezing
+  - name: clapping
+  - name: breathing
+  - name: coughing
+  - name: footsteps
+  - name: laughing
+  - name: brushing_teeth
+  - name: snoring
+  - name: drinking_sipping
+    related:
+      - sipping
+  - name: door_wood_knock
+    related:
+      - wood
+  - name: mouse_click
+    related:
+      - click
+  - name: keyboard_typing
+    related:
+      - typing
+  - name: door_wood_creaks
+    related:
+      - creaking
+  - name: can_opening
+    related:
+      - can
+  - name: washing_machine
+  - name: vacuum_cleaner
+  - name: clock_alarm
+  - name: clock_tick
+    related:
+      - clock
+  - name: glass_breaking
+    related:
+      - glass
+  - name: helicopter
+  - name: chainsaw
+  - name: siren
+  - name: car_horn
+  - name: engine
+  - name: train
+  - name: church_bells
+    related:
+      - bells
+      - church
+  - name: airplane
+  - name: fireworks
+  - name: hand_saw
+    related:
+      - saw
+output: configs/conceptnet/es50/output_raw.yaml

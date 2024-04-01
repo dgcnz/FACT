@@ -10,6 +10,10 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from .constants import AS_DIR, AS_TRAIN_IDX, AS_EVAL_IDX
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
+from tqdm.asyncio import tqdm as tqdm_asyncio
+from tqdm import tqdm
 
 
 class AudioSetDataset(Dataset):
@@ -120,7 +124,7 @@ def download_data(df, data: str = "train", n_data_points: int = 50):
 
     # Download the files
     datalist = []
-    for _, entry in df.iterrows():
+    for _, entry in tqdm(df.iterrows(), total=df.shape[0]):
         # Getting the details
         url = entry.iloc[0]
         start, end = int(entry.iloc[1]), int(entry.iloc[2])
@@ -146,12 +150,20 @@ def download_data(df, data: str = "train", n_data_points: int = 50):
             "force-keyframes-at-cuts": True,
             "prefer-ffmpeg": True,
             "ignoreerrors": True,  # Continue even if we get an error
+            "extractor_retries": 0,
+            "socket_timeout": 2,
         }
 
         # Try to download the snippet if it's needed
-        if any([midcounts[label] < n_data_points for label in pos_labels]):
+        if not os.path.exists(filepath + ".m4a") and any(
+            [midcounts[label] < n_data_points for label in pos_labels]
+        ):
+            print(f"Downloading {vid_id}...")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 error_code = ydl.download(url)
+        else:
+            print(f"Skipping {vid_id}...")
+            error_code = 0
 
         # Ignore the video if it returns an error
         if error_code:
@@ -179,6 +191,77 @@ def download_data(df, data: str = "train", n_data_points: int = 50):
     print(f"Data has been saved to {data_path}!")
 
     return datalist
+
+
+def download_vid(split_dir: str, archive: str, url: str, start: int, end: int):
+    vid_id = url.split("?v=")[1]
+    filepath = os.path.join(split_dir, vid_id)
+    ydl_opts = {
+        "download_archive": archive,
+        "format": "bestaudio/best",
+        "ffmpeg-location": "C:\\ffmpeg\\bin\\ffmpeg.exe",  # Note: this *may* need to be adjusted depending on the device
+        "postprocessors": [
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "m4a",
+            }
+        ],
+        "download_ranges": yt_dlp.utils.download_range_func(
+            None, [(start, end)]
+        ),  # Defining the range to download
+        "outtmpl": filepath,
+        "force-keyframes-at-cuts": True,
+        "prefer-ffmpeg": True,
+        "ignoreerrors": True,  # Continue even if we get an error
+        "extractor_retries": 0,
+        "socket_timeout": 2,
+    }
+    if os.path.exists(filepath + ".m4a"):
+        print(f"Skipping {vid_id}...")
+        return 0
+    print(f"Downloading {vid_id}...")
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        return ydl.download(url)
+
+
+def download_and_update(entry, split_dir: str, archive: str):
+    url = entry.iloc[0]
+    start, end = int(entry.iloc[1]), int(entry.iloc[2])
+    return download_vid(split_dir, archive, url, start, end)
+
+
+# Function for downloading and compiling the audio segments
+def download_data_v2(
+    df, data: str = "train", n_data_points: int = 50, dl_max_workers: int = 8
+):
+    """
+    Arguments:
+    df: Pandas dataframe object corresponding to either the training or evaluation set
+    data: If the data is either "train" or "test" (used for file saving)
+    n_data_points: Number of datapoints to return per class
+
+    Outputs:
+    data: Lists in the form of a PyTorch datalist; '[[audio_path1, audio_label1], [audio_path2, audio_label2], ...]'
+    """
+    # Creating the directory
+    split_dir = os.path.join(AS_DIR, data)
+    Path(split_dir).mkdir(parents=True, exist_ok=True)
+
+    # For smarter file tracking
+    archive = os.path.join(AS_DIR, f"archive_{data}.txt")
+    if not Path(archive).exists():
+        with open(archive, "w") as file:
+            file.write("")
+
+    loop = asyncio.get_event_loop()
+    with ProcessPoolExecutor(max_workers=dl_max_workers) as ex:
+        coros = [
+            loop.run_in_executor(ex, download_and_update, entry, split_dir, archive)
+            for _, entry in df.iterrows()
+        ]
+        loop.run_until_complete(tqdm_asyncio.gather(*coros))
+
+    print("Data has been saved!")
 
 
 # Function for processing the data if already present (i.e., from validation)
@@ -239,7 +322,14 @@ def process_data(
 
 
 # Function for retrieving the data (or commencing the downloads if the files are not present)
-def get_data(df, data: str = "valid", extension: str = "wav", n_data_points: int = 50):
+def get_data(
+    df,
+    data: str = "valid",
+    extension: str = "wav",
+    n_data_points: int = 50,
+    dl_max_workers: int | None = None,
+    download: bool = False,
+):
     """
     Arguments:
     df: Pandas dataframe object corresponding to either the training or evaluation set
@@ -261,7 +351,7 @@ def get_data(df, data: str = "valid", extension: str = "wav", n_data_points: int
         datalist = pd.read_csv(data_path).values.tolist()
 
     # Else if the files are there (i.e., from validation), we process that
-    elif len(os.listdir(split_dir)) > 0:
+    elif not download and len(os.listdir(split_dir)) > 0:
         print("Files detected. Generating dataset csv...")
         datalist = process_data(
             df, data, extension=extension, n_data_points=n_data_points
@@ -270,7 +360,14 @@ def get_data(df, data: str = "valid", extension: str = "wav", n_data_points: int
     # Otherwise we need to compile the data from scratch
     else:
         print("Files not found. Downloading data...")
-        datalist = download_data(df, data, n_data_points)
+        if dl_max_workers:
+            print("Using parallel downloads...")
+            download_data_v2(df, data, n_data_points, dl_max_workers)
+            datalist = process_data(
+                df, data, extension=extension, n_data_points=n_data_points
+            )
+        else:
+            datalist = download_data(df, data, n_data_points)
 
     return datalist
 
@@ -282,6 +379,8 @@ def load_aud_data(
     num_workers: int = 4,
     n_data_points: int = 50,
     val_size: float = 0.2,
+    dl_max_workers: int | None = None,
+    download: bool = False,
 ):
     """
     Arguments:
@@ -316,7 +415,13 @@ def load_aud_data(
     # First ensure that the csv files are reformatted (in case the non-validation files are desired)
     reformat_csv(csv_file)
     df = pd.read_csv(csv_file)
-    data = get_data(df, data=data, n_data_points=n_data_points)
+    data = get_data(
+        df,
+        data=data,
+        n_data_points=n_data_points,
+        dl_max_workers=dl_max_workers,
+        download=download,
+    )
 
     # And now we split the data in stratified fashion
     # Split data into features (X) and labels (y)
@@ -342,7 +447,7 @@ def load_aud_data(
 # For testing:
 if __name__ == "__main__":
 
-    train_as, test_as = load_aud_data(num_workers=2)
+    train_as, test_as = load_aud_data(num_workers=2, download=True)
 
     first_x, first_y = next(iter(train_as))
 

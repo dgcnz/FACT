@@ -9,6 +9,18 @@ from .constants import US_DIR
 
 
 class US8KDataset(Dataset):
+    IDX_TO_CLASS = {
+        0: "air_conditioner",
+        1: "car_horn",
+        2: "children_playing",
+        3: "dog_bark",
+        4: "drilling",
+        5: "engine_idling",
+        6: "gun_shot",
+        7: "jackhammer",
+        8: "siren",
+        9: "street_music",
+    }
 
     def __init__(
         self, datalist, transform=None, sample_rate: int = 44100, max_len: int = 176400

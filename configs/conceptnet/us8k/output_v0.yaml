@@ -1,0 +1,50 @@
+air_conditioner:
+- air
+- automobile
+- machine
+- noisy
+car_horn:
+- honk
+- car
+children_playing:
+- school
+- cute
+- noisy
+- class
+- kids
+- toy
+- fun
+dog_bark:
+- noisy
+- dog
+- woof
+- cry
+- animal_noise
+drilling:
+- noisy
+- construction
+engine_idling:
+- motorcycle
+- car
+- electric_motor
+- automobile
+gun_shot:
+- bang
+- bullet
+jackhammer:
+- rock
+- drill
+- repetitive
+siren:
+- repetitive
+- wail
+- noise
+- alarm
+- high_pitch
+street_music:
+- harmony
+- cars
+- songs
+- rhythm
+- entertainment
+- rap

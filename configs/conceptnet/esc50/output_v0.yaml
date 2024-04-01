@@ -1,0 +1,282 @@
+airplane:
+- jet
+- aircraft
+- vehicle
+- thunder
+- wheels
+- wing
+- windshield
+breathing:
+- oxygen
+- repetitive # added
+- snore
+- hyperventilation
+- exhalation
+- air
+- panting
+- inhalation
+- wheeze
+brushing_teeth:
+- human # added
+- bathroom # added
+- brushing # added
+- repetitive # added
+can_opening:
+- soda_can
+- aluminium
+- tin
+- aluminum
+- metal
+car_horn:
+- honk
+- car
+- horn
+cat:
+- kitty
+- four_legs
+- scratch_furniture
+- animal
+- claws
+- meow
+- fur
+- feline
+- pet
+chainsaw:
+- tool
+- cut
+- pull_cord
+chirping_birds:
+- pip
+- feathers
+- chirp
+- musical_voices
+- singing
+- peck
+church_bells:
+- cathedral
+- ring
+- bell
+- church
+clapping:
+- hand
+- clap
+- encore
+clock_alarm:
+- loud  # added
+- clock # added
+- alarm # added
+clock_tick:
+- tick_tock
+- chronometer
+- ticking
+- timer
+- machine
+- mechanical_device
+coughing:
+- sickness # added
+- sneeze
+- throat # added
+cow:
+- farm_animal
+- four_legs
+- farm
+- living_creature
+- moo
+- animal
+- nature # added
+crackling_fire:
+- fireplace
+- smoke
+- bonfire
+- burning
+- flames
+crickets:
+- silence
+- bug # added
+- nature # added 
+crow:
+- animal
+- cry
+- bird
+crying_baby:
+- wailing
+- human
+- sob
+dog:
+- four_legs
+- pet_animal
+- animal
+- paws
+- canine
+- woof
+- fur
+- four_legged_animal
+door_wood_creaks:
+- creak
+- high_pitched # added
+- door # added
+door_wood_knock:
+- table
+- door
+- house
+drinking_sipping:
+- drink
+- soup
+- sip
+- human # added
+engine:
+- turbine
+- automobile
+- throttle
+- mechanical_device
+fireworks:
+- explosive
+- boom
+- boisterous
+- violent
+footsteps:
+- pad
+- footstep
+- walk
+frog:
+- amphibian
+- animal
+- ribbit
+- nature # added
+glass_breaking:
+- drinking
+- liquid
+- shattering
+- high_pitched # added
+hand_saw:
+- wood # added
+- loud # added
+- mechanical_device # added
+helicopter:
+- machine
+- vehicle # added
+- loud # added
+- wind # added
+hen:
+- bird # added
+- chirps # added
+- farm_animal # added
+- farm # added
+insects:
+- animals
+- move
+- bugs
+- fly
+- vibrations # added
+- nature # added
+keyboard_typing:
+- typewriter
+- computer # added
+- repetitive # added
+- mechanical_device # added
+- human # added
+laughing:
+- human # added
+- happiness # added
+- loud # added
+mouse_click:
+- tsk
+- computer # added
+- mechanical_device # added
+- human # added
+- high_pitched # added
+pig:
+- animal
+- oink_oink
+- farm_animal
+- farm
+pouring_water:
+- flow
+- liquid
+- leak
+- glass
+- water # added
+rain:
+- liquid
+- weather
+- wet
+- rainstorm
+- pouring
+- water_drops
+- thunder
+- precipitation
+- storm
+- water
+- shower
+rooster:
+- chicken
+- farm_animal # added
+- farm # added
+- crowing # added
+sea_waves:
+- moving_water
+- wave
+- sea
+- beach
+- water
+sheep:
+- farm_animal
+- baa
+- animal
+- fur
+siren:
+- alarm
+- mechanical
+- device
+- electronic
+- wail
+- loud # added
+sneezing:
+- sign_of_sickness
+- disruptive
+- nose
+- human # added
+snoring:
+- vibration
+- breathing
+- noise
+- sleep
+- human # added
+thunderstorm:
+- typhoon
+- rainstorm
+- lightning
+- rain
+- thunder
+toilet_flush:
+- bathroom
+- shower
+- drain
+- sink
+train:
+- station
+- locomotive
+- engine
+- railroad
+vacuum_cleaner:
+- fan
+- suction
+- hoover
+- vacuum
+- cleaning
+washing_machine:
+- household_appliance # added
+- machine
+- house
+- water # added
+water_drops:
+- rain
+- water # added
+wind:
+- fast
+- blow
+- weather
+- air
+- moving
+- movement
+- strong

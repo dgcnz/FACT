@@ -1,0 +1,49 @@
+air_conditioner:
+  - mechanical
+  - continuous
+car_horn:
+  - alarming
+  - high_pitched
+  - urban
+  - movement
+  - vehicle
+children_playing:
+  - human
+  - spontaneous
+  - movement
+dog_bark:
+  - alarming
+  - spontaneous
+  - movement
+  - animal
+  - nature
+drilling:
+  - mechanical
+  - continuous
+  - urban
+  - high_pitched
+engine_idling:
+  - mechanical
+  - low_pitched
+  - continuous
+  - urban
+  - vehicle
+gun_shot:
+  - alarming
+  - short_lived
+jackhammer:
+  - mechanical
+  - low_pitched
+  - repeating
+  - urban
+siren:
+  - high_pitched
+  - urban
+  - alarming
+  - repeating
+  - movement
+  - vehicle
+street_music:
+  - rhythmic
+  - urban
+  - human

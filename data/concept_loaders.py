@@ -4,8 +4,11 @@ import torch
 import pandas as pd
 import numpy as np
 from PIL import Image
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset, Dataset
 from .constants import CUB_PROCESSED_DIR
+from pathlib import Path
+import yaml
+import logging
 
 
 class ListDataset:
@@ -196,6 +199,134 @@ def broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     return concept_loaders
 
 
+def invert_class_concept_dict(
+    class_to_concepts: dict[str, list[str]]
+) -> dict[str, list[str]]:
+    """Invert a dictionary mapping classes to concepts to a dictionary mapping concepts to classes."""
+    concept_to_classes: dict[str, list[str]] = {}
+    for class_name, concept_names in class_to_concepts.items():
+        for concept_name in concept_names:
+            concept_to_classes.setdefault(concept_name, []).append(class_name)
+    return concept_to_classes
+
+
+def get_concept_loaders_conceptnet(
+    concept_to_classes: dict[str, list[str]],
+    class_to_idx: dict[str, int],
+    ys: list[str],
+    dataset: Dataset,
+    n_samples: int,
+    batch_size: int,
+    num_workers: int,
+    seed: int,
+):
+    np.random.seed(seed)
+    concept_loaders = dict()
+    for concept_name, class_names in concept_to_classes.items():
+        # get all rows in train_dir that have classID in class_names
+        class_ids = [class_to_idx[c] for c in class_names]
+        pos_idx = [i for i, y in enumerate(ys) if y in class_ids]
+        neg_idx = [i for i, y in enumerate(ys) if y not in class_ids]
+        # random sample n_samples
+        # replace if not enough samples
+        pos_replace, neg_replace = False, False
+        if len(pos_idx) < 2 * n_samples:
+            print(
+                f"\t Not enough positive samples for {concept_name}: {len(pos_idx)}! Sampling with replacement"
+            )
+            pos_replace = True
+        if len(neg_idx) < 2 * n_samples:
+            print(
+                f"\t Not enough negative samples for {concept_name}: {len(pos_idx)}! Sampling with replacement"
+            )
+            neg_replace = True
+        pos_idx = np.random.choice(pos_idx, 2*n_samples, replace=pos_replace)
+        neg_idx = np.random.choice(neg_idx, 2*n_samples, replace=neg_replace)
+
+        pos_ds = Subset(dataset, pos_idx)
+        neg_ds = Subset(dataset, neg_idx)
+        pos_loader = DataLoader(
+            pos_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        )
+        neg_loader = DataLoader(
+            neg_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        )
+        concept_loaders[concept_name] = {"pos": pos_loader, "neg": neg_loader}
+    return concept_loaders
+
+
+def us8k_concept_loaders(dataset_name: str, n_samples, batch_size, num_workers, seed):
+    """
+    Returns:
+        concept_loaders: dict[str, dict[str, DataLoader]]
+    """
+    from .constants import US_DIR, US_CONCEPTS
+    from data.us8k import US8KDataset, prepare_data
+    if dataset_name != "us8k":
+        # we have a versioned concept file
+        version = dataset_name.split("_")[-1] # v0, v1, etc.
+        concept_path = US_CONCEPTS.with_name(f"output_{version}.yaml")
+    else:
+        concept_path = US_CONCEPTS
+    print(f"Using concept file {concept_path}")
+    meta_path = Path(US_DIR) / "UrbanSound8K.csv"
+    TESTFOLDS = [9, 10]
+    with open(concept_path, "r") as f:
+        concept_to_classes = invert_class_concept_dict(yaml.safe_load(f))
+    train_dir = os.path.join(US_DIR, "fold")
+    df = pd.read_csv(meta_path).drop(["fsID", "start", "end", "salience"], axis=1)
+    df["filename"] = train_dir + df["fold"].astype(str) + "/" + df["slice_file_name"]
+    train_pairs, _ = prepare_data(df, testfolds=TESTFOLDS)
+    train_df = df[-df["fold"].isin(TESTFOLDS)]
+
+    ys = train_df["classID"].tolist()
+    train_dataset = US8KDataset(train_pairs)
+    class_to_idx = {v: k for k, v in train_dataset.IDX_TO_CLASS.items()}
+    return get_concept_loaders_conceptnet(
+        concept_to_classes=concept_to_classes,
+        class_to_idx=class_to_idx,
+        ys=ys,
+        dataset=train_dataset,
+        n_samples=n_samples,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        seed=seed,
+    )
+
+def esc50_concept_loaders(dataset_name: str, n_samples: int, batch_size: int, num_workers: int, seed: int):
+    from .constants import ESC_DIR, ESC_CONCEPTS
+    # from data.us8k import US8KDataset, prepare_data
+    from data.esc_50 import ESCDataset, prepare_data
+    concept_path = ESC_CONCEPTS
+    if dataset_name != "esc50": # we have a versioned concept file
+        version = dataset_name.split("_")[-1] # v0, v1, etc.
+        concept_path = ESC_CONCEPTS.with_name(f"output_{version}.yaml")
+    with open(concept_path, "r") as f:
+        concept_to_classes = invert_class_concept_dict(yaml.safe_load(f))
+    print(f"Using concept file {concept_path}")
+    meta_dir = Path(ESC_DIR) /  "meta" / "esc50.csv"
+    df = pd.read_csv(meta_dir).drop(["src_file", "take"], axis=1)
+    train_dir = os.path.join(ESC_DIR, "audio")
+    df["filename"] = train_dir + "/" + df["filename"]
+    TESTFOLD = 5
+    train_pairs, _ = prepare_data(df, TESTFOLD)
+    train_df = df[df["fold"] != TESTFOLD]
+
+    ys = train_df["target"].tolist()
+    train_dataset = ESCDataset(train_pairs)
+    class_to_idx = {v: k for k, v in train_dataset.IDX_TO_CLASS.items()}
+    return get_concept_loaders_conceptnet(
+        concept_to_classes=concept_to_classes,
+        class_to_idx=class_to_idx,
+        ys=ys,
+        dataset=train_dataset,
+        n_samples=n_samples,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        seed=seed,
+    )
+
+
 def get_concept_loaders(
     dataset_name, preprocess, n_samples=50, batch_size=100, num_workers=4, seed=1
 ):
@@ -211,6 +342,13 @@ def get_concept_loaders(
         return broden_concept_loaders(
             preprocess, n_samples, batch_size, num_workers, seed
         )
-
+    elif dataset_name.startswith("us8k"):
+        return us8k_concept_loaders(
+            dataset_name, n_samples, batch_size, num_workers, seed
+        )
+    elif dataset_name.startswith("esc50"):
+        return esc50_concept_loaders(
+            dataset_name, n_samples, batch_size, num_workers, seed
+        )
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")

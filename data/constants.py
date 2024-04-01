@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 # CUB Constants
 # CUB data is downloaded from the CBM release.
@@ -34,9 +35,11 @@ BRODEN_CONCEPTS = "artifacts/data/broden_concepts"
 # CONSTANTS FOR EXTENSION EXPERIMENTS
 # ESC_50 can be obtained from : https://github.com/karolpiczak/ESC-50
 ESC_DIR = "artifacts/data/ESC_50"
+ESC_CONCEPTS = Path("configs") / "conceptnet" / "esc50" / "output_v0.yaml" # can be changed
 
 # UrbanSound8k can be obtained from : https://www.kaggle.com/datasets/chrisfilo/urbansound8k
 US_DIR = "artifacts/data/US8K"
+US_CONCEPTS = Path("configs") / "conceptnet" / "us8k" / "output_v1.yaml" # can be changed
 
 # AudioSet can be obtained from : https://research.google.com/audioset/download.html
 AS_DIR = "artifacts/data/audioset"

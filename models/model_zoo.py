@@ -91,6 +91,31 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                         ToTensor1D()
                       ])
         model = None
+    
+    elif backbone_name.lower() == "audio2": # to avoid forward issues
+        from models.AudioCLIP.model import AudioCLIP
+        from models.AudioCLIP.utils.transforms import ToTensor1D
+
+        # Done like this to ensure that it does not do relative imports w.r.t. from where
+        # the user is running the script
+        filedir = os.path.abspath(__file__)
+        filedir = os.path.dirname(filedir)
+        pt_path = os.path.join(filedir, "AudioCLIP/assets/audioclip.pt")
+        
+        class AudioCLIPAudioOnly(nn.Module):
+            def __init__(self, model):
+                super(AudioCLIPAudioOnly, self).__init__()
+                self.model = model
+            def forward(self, x):
+                return self.model.encode_audio(x)
+
+        backbone = AudioCLIP(pretrained=pt_path, multilabel=False)
+        backbone.eval()
+        backbone = AudioCLIPAudioOnly(backbone)
+        preprocess = transforms.Compose([
+                        ToTensor1D()
+                      ])
+        model = None
         
     else:
         raise ValueError(backbone_name)
