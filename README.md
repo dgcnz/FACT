@@ -265,7 +265,7 @@ For replicating the results of the user study, [please see this notebook](/noteb
 
 
 # **Citation**
-If you find this code useful, please consider citing our paper (not out yet unfortunately):
+If you find this code useful, please consider citing our paper:
 ```
 @article{midavaine2024repcbm,
 title={[Re] On the Reproducibility of Post-Hoc Concept Bottleneck Models},
